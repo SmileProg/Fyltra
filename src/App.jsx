@@ -121,7 +121,14 @@ function PillNav({ view, setView }) {
 }
 
 /* ─── Desktop Sidebar ────────────────────────────────────────────── */
-function Sidebar({ view, setView, total, pnlSum }) {
+const FULL_NAV = [
+  { key:"propfirm",  icon:"◉",  label:"Compte" },
+  { key:"add",       icon:"＋", label:"Trade" },
+  { key:"history",   icon:"≡",  label:"Historique" },
+  { key:"strategy",  icon:"◈",  label:"Plan" },
+  { key:"ai",        icon:"◆",  label:"IA" },
+];
+function Sidebar({ view, setView }) {
   return (
     <div style={{ width:220, minHeight:"100vh", background:C.bg2, borderRight:`1px solid ${C.border}`, flexDirection:"column", position:"fixed", left:0, top:0, padding:"28px 0", zIndex:50, display:"flex" }}>
       <div style={{ padding:"0 20px 24px", borderBottom:`1px solid ${C.border}` }}>
@@ -140,7 +147,7 @@ function Sidebar({ view, setView, total, pnlSum }) {
       </div>
       <div style={{ padding:"16px 12px", flex:1, display:"flex", flexDirection:"column", justifyContent:"center" }}>
         <div style={{ background:"rgba(15,15,15,0.95)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", borderRadius:24, padding:"10px", boxShadow:"0 12px 40px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)", border:"1px solid rgba(255,255,255,0.07)" }}>
-          {NAV.map(item => {
+          {FULL_NAV.map(item => {
             const active = view === item.key;
             return (
               <button key={item.key} onClick={() => setView(item.key)} style={{
@@ -324,7 +331,7 @@ export default function App() {
   const [pfCalMonth, setPfCalMonth] = useState(now0.getMonth());
   const [calYear,  setCalYear]  = useState(now0.getFullYear());
   const [pfCalYear,  setPfCalYear]  = useState(now0.getFullYear());
-  const [form, setForm] = useState({ date:new Date().toISOString().split("T")[0], instrument:"MNQ", direction:"LONG", result:"WIN", session:"New York", emotion:"Neutre", entry:"", exit:"", rr:"", notes:"", accountIds:[] });
+  const [form, setForm] = useState({ date:new Date().toISOString().split("T")[0], instrument:"MNQ", direction:"LONG", result:"WIN", session:"New York", emotion:"Neutre", entry:"", exit:"", rr:"", notes:"", accountIds:[], strategyId:null });
 
   const instruments = [...BASE_INSTRUMENTS, ...extraInstr, "Autre"];
   const availableYears = Array.from({ length:now0.getFullYear() - 2019 }, (_, i) => now0.getFullYear() - i);
@@ -361,7 +368,7 @@ export default function App() {
     const p = computedPnl();
     if (p === null) return;
     setTrades(prev => [{ ...form, pnl:p, id:Date.now() }, ...prev]);
-    setPnlRaw(""); setForm(f => ({ ...f, entry:"", exit:"", rr:"", notes:"", accountIds:[] }));
+    setPnlRaw(""); setForm(f => ({ ...f, entry:"", exit:"", rr:"", notes:"", accountIds:[], strategyId:null }));
     setSaved(true); setTimeout(() => setSaved(false), 2500);
   };
 
@@ -605,6 +612,21 @@ export default function App() {
         </Field>
       )}
 
+      {strategies.length > 0 && (
+        <Field label="Stratégie utilisée">
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {strategies.map(s => {
+              const sel = form.strategyId === s.id;
+              return (
+                <button key={s.id} onClick={() => set("strategyId", sel ? null : s.id)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 14px", borderRadius:6, border:`1px solid ${sel?C.accent:C.border}`, background:sel?"rgba(0,0,0,0.06)":"transparent", cursor:"pointer" }}>
+                  <span style={{ fontSize:13, fontFamily:"'Josefin Sans',sans-serif", fontWeight:sel?600:300, color:sel?C.accent:C.white, letterSpacing:"0.05em" }}>{s.name||"Stratégie"}</span>
+                  <div style={{ width:18, height:18, borderRadius:4, border:`1px solid ${sel?C.accent:C.gray2}`, background:sel?C.accent:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{sel && <span style={{ color:"#fff", fontSize:11 }}>✓</span>}</div>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+      )}
       <button onClick={addTrade} disabled={computedPnl() === null} style={{ width:"100%", padding:"14px", borderRadius:4, border:"none", background:computedPnl() !== null ? C.accent : C.gray3, color:computedPnl() !== null ? "#fff" : C.gray2, fontSize:12, fontWeight:600, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.2em", textTransform:"uppercase", cursor:computedPnl() !== null ? "pointer" : "not-allowed", transition:"all 0.3s" }}>
         {saved ? "✓  Trade enregistré" : "Enregistrer  →"}
       </button>
@@ -743,7 +765,7 @@ export default function App() {
         <input type="text" value={strat.name||""} onChange={e=>updateStrat(strat.id,{name:e.target.value})} placeholder="" style={iStyle}/>
       </Field>
       <Field label="Description générale">
-        <textarea rows={3} placeholder="" value={strat.description||""} onChange={e=>updateStrat(strat.id,{description:e.target.value})} style={{...iStyle,resize:"vertical",lineHeight:1.6}}/>
+        <textarea rows={3} placeholder="ex: ICT sur MNQ, entrée OB retest M5, NY session..." value={strat.description||""} onChange={e=>updateStrat(strat.id,{description:e.target.value})} style={{...iStyle,resize:"vertical",lineHeight:1.6}}/>
       </Field>
       <div style={{ marginBottom:16 }}>
         <Label>Étapes d'entrée</Label>
@@ -751,7 +773,7 @@ export default function App() {
           {(strat.steps||[]).map((step, i) => (
             <div key={i} style={{ display:"flex", alignItems:"center", gap:8 }}>
               <div style={{ width:22, height:22, borderRadius:"50%", background:C.bg3, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:C.dim, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, flexShrink:0 }}>{i+1}</div>
-              <input type="text" value={step} placeholder={`Étape ${i+1}...`} onChange={e=>{const steps=[...(strat.steps||[])];steps[i]=e.target.value;updateStrat(strat.id,{steps});}} className="step-input" style={{...iStyle,flex:1,padding:"10px 12px",fontSize:14}}/>
+              <input type="text" value={step} placeholder={`ex: Attendre le retest de l'OB`} onChange={e=>{const steps=[...(strat.steps||[])];steps[i]=e.target.value;updateStrat(strat.id,{steps});}} className="step-input" style={{...iStyle,flex:1,padding:"10px 12px",fontSize:14}}/>
               {(strat.steps||[]).length > 1 && <button onClick={()=>updateStrat(strat.id,{steps:(strat.steps||[]).filter((_,j)=>j!==i)})} style={{background:"none",border:"none",color:C.gray2,cursor:"pointer",fontSize:18,lineHeight:1,padding:"0 4px",flexShrink:0}}>×</button>}
             </div>
           ))}
@@ -881,10 +903,10 @@ export default function App() {
       {pfView==="add-propfirm" && (
         <div>
           <Field label="Nom de la Prop Firm *">
-            <input type="text" placeholder="" value={pfForm.firm} onChange={e=>pfSet("firm",e.target.value)} style={iStyle}/>
+            <input type="text" placeholder="ex: Lucid Trading, FTMO..." value={pfForm.firm} onChange={e=>pfSet("firm",e.target.value)} style={iStyle}/>
           </Field>
           <Field label="Nom du compte (optionnel)">
-            <input type="text" placeholder="" value={pfForm.name} onChange={e=>pfSet("name",e.target.value)} style={iStyle}/>
+            <input type="text" placeholder="ex: Eval 1, Compte principal..." value={pfForm.name} onChange={e=>pfSet("name",e.target.value)} style={iStyle}/>
           </Field>
           <Divider/>
           <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:6,marginBottom:8}}>
@@ -940,7 +962,7 @@ export default function App() {
       {pfView==="add-personal" && (
         <div>
           <Field label="Nom du compte (optionnel)">
-            <input type="text" placeholder="" value={pfForm.name} onChange={e=>pfSet("name",e.target.value)} style={iStyle}/>
+            <input type="text" placeholder="ex: Eval 1, Compte principal..." value={pfForm.name} onChange={e=>pfSet("name",e.target.value)} style={iStyle}/>
           </Field>
           <Field label="Capital *">
             <input type="text" inputMode="numeric" placeholder="" value={pfForm.capital} onChange={e=>pfSet("capital",e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,""))} style={iStyle}/>
@@ -1933,15 +1955,15 @@ export default function App() {
       ) : (
         /* ── DESKTOP ── */
         <div style={{ display:"flex", minHeight:"100vh" }}>
-          <Sidebar view={view} setView={setView} total={total} pnlSum={pnlSum} />
+          <Sidebar view={view} setView={setView} />
           <div style={{ marginLeft:220, flex:1, display:"flex", flexDirection:"column" }}>
             <div style={{ padding:"20px 36px 18px", borderBottom:`1px solid ${C.border}`, background:C.bg, position:"sticky", top:0, zIndex:40, backdropFilter:"blur(12px)" }}>
               <div style={{ fontSize:11, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", marginBottom:2, fontFamily:"'Josefin Sans',sans-serif" }}>{NAV.find(n => n.key === view)?.label}</div>
               <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:30, fontWeight:600, color:C.white, letterSpacing:"-0.01em" }}>
-                {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Historique" : view === "strategy" ? "Plan de Trading" : "Analyse IA"}
+                {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Historique" : view === "strategy" ? "Plan de Trading" : view === "tools" ? "Outils" : "Analyse IA"}
               </div>
             </div>
-            <div style={{ padding:"28px 36px", flex:1, maxWidth:1100 }}>
+            <div style={{ padding:"28px 36px", flex:1, maxWidth:760, margin:"0 auto", width:"100%" }}>
               {getContent(true)}
             </div>
           </div>
