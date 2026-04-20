@@ -98,7 +98,7 @@ function ChipGroup({ options, value, onChange }) {
 
 function StatCard({ label, value, color, small }) {
   return (
-    <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderTop:`2px solid ${color||C.accent}`, borderRadius:6, padding:small ? "12px 14px" : "16px 14px", position:"relative", overflow:"hidden" }}>
+    <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderTop:`2px solid ${color||C.accent}`, borderRadius:8, padding:small ? "16px 18px" : "20px 18px", position:"relative", overflow:"hidden" }}>
       <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at top left,rgba(0,0,0,0.02),transparent 70%)", pointerEvents:"none" }} />
       <div style={{ fontSize:9, color:C.dim, textTransform:"uppercase", letterSpacing:"0.18em", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, marginBottom:6 }}>{label}</div>
       <div style={{ fontSize:small ? 16 : 24, fontWeight:300, color:color||C.white, fontFamily:"'Josefin Sans',sans-serif", lineHeight:1, letterSpacing:"0.05em" }}>{value}</div>
@@ -1362,10 +1362,10 @@ export default function App() {
     const alerts = getPfAlerts(pf);
 
     const MiniCard = ({label, value, color, sub}) => (
-      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"12px 14px"}}>
-        <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:6}}>{label}</div>
-        <div style={{fontSize:20,fontWeight:300,color:color||C.white,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1}}>{value}</div>
-        {sub && <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>{sub}</div>}
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:10,padding:desktop?"20px 20px":"12px 14px"}}>
+        <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:desktop?10:6}}>{label}</div>
+        <div style={{fontSize:desktop?28:20,fontWeight:300,color:color||C.white,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1}}>{value}</div>
+        {sub && <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:6}}>{sub}</div>}
       </div>
     );
 
@@ -1494,9 +1494,9 @@ export default function App() {
         })()}
 
         {/* ── WIN/LOSS + DIRECTION ── */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
           {/* Win/Loss gauge */}
-          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:10,padding:desktop?"24px":"14px",display:"flex",flexDirection:"column",alignItems:"center"}}>
             <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4,alignSelf:"flex-start"}}>Winrate · Aujourd'hui</div>
             {(() => { const tw=statsTrades.filter(t=>t.result==="WIN").length; const tl=statsTrades.filter(t=>t.result==="LOSS").length; const tt=statsTrades.length; return tt>0 ? (((wins, losses, total, size=130) => {
               const r=46, cx=size/2, cy=size*0.52, sw=13, PI=Math.PI;
@@ -1559,7 +1559,7 @@ export default function App() {
         {/* ── EQUITY CURVE ── */}
         <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"16px 14px 10px",marginBottom:12}}>
           <div style={{fontSize:9,color:C.dim,letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Courbe d'équité</div>
-          {(acctView==="global"?acctTrades:todayTrades).length>1 ? <PnlChart filtered={acctView==="global"?acctTrades:todayTrades} capital={pf.capital} pnlSum={acctView==="global"?allPnl:todayTrades.reduce((s,t)=>s+(t.pnl||0),0)} height={160} cur={currency}/>
+          {(acctView==="global"?acctTrades:todayTrades).length>1 ? <PnlChart filtered={acctView==="global"?acctTrades:todayTrades} capital={pf.capital} pnlSum={acctView==="global"?allPnl:todayTrades.reduce((s,t)=>s+(t.pnl||0),0)} height={desktop?260:160} cur={currency}/>
           : <div style={{textAlign:"center",padding:"32px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif"}}>Aucun trade</div>}
         </div>
 
@@ -2168,41 +2168,80 @@ export default function App() {
               <div key={view+(selectedPf?.id||"")} style={{animation:"tabFadeIn 0.25s cubic-bezier(.4,0,.2,1)"}}>{getContent(true)}</div>
             </div>
           </div>
-          {/* Day popup for desktop */}
+          {/* Day popup for desktop — same rich content as mobile */}
           {selectedDay && (
-            <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.4)",backdropFilter:"blur(4px)"}} onClick={closeDay}>
-              <div onClick={e=>e.stopPropagation()} style={{width:"90%",maxWidth:520,background:"rgba(14,14,14,0.97)",backdropFilter:"blur(24px)",borderRadius:24,padding:"24px",boxShadow:"0 24px 80px rgba(0,0,0,0.5)",border:"1px solid rgba(255,255,255,0.08)",animation:`${dayClosing?"fadeOutDown":"fadeInUp"} 0.25s cubic-bezier(.4,0,.2,1)`,maxHeight:"85vh",overflowY:"auto"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.45)",backdropFilter:"blur(6px)"}} onClick={closeDay}>
+              <div onClick={e=>e.stopPropagation()} style={{width:560,maxHeight:"90vh",overflowY:"auto",background:"rgba(14,14,14,0.97)",backdropFilter:"blur(24px)",borderRadius:24,padding:"24px",boxShadow:"0 24px 80px rgba(0,0,0,0.6)",border:"1px solid rgba(255,255,255,0.08)",animation:`${dayClosing?"fadeOutDown":"fadeInUp"} 0.25s cubic-bezier(.4,0,.2,1)`}}>
+                {/* Header */}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:14,color:"rgba(255,255,255,0.9)",fontFamily:"'Barlow',sans-serif",fontWeight:600,letterSpacing:"0.08em"}}>{new Date(selectedDay.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</div>
-                    <div style={{fontSize:22,color:selectedDay.pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,marginTop:2}}>{selectedDay.pnl>=0?"+":""}{selectedDay.pnl.toFixed(0)}{currency} · {selectedDay.trades.length} trade{selectedDay.trades.length!==1?"s":""}</div>
+                    <div style={{fontSize:24,color:selectedDay.pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,marginTop:4}}>{selectedDay.pnl>=0?"+":""}{selectedDay.pnl.toFixed(0)}{currency} · {selectedDay.trades.length} trade{selectedDay.trades.length!==1?"s":""}</div>
                   </div>
-                  <button onClick={closeDay} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:50,width:36,height:36,color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+                  <button onClick={closeDay} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:50,width:36,height:36,color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
                 </div>
-                {/* Reuse same popup content — trades list */}
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {selectedDay.trades.map(t=>{
-                    const pnl=t.pnl||0;
-                    return (
-                      <div key={t.id} style={{background:"rgba(255,255,255,0.05)",borderRadius:10,padding:"14px",borderLeft:`3px solid ${t.result==="WIN"?"#4caf6e":t.result==="LOSS"?"#e05a5a":"rgba(255,255,255,0.2)"}`}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                          <div>
-                            <span style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:16,color:"rgba(255,255,255,0.95)"}}>{t.instrument}</span>
-                            <span style={{marginLeft:8,fontSize:10,color:t.direction==="LONG"?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,letterSpacing:"0.1em"}}>{t.direction}</span>
-                            <span style={{marginLeft:8,fontSize:10,color:t.result==="WIN"?"#4caf6e":t.result==="LOSS"?"#e05a5a":"rgba(255,255,255,0.4)",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{t.result}</span>
-                          </div>
-                          <span style={{fontSize:18,fontWeight:300,color:pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif"}}>{pnl>=0?"+":""}{pnl.toFixed(0)}{currency}</span>
-                        </div>
-                        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                          {[t.session,t.emotion,t.rr?`RR ${t.rr}`:null,t.entry?`Entrée ${t.entry}`:null,t.exit?`Sortie ${t.exit}`:null].filter(Boolean).map((tag,i)=>(
-                            <span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.07)",padding:"3px 9px",borderRadius:4,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.06em"}}>{tag}</span>
+                {/* Gauge + stats */}
+                {(() => {
+                  const dW=selectedDay.trades.filter(t=>t.result==="WIN").length;
+                  const dL=selectedDay.trades.filter(t=>t.result==="LOSS").length;
+                  const dT=selectedDay.trades.length;
+                  const r=38,cx=55,cy=42,sw=10,PI=Math.PI;
+                  const wFrac=dT>0?dW/dT:0; const lFrac=dT>0?dL/dT:0;
+                  const wr=dT?Math.round(dW/dT*100):0;
+                  const LEFT2={x:cx-r,y:cy}, RIGHT2={x:cx+r,y:cy};
+                  const a2XY=(deg)=>({x:cx+r*Math.cos(deg*PI/180),y:cy-r*Math.sin(deg*PI/180)});
+                  const bgA=`M${LEFT2.x},${LEFT2.y} A${r},${r} 0 0 1 ${RIGHT2.x},${RIGHT2.y}`;
+                  const wD2=180-wFrac*180; const wP2=a2XY(wD2);
+                  const lD2=lFrac*180; const lP2=a2XY(lD2);
+                  const wA2=wFrac>0.01?`M${LEFT2.x},${LEFT2.y} A${r},${r} 0 ${wFrac>=1?1:0} 1 ${wP2.x.toFixed(1)},${wP2.y.toFixed(1)}`:"";
+                  const lA2=lFrac>0.01?`M${RIGHT2.x},${RIGHT2.y} A${r},${r} 0 ${lFrac>=1?1:0} 0 ${lP2.x.toFixed(1)},${lP2.y.toFixed(1)}`:"";
+                  const dayEmotions=EMOTIONS.map(e=>{const et=selectedDay.trades.filter(t=>t.emotion===e);const wr2=et.length?Math.round(et.filter(t=>t.result==="WIN").length/et.length*100):0;return{name:e,count:et.length,wr:wr2,pnl:et.reduce((a,t)=>a+(t.pnl||0),0)};}).filter(e=>e.count>0);
+                  const daySess=SESSIONS.map(s=>{const st=selectedDay.trades.filter(t=>t.session===s);const wr2=st.length?Math.round(st.filter(t=>t.result==="WIN").length/st.length*100):0;return{name:s,count:st.length,wr:wr2,pnl:st.reduce((a,t)=>a+(t.pnl||0),0)};}).filter(s=>s.count>0);
+                  const dAvgW=dW?selectedDay.trades.filter(t=>t.result==="WIN").reduce((s,t)=>s+(t.pnl||0),0)/dW:0;
+                  const dAvgL=dL?Math.abs(selectedDay.trades.filter(t=>t.result==="LOSS").reduce((s,t)=>s+(t.pnl||0),0)/dL):0;
+                  const dPF=dAvgL>0?(dAvgW*dW/(dAvgL*dL)).toFixed(2):dW>0?"∞":"—";
+                  const dRR=dT?(selectedDay.trades.reduce((s,t)=>s+(parseFloat(t.rr)||0),0)/dT).toFixed(1):"—";
+                  return (
+                    <div style={{marginBottom:14}}>
+                      <div style={{display:"flex",gap:16,background:"rgba(255,255,255,0.04)",borderRadius:12,padding:"14px",marginBottom:10}}>
+                        <svg width={110} height={68} style={{overflow:"visible",flexShrink:0}}>
+                          <path d={bgA} stroke="rgba(255,255,255,0.1)" strokeWidth={sw} fill="none" strokeLinecap="round"/>
+                          {wFrac>0.01&&<path d={wA2} stroke="#4caf6e" strokeWidth={sw} fill="none" strokeLinecap="round"/>}
+                          {lFrac>0.01&&<path d={lA2} stroke="#e05a5a" strokeWidth={sw} fill="none" strokeLinecap="round"/>}
+                          <text x={cx} y={cy} textAnchor="middle" fontSize={14} fontWeight={300} fill={wr>=50?"#4caf6e":"#e05a5a"} fontFamily="'Josefin Sans',sans-serif">{wr}%</text>
+                          <text x={cx} y={cy+12} textAnchor="middle" fontSize={6} fill="rgba(255,255,255,0.35)" fontFamily="'Josefin Sans',sans-serif" letterSpacing="1">WIN RATE</text>
+                          <text x={3} y={cy+r+14} textAnchor="start" fontSize={8} fontWeight="600" fill="#4caf6e" fontFamily="'Josefin Sans',sans-serif">{dW}W</text>
+                          <text x={cx} y={cy+r+14} textAnchor="middle" fontSize={8} fill="rgba(255,255,255,0.35)" fontFamily="'Josefin Sans',sans-serif">{dT-dW-dL}BE</text>
+                          <text x={107} y={cy+r+14} textAnchor="end" fontSize={8} fontWeight="600" fill="#e05a5a" fontFamily="'Josefin Sans',sans-serif">{dL}L</text>
+                        </svg>
+                        <div style={{flex:1,display:"flex",flexDirection:"column",gap:5}}>
+                          {dayEmotions.length>0&&<div style={{fontSize:7,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Josefin Sans',sans-serif"}}>Émotions</div>}
+                          {dayEmotions.map(e=>(
+                            <div key={e.name} style={{display:"flex",justifyContent:"space-between"}}>
+                              <span style={{fontSize:11,color:"rgba(255,255,255,0.6)",fontFamily:"'Josefin Sans',sans-serif"}}>{e.name}</span>
+                              <span style={{fontSize:11,color:e.wr>=50?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{e.wr}% · {e.pnl>=0?"+":""}{e.pnl.toFixed(0)}{currency}</span>
+                            </div>
+                          ))}
+                          {daySess.length>0&&<div style={{fontSize:7,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>Sessions</div>}
+                          {daySess.map(s=>(
+                            <div key={s.name} style={{display:"flex",justifyContent:"space-between"}}>
+                              <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"'Josefin Sans',sans-serif"}}>{s.name}</span>
+                              <span style={{fontSize:11,color:s.pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif"}}>{s.pnl>=0?"+":""}{s.pnl.toFixed(0)}{currency}</span>
+                            </div>
                           ))}
                         </div>
-                        {t.notes&&<div style={{marginTop:8,fontSize:11,color:"rgba(255,255,255,0.45)",fontStyle:"italic",fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.6,borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:8}}>{t.notes}</div>}
                       </div>
-                    );
-                  })}
-                </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:10}}>
+                        {[{l:"Profit Factor",v:dPF==="—"||dPF==="∞"?dPF:dPF+"x",c:parseFloat(dPF)>=1||dPF==="∞"?"#4caf6e":"#e05a5a"},{l:"RR Moyen",v:dRR==="—"?"—":dRR+":1",c:"rgba(255,255,255,0.5)"},{l:"Nb Trades",v:dT,c:"rgba(255,255,255,0.7)"}].map(s=>(
+                          <div key={s.l} style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"10px 12px"}}>
+                            <div style={{fontSize:8,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'Josefin Sans',sans-serif",marginBottom:4}}>{s.l}</div>
+                            <div style={{fontSize:16,fontWeight:300,color:s.c,fontFamily:"'Josefin Sans',sans-serif"}}>{s.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
