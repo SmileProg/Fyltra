@@ -123,7 +123,7 @@ function PillNav({ view, setView }) {
         const active = view === item.key;
         return (
           <button key={item.key} onClick={() => setView(item.key)} style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"8px 14px", borderRadius:44, border:"none", cursor:"pointer", background:active ? "rgba(255,255,255,0.15)" : "transparent", transition:"all 0.25s cubic-bezier(.4,0,.2,1)", minWidth:52, position:"relative" }}>
-            {item.key==="ai" && <span style={{position:"absolute",top:1,right:2,fontSize:5,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.18em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",lineHeight:1}}>bientôt</span>}
+            {item.key==="ai" && <span style={{position:"absolute",top:3,right:4,background:"linear-gradient(135deg,rgba(210,180,120,0.18),rgba(210,180,120,0.06))",border:"1px solid rgba(210,180,120,0.3)",color:"rgba(210,180,120,0.9)",fontSize:6,fontFamily:"'Josefin Sans',sans-serif",fontWeight:400,letterSpacing:"0.22em",padding:"2px 5px",borderRadius:4,textTransform:"uppercase",lineHeight:1.4,backdropFilter:"blur(4px)"}}>bientôt</span>}
             <span style={{ fontSize:16, lineHeight:1, color:active ? "#fff" : "rgba(255,255,255,0.4)", transition:"color 0.2s" }}>{item.icon}</span>
             <span style={{ fontSize:8, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:active ? "#fff" : "rgba(255,255,255,0.35)", transition:"color 0.2s" }}>{item.label}</span>
           </button>
@@ -176,7 +176,7 @@ function Sidebar({ view, setView }) {
               }}>
                 <span style={{ fontSize:17, color:active ? "#111" : "rgba(255,255,255,0.4)", lineHeight:1, width:22, textAlign:"center", transition:"color 0.25s" }}>{item.icon}</span>
                 <span style={{ fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#111" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
-                {item.key==="ai" && <span style={{marginLeft:"auto",fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.2em",color:"rgba(255,255,255,0.3)",textTransform:"uppercase"}}>bientôt</span>}
+                {item.key==="ai" && <span style={{marginLeft:"auto",background:"linear-gradient(135deg,rgba(210,180,120,0.15),rgba(210,180,120,0.05))",border:"1px solid rgba(210,180,120,0.25)",color:"rgba(210,180,120,0.85)",fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.22em",padding:"3px 8px",borderRadius:4,textTransform:"uppercase",backdropFilter:"blur(4px)"}}>bientôt</span>}
               </button>
             );
           })}
@@ -597,7 +597,7 @@ export default function App() {
         <div style={{ textAlign:"center", padding:"48px 0" }}>
           <div style={{ fontSize:44, marginBottom:12, color:C.gray2 }}>◎</div>
           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:C.gray1, marginBottom:14 }}>Commencez à enregistrer vos trades</div>
-          <button onClick={() => setView("add")} style={{ background:C.accent, border:"none", borderRadius:4, padding:"11px 24px", color:"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer" }}>+ Premier trade</button>
+          <button onClick={() => setView("add")} style={{ background:C.accent, border:"none", borderRadius:4, padding:"11px 24px", color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer" }}>+ Premier trade</button>
         </div>
       )}
     </div>
@@ -615,7 +615,7 @@ export default function App() {
         {showCustom && (
           <div style={{ marginTop:8, display:"flex", gap:8 }}>
             <input type="text" placeholder="Nom de l'actif" value={customInstr} onChange={e => setCustomInstr(e.target.value)} onKeyDown={e => e.key === "Enter" && saveCustomInstr()} style={{ ...iStyle, flex:1, fontSize:14 }} autoFocus />
-            <button onClick={saveCustomInstr} style={{ background:C.accent, border:"none", borderRadius:6, padding:"0 14px", color:"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, cursor:"pointer", textTransform:"uppercase", flexShrink:0 }}>OK</button>
+            <button onClick={saveCustomInstr} style={{ background:C.accent, border:"none", borderRadius:6, padding:"0 14px", color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, cursor:"pointer", textTransform:"uppercase", flexShrink:0 }}>OK</button>
           </div>
         )}
         {extraInstr.length > 0 && !showCustom && <div style={{ marginTop:6, fontSize:10, color:C.gray2, fontFamily:"'Josefin Sans',sans-serif" }}>Mémorisés: {extraInstr.join(", ")}</div>}
@@ -698,7 +698,7 @@ export default function App() {
               return (
                 <button key={s.id} onClick={() => set("strategyId", sel ? null : s.id)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 14px", borderRadius:6, border:`1px solid ${sel?C.accent:C.border}`, background:sel?"rgba(0,0,0,0.06)":"transparent", cursor:"pointer" }}>
                   <span style={{ fontSize:13, fontFamily:"'Josefin Sans',sans-serif", fontWeight:sel?600:300, color:sel?C.accent:C.white, letterSpacing:"0.05em" }}>{s.name||"Stratégie"}</span>
-                  <div style={{ width:18, height:18, borderRadius:4, border:`1px solid ${sel?C.accent:C.gray2}`, background:sel?C.accent:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{sel && <span style={{ color:"#fff", fontSize:11 }}>✓</span>}</div>
+                  <div style={{ width:18, height:18, borderRadius:4, border:`1px solid ${sel?C.accent:C.gray2}`, background:sel?C.accent:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{sel && <span style={{ color:darkMode?"#111":"#fff", fontSize:11 }}>✓</span>}</div>
                 </button>
               );
             })}
@@ -855,14 +855,14 @@ export default function App() {
                         const sel = (editingTrade.accountIds||[]).includes(pf.id);
                         return <button key={pf.id} onClick={() => setEditingTrade(p => ({ ...p, accountIds: sel ? (p.accountIds||[]).filter(id=>id!==pf.id) : [...(p.accountIds||[]), pf.id] }))} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", borderRadius:5, border:`1px solid ${sel?C.accent:C.gray3}`, background:sel?"rgba(0,0,0,0.06)":"transparent", cursor:"pointer" }}>
                           <span style={{ fontSize:12, fontFamily:"'Josefin Sans',sans-serif", fontWeight:sel?600:300, color:sel?C.accent:C.white }}>{pf.firm}{pf.name?" · "+pf.name:""}</span>
-                          <div style={{ width:16, height:16, borderRadius:3, border:`1px solid ${sel?C.accent:C.gray2}`, background:sel?C.accent:"transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>{sel && <span style={{ color:"#fff", fontSize:10 }}>✓</span>}</div>
+                          <div style={{ width:16, height:16, borderRadius:3, border:`1px solid ${sel?C.accent:C.gray2}`, background:sel?C.accent:"transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>{sel && <span style={{ color:darkMode?"#111":"#fff", fontSize:10 }}>✓</span>}</div>
                         </button>;
                       })}
                     </div>
                   </div>
                 )}
                 <div style={{ display:"flex", gap:7 }}>
-                  <button onClick={saveEdit} style={{ flex:2, padding:"9px", borderRadius:4, border:"none", background:C.accent, color:"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer" }}>✓ Sauvegarder</button>
+                  <button onClick={saveEdit} style={{ flex:2, padding:"9px", borderRadius:4, border:"none", background:C.accent, color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer" }}>✓ Sauvegarder</button>
                   <button onClick={cancelEdit} style={{ flex:1, padding:"9px", borderRadius:4, border:`1px solid ${C.gray3}`, background:"transparent", color:C.gray1, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer" }}>Annuler</button>
                 </div>
               </>
@@ -884,7 +884,7 @@ export default function App() {
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:16 }}>
         <PageTitle sub="Mes Stratégies" title="Plan de Trading" />
-        <button onClick={()=>{ const ns={id:Date.now(),name:"Nouvelle stratégie",description:"",steps:[],rules:"",notes:""}; setStrategies(p=>[...p,ns]); setActiveStratId(ns.id); }} style={{ padding:"8px 14px", borderRadius:4, border:"none", background:C.accent, color:"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", marginBottom:22 }}>+ Nouvelle</button>
+        <button onClick={()=>{ const ns={id:Date.now(),name:"Nouvelle stratégie",description:"",steps:[],rules:"",notes:""}; setStrategies(p=>[...p,ns]); setActiveStratId(ns.id); }} style={{ padding:"8px 14px", borderRadius:4, border:"none", background:C.accent, color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", marginBottom:22 }}>+ Nouvelle</button>
       </div>
 
       {/* Strategy tabs */}
@@ -939,24 +939,22 @@ export default function App() {
   const aiContent = (
     <div>
       <PageTitle sub="Intelligence" title="Analyse IA" />
-      <div style={{ fontSize:13, color:C.gray1, lineHeight:1.7, marginBottom:18 }}>L'IA croise vos trades avec votre stratégie pour détecter chaque déviation de votre plan.</div>
-      {!strategies[0]?.description && !strategies[0]?.steps?.length && (
-        <div style={{ marginBottom:14, padding:"10px 12px", borderRadius:4, background:"rgba(0,0,0,0.04)", border:`1px solid ${C.borderGold}` }}>
-          <div style={{ fontSize:11, color:C.dim, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>◆ Remplis l'onglet Stratégie pour un coaching ultra-personnalisé</div>
+      <div style={{textAlign:"center",padding:"40px 20px 20px",display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
+        <div style={{width:64,height:64,borderRadius:16,background:"linear-gradient(135deg,rgba(210,180,120,0.12),rgba(210,180,120,0.04))",border:"1px solid rgba(210,180,120,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(210,180,120,0.7)",fontSize:24}}>◆</div>
+        <div>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:30,fontWeight:300,color:C.white,marginBottom:10}}>Bientôt disponible</div>
+          <div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",lineHeight:1.9,maxWidth:320,margin:"0 auto"}}>L'analyse IA croisera vos trades avec votre stratégie pour détecter chaque déviation de votre plan.</div>
         </div>
-      )}
-      <button onClick={analyzeAI} disabled={aiLoading} style={{ width:"100%", padding:14, borderRadius:4, border:`1px solid ${C.borderGold}`, background:aiLoading ? "transparent" : "rgba(0,0,0,0.04)", color:aiLoading ? C.gray2 : C.dim, fontSize:12, fontWeight:600, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.2em", textTransform:"uppercase", cursor:aiLoading ? "not-allowed" : "pointer", marginBottom:18, transition:"all 0.3s" }}>
-        {aiLoading ? "◌  Analyse en cours..." : "◆  Analyser mes trades"}
-      </button>
-      {aiError && <div style={{ marginBottom:14, padding:"10px 12px", borderRadius:4, background:"rgba(0,0,0,0.04)", border:`1px solid ${C.borderGold}`, fontSize:12, color:C.gray1, fontFamily:"'Josefin Sans',sans-serif", lineHeight:1.6 }}>{aiError}</div>}
-      {aiText && <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, padding:20, fontSize:14, lineHeight:1.8, color:C.white, whiteSpace:"pre-wrap", fontFamily:"'Cormorant Garamond',serif", fontWeight:400 }}>{aiText}</div>}
-      {!aiText && !aiLoading && !aiError && (
-        <div style={{ textAlign:"center", padding:"50px 0", border:`1px solid ${C.gray3}`, borderRadius:6 }}>
-          <div style={{ fontSize:34, marginBottom:10, color:C.gray2 }}>◆</div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, color:C.gray1, marginBottom:4 }}>Prêt à analyser</div>
-          <div style={{ fontSize:10, color:C.gray2, letterSpacing:"0.1em", fontFamily:"'Josefin Sans',sans-serif" }}>MINIMUM 3 TRADES REQUIS</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8,width:"100%",maxWidth:340}}>
+          {["Détection des déviations de stratégie","Debriefing automatique fin de journée","3 règles concrètes pour demain"].map((f,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 16px",borderRadius:8,background:C.bg2,border:`1px solid ${C.border}`}}>
+              <div style={{width:5,height:5,borderRadius:"50%",background:"rgba(210,180,120,0.45)",flexShrink:0}}/>
+              <span style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.06em"}}>{f}</span>
+            </div>
+          ))}
         </div>
-      )}
+        <span style={{background:"linear-gradient(135deg,rgba(210,180,120,0.15),rgba(210,180,120,0.05))",border:"1px solid rgba(210,180,120,0.25)",color:"rgba(210,180,120,0.85)",fontSize:9,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.28em",padding:"6px 18px",borderRadius:6,textTransform:"uppercase",marginTop:4}}>Bientôt</span>
+      </div>
     </div>
   );
 
@@ -1128,7 +1126,7 @@ export default function App() {
         <div style={{textAlign:"center",padding:"60px 0"}}>
           <div style={{fontSize:44,marginBottom:10,color:C.gray2}}>◉</div>
           <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.gray1,marginBottom:14}}>Aucun compte enregistré</div>
-          <button onClick={(e)=>{e.stopPropagation();setPfView("add-type");}} style={{background:C.accent,border:"none",borderRadius:4,padding:"11px 24px",color:"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer"}}>+ Ajouter un compte</button>
+          <button onClick={(e)=>{e.stopPropagation();setPfView("add-type");}} style={{background:C.accent,border:"none",borderRadius:4,padding:"11px 24px",color:darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer"}}>+ Ajouter un compte</button>
         </div>
       )}
 
@@ -1170,7 +1168,7 @@ export default function App() {
                   )}
                 </>}
                 <div style={{display:"flex",gap:7,marginTop:4}}>
-                  <button onClick={()=>{setPropfirms(p=>p.map(x=>x.id===editingPf.id?{...editingPf}:x));setEditingPf(null);}} style={{flex:2,padding:"9px",borderRadius:4,border:"none",background:C.accent,color:"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>✓ Sauvegarder</button>
+                  <button onClick={()=>{setPropfirms(p=>p.map(x=>x.id===editingPf.id?{...editingPf}:x));setEditingPf(null);}} style={{flex:2,padding:"9px",borderRadius:4,border:"none",background:C.accent,color:darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>✓ Sauvegarder</button>
                   <button onClick={()=>setEditingPf(null)} style={{flex:1,padding:"9px",borderRadius:4,border:`1px solid ${C.gray3}`,background:"transparent",color:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Annuler</button>
                 </div>
               </div>
@@ -1859,12 +1857,12 @@ export default function App() {
               <div style={{fontSize:13,color:C.white,fontFamily:"'Josefin Sans',sans-serif",marginBottom:10}}><strong>{csvResult.trades.length}</strong> trade{csvResult.trades.length!==1?"s":""} détecté{csvResult.trades.length!==1?"s":""}. {csvResult.skipped>0?`(${csvResult.skipped} ligne${csvResult.skipped>1?"s":""} ignorée${csvResult.skipped>1?"s":""})`:""}
               </div>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={confirmImport} style={{flex:2,padding:"11px",borderRadius:4,border:"none",background:C.accent,color:"#fff",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>✓ Importer</button>
+                <button onClick={confirmImport} style={{flex:2,padding:"11px",borderRadius:4,border:"none",background:C.accent,color:darkMode?"#111":"#fff",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>✓ Importer</button>
                 <button onClick={()=>setCsvResult(null)} style={{flex:1,padding:"11px",borderRadius:4,border:`1px solid ${C.gray3}`,background:"transparent",color:C.gray1,fontSize:12,fontFamily:"'Josefin Sans',sans-serif",cursor:"pointer",textTransform:"uppercase",letterSpacing:"0.1em"}}>Annuler</button>
               </div>
             </div>
           )}
-          {!csvResult && <button onClick={importCSV} style={{width:"100%",padding:"14px",borderRadius:4,border:"none",background:C.accent,color:"#fff",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.2em",textTransform:"uppercase",cursor:"pointer"}}>Analyser le CSV →</button>}
+          {!csvResult && <button onClick={importCSV} style={{width:"100%",padding:"14px",borderRadius:4,border:"none",background:C.accent,color:darkMode?"#111":"#fff",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.2em",textTransform:"uppercase",cursor:"pointer"}}>Analyser le CSV →</button>}
         </div>
       )}
 
