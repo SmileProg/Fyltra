@@ -7,7 +7,7 @@ const EMOTIONS = ["Confiant","Neutre","Anxieux","Euphorique","Frustré","Patient
 const SESSIONS = ["Asia","London","New York","Overlap"];
 const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const MONTHS_SH = ["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc"];
-const KEYS = { trades:"fyltre_trades_v1", instruments:"fyltre_instr_v1", strategies:"fyltre_strategies_v1", capital:"fyltre_cap_v1", propfirms:"fyltre_propfirms_v1" };
+const KEYS = { trades:"fyltra_trades_v1", instruments:"fyltra_instr_v1", strategies:"fyltra_strategies_v1", capital:"fyltra_cap_v1", propfirms:"fyltra_propfirms_v1" };
 const NAV = [
   { key:"propfirm",  icon:"◉",  label:"Compte" },
   { key:"add",       icon:"＋", label:"Trade" },
@@ -122,7 +122,8 @@ function PillNav({ view, setView }) {
       {NAV.map(item => {
         const active = view === item.key;
         return (
-          <button key={item.key} onClick={() => setView(item.key)} style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"8px 14px", borderRadius:44, border:"none", cursor:"pointer", background:active ? "rgba(255,255,255,0.15)" : "transparent", transition:"all 0.25s cubic-bezier(.4,0,.2,1)", minWidth:52 }}>
+          <button key={item.key} onClick={() => setView(item.key)} style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"8px 14px", borderRadius:44, border:"none", cursor:"pointer", background:active ? "rgba(255,255,255,0.15)" : "transparent", transition:"all 0.25s cubic-bezier(.4,0,.2,1)", minWidth:52, position:"relative" }}>
+            {item.key==="ai" && <span style={{position:"absolute",top:1,right:2,fontSize:5,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.18em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",lineHeight:1}}>bientôt</span>}
             <span style={{ fontSize:16, lineHeight:1, color:active ? "#fff" : "rgba(255,255,255,0.4)", transition:"color 0.2s" }}>{item.icon}</span>
             <span style={{ fontSize:8, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:active ? "#fff" : "rgba(255,255,255,0.35)", transition:"color 0.2s" }}>{item.label}</span>
           </button>
@@ -152,7 +153,7 @@ function Sidebar({ view, setView }) {
               <polygon points="10,50 30,50 24,64 10,64" fill="#f0ede8"/>
             </svg></div>
           <div>
-            <div style={{ fontFamily:"'Barlow',sans-serif", fontWeight:600, fontSize:18, letterSpacing:"0.2em", color:C.white, lineHeight:1, textTransform:"uppercase" }}>FYLTRE</div>
+            <div style={{ fontFamily:"'Barlow',sans-serif", fontWeight:600, fontSize:18, letterSpacing:"0.2em", color:C.white, lineHeight:1, textTransform:"uppercase" }}>FYLTRA</div>
             <div style={{ fontSize:8, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300 }}>Trading Journal</div>
           </div>
         </div>
@@ -171,15 +172,17 @@ function Sidebar({ view, setView }) {
                 marginBottom:4,
                 transition:"all 0.25s cubic-bezier(.4,0,.2,1)",
                 boxShadow: active ? "0 2px 12px rgba(0,0,0,0.25)" : "none",
+                position:"relative",
               }}>
                 <span style={{ fontSize:17, color:active ? "#111" : "rgba(255,255,255,0.4)", lineHeight:1, width:22, textAlign:"center", transition:"color 0.25s" }}>{item.icon}</span>
                 <span style={{ fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#111" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
+                {item.key==="ai" && <span style={{marginLeft:"auto",fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.2em",color:"rgba(255,255,255,0.3)",textTransform:"uppercase"}}>bientôt</span>}
               </button>
             );
           })}
         </div>
       </div>
-      <div style={{ padding:"0 20px", fontSize:9, color:C.gray2, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.08em" }}>v1.0 · Fyltre</div>
+      <div style={{ padding:"0 20px", fontSize:9, color:C.gray2, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.08em" }}>v1.0 · Fyltra</div>
     </div>
   );
 }
@@ -308,7 +311,7 @@ export default function App() {
   const isMobile = useIsMobile();
   const [trades,      setTrades]      = useState(() => load(KEYS.trades, []));
   const [extraInstr,  setExtraInstr]  = useState(() => load(KEYS.instruments, []));
-  const [extraEmotions, setExtraEmotions] = useState(() => load('fyltre_emotions_v1', []));
+  const [extraEmotions, setExtraEmotions] = useState(() => load('fyltra_emotions_v1', []));
   const [customEmotion, setCustomEmotion] = useState('');
   const [beSign, setBeSign] = useState(1);
   const [showCustomEmotion, setShowCustomEmotion] = useState(false);
@@ -316,7 +319,7 @@ export default function App() {
     const saved = load(KEYS.strategies, null);
     if (saved && Array.isArray(saved)) return saved;
     // migrate old single strategy
-    const old = load("vantage_strategy_v1", null) || load("fyltre_strat_v1", null);
+    const old = load("vantage_strategy_v1", null) || load("fyltra_strat_v1", null);
     if (old) return [{ id:1, name:"Ma stratégie", description:old.description||"", steps:Array.isArray(old.steps)?old.steps:[], rules:old.rules||"", notes:old.notes||"" }];
     return [{ id:Date.now(), name:"Ma stratégie", description:"", steps:[], rules:"", notes:"" }];
   });
@@ -335,12 +338,12 @@ export default function App() {
   const [eodText, setEodText] = useState("");
   const [eodAccount, setEodAccount] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
-  const [currency, setCurrency] = useState(() => localStorage.getItem("fyltre_currency")||"€");
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("fyltre_dark")==="true");
+  const [currency, setCurrency] = useState(() => localStorage.getItem("fyltra_currency")||"€");
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("fyltra_dark")==="true");
   C = darkMode ? DARK_THEME : LIGHT_THEME; // Dynamic theme
   const [acctView, setAcctView] = useState("today");
   const [tabKey, setTabKey] = useState(0); // "today" | "global"
-  const [lang, setLang] = useState(() => localStorage.getItem("fyltre_lang")||"fr");
+  const [lang, setLang] = useState(() => localStorage.getItem("fyltra_lang")||"fr");
   const [menuClosing, setMenuClosing] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null); // {date, trades, pnl}
   const [dayClosing, setDayClosing] = useState(false);
@@ -385,13 +388,13 @@ export default function App() {
 
   useEffect(() => { save(KEYS.trades,      trades);    }, [trades]);
   useEffect(() => { save(KEYS.instruments, extraInstr);}, [extraInstr]);
-  useEffect(() => { save('fyltre_emotions_v1', extraEmotions); }, [extraEmotions]);
+  useEffect(() => { save('fyltra_emotions_v1', extraEmotions); }, [extraEmotions]);
   useEffect(() => { save(KEYS.strategies,  strategies); }, [strategies]);
   useEffect(() => { save(KEYS.capital,     capital);   }, [capital]);
   useEffect(() => { save(KEYS.propfirms,   propfirms); }, [propfirms]);
-  useEffect(() => { localStorage.setItem("fyltre_currency", currency); }, [currency]);
-  useEffect(() => { localStorage.setItem("fyltre_dark", darkMode); document.documentElement.style.setProperty("--bg", darkMode?"#0f0f0f":"#f8f7f5"); document.body.style.background = darkMode?"#0f0f0f":"#f8f7f5"; document.body.style.color = darkMode?"#f0ede8":"#1a1a1a"; C = darkMode ? DARK_THEME : LIGHT_THEME; }, [darkMode]);
-  useEffect(() => { localStorage.setItem("fyltre_lang", lang); }, [lang]);
+  useEffect(() => { localStorage.setItem("fyltra_currency", currency); }, [currency]);
+  useEffect(() => { localStorage.setItem("fyltra_dark", darkMode); document.documentElement.style.setProperty("--bg", darkMode?"#0f0f0f":"#f8f7f5"); document.body.style.background = darkMode?"#0f0f0f":"#f8f7f5"; document.body.style.color = darkMode?"#f0ede8":"#1a1a1a"; C = darkMode ? DARK_THEME : LIGHT_THEME; }, [darkMode]);
+  useEffect(() => { localStorage.setItem("fyltra_lang", lang); }, [lang]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
   // Scroll to top on view change
@@ -1868,7 +1871,7 @@ export default function App() {
       {/* POSITION CALCULATOR */}
       {toolTab==="calc" && (
         <div>
-          <div style={{fontSize:13,color:C.gray1,lineHeight:1.7,marginBottom:16}}>Entre ton prix d'entrée, stop loss et risque max — FYLTRE calcule le nombre de contrats adapté.</div>
+          <div style={{fontSize:13,color:C.gray1,lineHeight:1.7,marginBottom:16}}>Entre ton prix d'entrée, stop loss et risque max — FYLTRA calcule le nombre de contrats adapté.</div>
           {/* Mode switch */}
           <div style={{display:"flex",gap:6,marginBottom:16}}>
             {[{k:"futures",l:"Futures"},{k:"forex",l:"Forex"}].map(m=>(
@@ -1971,7 +1974,7 @@ export default function App() {
       </div>
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px"}}>
         <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Version</div>
-        <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>FYLTRE v1.0 · Trading Journal</div>
+        <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>FYLTRA v1.0 · Trading Journal</div>
         <div style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:4,letterSpacing:"0.06em"}}>Créé par Smile</div>
       </div>
     </div>
@@ -2003,7 +2006,7 @@ export default function App() {
                 <polygon points="10,50 30,50 24,64 10,64" fill="#f0ede8"/>
               </svg></div>
               <div>
-                <div style={{ fontFamily:"'Barlow',sans-serif", fontWeight:600, fontSize:17, letterSpacing:"0.2em", color:C.white, lineHeight:1, textTransform:"uppercase" }}>FYLTRE</div>
+                <div style={{ fontFamily:"'Barlow',sans-serif", fontWeight:600, fontSize:17, letterSpacing:"0.2em", color:C.white, lineHeight:1, textTransform:"uppercase" }}>FYLTRA</div>
                 <div style={{ fontSize:7, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300 }}>Trading Journal</div>
               </div>
             </div>
