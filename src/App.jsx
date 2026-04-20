@@ -15,28 +15,40 @@ const NAV = [
 ];
 
 /* ─── Colors ─────────────────────────────────────────────────────── */
-const C = {
+const LIGHT_THEME = {
   bg:"#f8f7f5", bg2:"#f0ede8", bg3:"#e8e4de",
   white:"#1a1a1a", gray1:"#888", gray2:"#bbb", gray3:"#ddd",
   accent:"#111", dim:"#555",
   border:"rgba(0,0,0,0.1)", borderGold:"rgba(0,0,0,0.15)",
 };
+const DARK_THEME = {
+  bg:"#0f0f0f", bg2:"#1a1a1a", bg3:"#242424",
+  white:"#f0ede8", gray1:"#888", gray2:"#555", gray3:"#333",
+  accent:"#f0ede8", dim:"#aaa",
+  border:"rgba(255,255,255,0.08)", borderGold:"rgba(255,255,255,0.12)",
+};
+// C is set dynamically in App — default to light for components defined outside App
+let C = LIGHT_THEME;
 
 /* ─── Fonts / Global CSS ─────────────────────────────────────────── */
 const FONTS = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Josefin+Sans:wght@300;400;600&family=Barlow:wght@500;600;700&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:#f8f7f5;overflow-x:hidden;}
+  body{background:var(--bg, #f8f7f5);overflow-x:hidden;transition:background 0.3s;}
   input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.4);opacity:0.5;}
   ::selection{background:#111;color:#fff;}
   ::-webkit-scrollbar{width:4px;}
-  ::-webkit-scrollbar-track{background:#f8f7f5;}
+  ::-webkit-scrollbar-track{background:var(--bg, #f8f7f5);}
   ::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px;}
   textarea{font-family:'Josefin Sans',sans-serif !important;}
+  input, textarea, select{color:#1a1a1a !important;}
   @keyframes slideFromRight{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
   @keyframes slideToRight{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(40px);}}
   @keyframes fadeInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes slideInAccount{from{opacity:0;transform:translateX(-24px);}to{opacity:1;transform:translateX(0);}}
+  @keyframes slideOutAccount{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(-24px);}}
   @keyframes fadeOutDown{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(20px);}}
+  @keyframes tabFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 `;
 
 /* ─── Utils ──────────────────────────────────────────────────────── */
@@ -124,9 +136,10 @@ function PillNav({ view, setView }) {
 const FULL_NAV = [
   { key:"propfirm",  icon:"◉",  label:"Compte" },
   { key:"add",       icon:"＋", label:"Trade" },
-  { key:"history",   icon:"≡",  label:"Historique" },
+  { key:"history",   icon:"≡",  label:"Statistiques" },
   { key:"strategy",  icon:"◈",  label:"Plan" },
   { key:"ai",        icon:"◆",  label:"IA" },
+  { key:"settings",  icon:"◎",  label:"Paramètres" },
 ];
 function Sidebar({ view, setView }) {
   return (
@@ -219,7 +232,7 @@ function Calendar({ filtered, calMonth, calYear, onPrev, onNext, onDayClick }) {
               const bg = hasTrade ? (pnl >= 0 ? `rgba(42,110,58,${intensity})` : `rgba(192,57,43,${intensity})`) : "transparent";
               const isToday = now.getDate() === day && now.getMonth() === m && now.getFullYear() === yr;
               return (
-                <div key={day} onClick={()=>{ if(onDayClick&&!isToday&&hasTrade){onDayClick({day,month:m,year:yr,pnl});}}} title={hasTrade ? `${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)}€` : ""} style={{ aspectRatio:"1", borderRadius:4, background:bg, border:isToday ? `1px solid ${C.accent}` : `1px solid ${hasTrade ? bg : C.gray3}`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:hasTrade&&!isToday?"pointer":"default" }}>
+                <div key={day} onClick={()=>{ if(onDayClick&&!isToday&&hasTrade){onDayClick({day,month:m,year:yr,pnl});}}} title={hasTrade ? `${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)}{currency}` : ""} style={{ aspectRatio:"1", borderRadius:4, background:bg, border:isToday ? `1px solid ${C.accent}` : `1px solid ${hasTrade ? bg : C.gray3}`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:hasTrade&&!isToday?"pointer":"default" }}>
                   <span style={{ fontSize:9, color:hasTrade ? "#fff" : C.gray1, fontFamily:"'Josefin Sans',sans-serif", lineHeight:1, fontWeight:hasTrade ? 600 : 300 }}>{day}</span>
                   {hasTrade && <span style={{ fontSize:7, color:"rgba(255,255,255,0.9)", lineHeight:1, marginTop:1 }}>{pnl >= 0 ? "+" : ""}{Math.round(pnl)}</span>}
                 </div>
@@ -245,24 +258,46 @@ function Calendar({ filtered, calMonth, calYear, onPrev, onNext, onDayClick }) {
 }
 
 /* ─── P&L Chart ──────────────────────────────────────────────────── */
-function PnlChart({ filtered, capital, pnlSum, height }) {
-  if (filtered.length < 2) return null;
-  const startCapital = parseFloat(capital) || 0;
-  let cum = startCapital;
-  const sorted = [...filtered].sort((a, b) => a.date.localeCompare(b.date));
-  const data = [{ date:"Départ", v:0, total:startCapital }, ...sorted.map(t => { cum += t.pnl || 0; return { date:t.date.slice(5), v:parseFloat((cum - startCapital).toFixed(2)), total:parseFloat(cum.toFixed(2)) }; })];
+function PnlChart({ filtered, capital, pnlSum, height, cur }) {
+  if (!filtered || filtered.length < 2) return null;
+  const sorted = [...filtered].sort((a,b) => { const dc=a.date.localeCompare(b.date); return dc!==0?dc:(a.id||0)-(b.id||0); });
+  let cum = 0;
+  const data = [
+    { label:"0", v:0, pnl:0, instrument:"" },
+    ...sorted.map((t,i) => {
+      cum += t.pnl || 0;
+      return { label:String(i+1), v:parseFloat(cum.toFixed(2)), pnl:t.pnl||0, date:t.date.slice(5), instrument:t.instrument||"" };
+    })
+  ];
   const vals = data.map(d => d.v);
-  const isPos = pnlSum >= 0;
   const minV = Math.min(...vals), maxV = Math.max(...vals);
-  const pad = Math.max(Math.abs(maxV - minV) * 0.2, 50);
+  const pad = Math.max((maxV - minV) * 0.15, 30);
+  const lineColor = pnlSum >= 0 ? "#2a6e3a" : "#c0392b";
+  const absMax = Math.max(Math.abs(minV), Math.abs(maxV), 30);
+  const step = Math.ceil(absMax / 2 / 50) * 50 || 50;
+  const yDomain = [-step * 2, step * 2];
+  const yTicks = [-step * 2, -step, 0, step, step * 2];
   return (
     <ResponsiveContainer width="100%" height={height || 150}>
       <LineChart data={data} margin={{ top:4, right:4, left:0, bottom:0 }}>
-        <XAxis dataKey="date" tick={{ fontSize:9, fontFamily:"'Josefin Sans',sans-serif", fill:C.gray1 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-        <YAxis domain={[minV - pad, maxV + pad]} tick={{ fontSize:9, fontFamily:"'Josefin Sans',sans-serif", fill:C.gray1 }} tickLine={false} axisLine={false} width={46} tickFormatter={v => `${v > 0 ? "+" : ""}${Math.round(v)}€`} />
-        <Tooltip contentStyle={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:4, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", color:C.white }} formatter={(v, n, p) => [`${v >= 0 ? "+" : ""}${v.toFixed(0)}€${capital ? " · " + p.payload.total.toFixed(0) + "€" : ""}`, "P&L"]} labelStyle={{ color:C.gray1, marginBottom:4 }} />
-        <ReferenceLine y={0} stroke={C.gray3} strokeDasharray="3 3" />
-        <Line type="monotone" dataKey="v" stroke={isPos?"#2a6e3a":"#c0392b"} strokeWidth={2.5} dot={false} activeDot={{ r:4, fill:isPos?"#2a6e3a":"#c0392b", strokeWidth:0 }}/>
+        <XAxis dataKey="label" tick={{ fontSize:9, fontFamily:"'Josefin Sans',sans-serif", fill:C.gray1 }} tickLine={false} axisLine={false} interval={Math.max(0, Math.floor(data.length/6)-1)} />
+        <YAxis
+          domain={yDomain}
+          ticks={yTicks}
+          tick={{ fontSize:9, fontFamily:"'Josefin Sans',sans-serif", fill:C.gray1 }} tickLine={false} axisLine={false} width={52}
+          tickFormatter={v => v===0?`0${cur||"€"}`:v>0?`+${Math.round(v)}${cur||"€"}`:`${Math.round(v)}${cur||"€"}`}
+        />
+        <Tooltip
+          content={({active,payload}) => active && payload?.length ? (
+            <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:6,padding:"8px 12px"}}>
+              {payload[0].payload.date && <div style={{fontSize:10,color:C.gray1,marginBottom:3,fontFamily:"'Josefin Sans',sans-serif"}}>{payload[0].payload.date}{payload[0].payload.instrument?" · "+payload[0].payload.instrument:""}</div>}
+              <div style={{fontSize:13,color:payload[0].payload.pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{payload[0].payload.pnl>=0?"+":""}{payload[0].payload.pnl?.toFixed(0)}{cur||"€"}</div>
+              <div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>Cumulé : {payload[0].value>=0?"+":""}{payload[0].value?.toFixed(0)}{cur||"€"}</div>
+            </div>
+          ) : null}
+        />
+        <ReferenceLine y={0} stroke={C.gray2} strokeWidth={1} />
+        <Line type="monotone" dataKey="v" stroke={lineColor} strokeWidth={2} dot={{ r:2, fill:lineColor, strokeWidth:0 }} activeDot={{ r:5, fill:lineColor, strokeWidth:0 }} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -273,6 +308,10 @@ export default function App() {
   const isMobile = useIsMobile();
   const [trades,      setTrades]      = useState(() => load(KEYS.trades, []));
   const [extraInstr,  setExtraInstr]  = useState(() => load(KEYS.instruments, []));
+  const [extraEmotions, setExtraEmotions] = useState(() => load('fyltre_emotions_v1', []));
+  const [customEmotion, setCustomEmotion] = useState('');
+  const [beSign, setBeSign] = useState(1);
+  const [showCustomEmotion, setShowCustomEmotion] = useState(false);
   const [strategies,  setStrategies]  = useState(() => {
     const saved = load(KEYS.strategies, null);
     if (saved && Array.isArray(saved)) return saved;
@@ -296,10 +335,16 @@ export default function App() {
   const [eodText, setEodText] = useState("");
   const [eodAccount, setEodAccount] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [currency, setCurrency] = useState(() => localStorage.getItem("fyltre_currency")||"€");
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("fyltre_dark")==="true");
+  C = darkMode ? DARK_THEME : LIGHT_THEME; // Dynamic theme
+  const [acctView, setAcctView] = useState("today");
+  const [tabKey, setTabKey] = useState(0); // "today" | "global"
+  const [lang, setLang] = useState(() => localStorage.getItem("fyltre_lang")||"fr");
   const [menuClosing, setMenuClosing] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null); // {date, trades, pnl}
   const [dayClosing, setDayClosing] = useState(false);
-  const closeMenu = () => { setMenuClosing(true); setTimeout(()=>{setShowMenu(false);setMenuClosing(false);},220); };
+  const closeMenu = () => { setMenuClosing(true); setTimeout(()=>{setShowMenu(false);setMenuClosing(false);},240); };
   const closeDay = () => { setDayClosing(true); setTimeout(()=>{setSelectedDay(null);setDayClosing(false);},220); };
   const [calcMode, setCalcMode] = useState("futures");
   const [calcCustomPair, setCalcCustomPair] = useState("");
@@ -313,7 +358,9 @@ export default function App() {
   const [chartAccountId, setChartAccountId] = useState("all");
   const [editingPf, setEditingPf] = useState(null);
   const [selectedPf, setSelectedPf] = useState(null);
-  const [confirmDeletePf, setConfirmDeletePf] = useState(false); // null = list, pf = detail
+  const [confirmDeletePf, setConfirmDeletePf] = useState(false);
+  const [accountLeaving, setAccountLeaving] = useState(false);
+  const closeAccount = () => { setAccountLeaving(true); setTimeout(()=>{ setSelectedPf(null); setConfirmDeletePf(false); setAccountLeaving(false); setAcctView("today"); }, 260); }; // null = list, pf = detail
   const [view,        setView]        = useState("propfirm");
   const [aiText,      setAiText]      = useState("");
   const [aiLoading,   setAiLoading]   = useState(false);
@@ -338,11 +385,17 @@ export default function App() {
 
   useEffect(() => { save(KEYS.trades,      trades);    }, [trades]);
   useEffect(() => { save(KEYS.instruments, extraInstr);}, [extraInstr]);
+  useEffect(() => { save('fyltre_emotions_v1', extraEmotions); }, [extraEmotions]);
   useEffect(() => { save(KEYS.strategies,  strategies); }, [strategies]);
   useEffect(() => { save(KEYS.capital,     capital);   }, [capital]);
   useEffect(() => { save(KEYS.propfirms,   propfirms); }, [propfirms]);
+  useEffect(() => { localStorage.setItem("fyltre_currency", currency); }, [currency]);
+  useEffect(() => { localStorage.setItem("fyltre_dark", darkMode); document.documentElement.style.setProperty("--bg", darkMode?"#0f0f0f":"#f8f7f5"); document.body.style.background = darkMode?"#0f0f0f":"#f8f7f5"; document.body.style.color = darkMode?"#f0ede8":"#1a1a1a"; C = darkMode ? DARK_THEME : LIGHT_THEME; }, [darkMode]);
+  useEffect(() => { localStorage.setItem("fyltre_lang", lang); }, [lang]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
+  // Scroll to top on view change
+  useEffect(() => { window.scrollTo(0,0); }, [view, selectedPf]);
 
   const handleInstrument = v => {
     if (v === "Autre") { setShowCustom(true); set("instrument", "Autre"); }
@@ -360,7 +413,7 @@ export default function App() {
     const a = parseFloat(pnlRaw);
     if (isNaN(a) || pnlRaw === "") return null;
     if (form.result === "LOSS") return -Math.abs(a);
-    if (form.result === "BREAKEVEN") return 0;
+    if (form.result === "BREAKEVEN") return pnlRaw ? beSign * (parseFloat(pnlRaw) || 0) : 0;
     return Math.abs(a);
   };
 
@@ -446,7 +499,7 @@ export default function App() {
     const summary = trades.slice(0, 20).map(t => `${t.date}|${t.instrument}|${t.direction}|${t.session}|${t.emotion}|RR:${t.rr||"—"}|P&L:${t.pnl}€|${t.result}${t.notes ? `|"${t.notes}"` : ""}`).join("\n");
     const strat = strategies[0] || {};
     const stratCtx = [strat.description && "Description: " + strat.description, strat.steps && strat.steps.length > 0 && "Étapes: " + strat.steps.map((s,i)=>`${i+1}. ${s}`).join("\n"), strat.rules && "Règles: " + strat.rules, strat.notes && "Notes: " + strat.notes].filter(Boolean).join("\n");
-    const systemMsg = "Tu es un coach de trading professionnel et exigeant.\n" + (stratCtx ? "\nSTRATÉGIE DU TRADER:\n" + stratCtx + "\n" : "") + "\nAnalyse le journal. Donne:\n1) ✅ Ce qui fonctionne\n2) ❌ Erreurs récurrentes" + (stratCtx ? " (déviations de la stratégie aussi)" : "") + "\n3) 📌 3 règles concrètes pour demain\nSois direct, sans blabla. Réponds en français.";
+    const systemMsg = "Tu es un coach de trading professionnel et exigeant.\n" + (stratCtx ? "\nSTRATÉGIE DU TRADER:\n" + stratCtx + "\n" : "") + "\nAnalyse le journal. Donne:\n1) Ce qui fonctionne\n2) Erreurs récurrentes" + (stratCtx ? " (déviations de la stratégie aussi)" : "") + "\n3) 3 règles concrètes pour demain\nSoyez direct, sans fioritures. Répondez en français.";
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -468,7 +521,7 @@ export default function App() {
       {!desktop && <PageTitle sub="Tableau de bord" title={total === 0 ? "Aucun trade" : "Performance"} />}
       <div style={{ display:"grid", gridTemplateColumns:desktop ? "repeat(4,1fr)" : "1fr 1fr", gap:10, marginBottom:20 }}>
         <StatCard label="Win Rate"  value={`${winRate}%`}                              color={winRate >= 50 ? C.accent : C.gray1} small={desktop} />
-        <StatCard label="P&L Total" value={`${pnlSum >= 0 ? "+" : ""}${pnlSum.toFixed(0)}€`} color={pnlSum >= 0 ? C.accent : C.gray1} small={desktop} />
+        <StatCard label="P&L Total" value={`${pnlSum >= 0 ? "+" : ""}${pnlSum.toFixed(0)}{currency}`} color={pnlSum >= 0 ? C.accent : C.gray1} small={desktop} />
         <StatCard label="RR Moyen"  value={`${avgRR}:1`}                               color={C.dim}   small={desktop} />
         <StatCard label="Bilan" value={`${wins}W / ${total - wins}L`} color={C.accent} small={desktop} />
       </div>
@@ -489,7 +542,7 @@ export default function App() {
                 ))}
               </div>
             )}
-            <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={160} />
+            <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={160} cur={currency}/>
             {filtered.length < 2 && <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>Aucun trade ce mois</div>}
           </div>
           <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, padding:"16px 14px" }}>
@@ -512,7 +565,7 @@ export default function App() {
                   ))}
                 </div>
               )}
-              {filtered.length > 1 ? <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={150} /> : <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>Aucun trade ce mois</div>}
+              {filtered.length > 1 ? <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={150} cur={currency}/> : <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>Aucun trade ce mois</div>}
             </div>
           <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, padding:"16px 14px", marginBottom:14 }}>
               <Calendar filtered={calFiltered} calMonth={calMonth} calYear={calYear} onPrev={prevMonth} onNext={nextMonth} />
@@ -527,7 +580,7 @@ export default function App() {
             <div key={s.name} style={{ marginBottom:12 }}>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
                 <span style={{ fontSize:11, color:C.white, letterSpacing:"0.06em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif" }}>{s.name}</span>
-                <span style={{ fontSize:12, fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, color:s.pnl >= 0 ? C.accent : C.gray1, letterSpacing:"0.03em" }}>{s.pnl >= 0 ? "+" : ""}{s.pnl.toFixed(0)}€ · {s.wr}%</span>
+                <span style={{ fontSize:12, fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, color:s.pnl >= 0 ? C.accent : C.gray1, letterSpacing:"0.03em" }}>{s.pnl >= 0 ? "+" : ""}{s.pnl.toFixed(0)}{currency} · {s.wr}%</span>
               </div>
               <div style={{ height:3, background:C.gray3, borderRadius:2 }}>
                 <div style={{ width:`${s.wr}%`, height:"100%", borderRadius:2, background:C.accent, transition:"width 0.7s" }} />
@@ -540,7 +593,7 @@ export default function App() {
       {trades.length === 0 && (
         <div style={{ textAlign:"center", padding:"48px 0" }}>
           <div style={{ fontSize:44, marginBottom:12, color:C.gray2 }}>◎</div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:C.gray1, marginBottom:14 }}>Commence à tracker tes trades</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:C.gray1, marginBottom:14 }}>Commencez à enregistrer vos trades</div>
           <button onClick={() => setView("add")} style={{ background:C.accent, border:"none", borderRadius:4, padding:"11px 24px", color:"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer" }}>+ Premier trade</button>
         </div>
       )}
@@ -566,18 +619,40 @@ export default function App() {
       </Field>
       <Divider />
       <Field label="Direction"><ChipGroup options={["LONG","SHORT"]} value={form.direction} onChange={v => set("direction", v)} /></Field>
-      <Field label="Résultat"><ChipGroup options={["WIN","LOSS","BREAKEVEN"]} value={form.result} onChange={v => set("result", v)} /></Field>
+      <Field label="Résultat"><ChipGroup options={["WIN","LOSS","BREAKEVEN"]} value={form.result} onChange={v => { set("result", v); setBeSign(1); }} /></Field>
       <Divider />
       <Field label="Session"><ChipGroup options={SESSIONS} value={form.session} onChange={v => set("session", v)} /></Field>
-      <Field label="État émotionnel"><ChipGroup options={EMOTIONS} value={form.emotion} onChange={v => set("emotion", v)} /></Field>
+      <Field label="État émotionnel">
+        <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+          {[...EMOTIONS, ...extraEmotions].map(e => (
+            <Chip key={e} label={e} active={form.emotion===e} onClick={()=>set("emotion",e)}/>
+          ))}
+          <Chip label="+ Autre" active={showCustomEmotion} onClick={()=>setShowCustomEmotion(v=>!v)}/>
+        </div>
+        {showCustomEmotion && (
+          <div style={{display:"flex",gap:8,marginTop:8}}>
+            <input type="text" placeholder="ex: Déterminé" value={customEmotion} onChange={e=>setCustomEmotion(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&customEmotion.trim()){setExtraEmotions(p=>[...p,customEmotion.trim()]);set("emotion",customEmotion.trim());setCustomEmotion('');setShowCustomEmotion(false);}}} style={{...iStyle,flex:1,fontSize:13}} autoFocus/>
+            <button onClick={()=>{if(customEmotion.trim()){setExtraEmotions(p=>[...p,customEmotion.trim()]);set("emotion",customEmotion.trim());setCustomEmotion('');setShowCustomEmotion(false);}}} style={{background:C.accent,border:"none",borderRadius:6,padding:"0 14px",color:darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>OK</button>
+          </div>
+        )}
+      </Field>
       <Divider />
       <Field label={`P&L — ${form.result === "LOSS" ? "montant perte" : form.result === "WIN" ? "montant gain" : "breakeven"}`}>
-        <input type="text" inputMode="numeric" placeholder="" value={pnlRaw} onChange={e => { const v = e.target.value.replace(/[^0-9.]/g, ""); setPnlRaw(v); }} style={{ ...iStyle, fontSize:22, fontFamily:"'Cormorant Garamond',serif", fontWeight:600, color:C.white }} />
-        {pnlRaw && !isNaN(parseFloat(pnlRaw)) && (
-          <div style={{ marginTop:5, fontSize:12, fontFamily:"'Cormorant Garamond',serif", color:form.result === "WIN" ? C.accent : form.result === "LOSS" ? C.gray1 : C.gray1 }}>
-            {form.result === "WIN" && "✓ Gain : +" + parseFloat(pnlRaw).toFixed(2) + " €"}
-            {form.result === "LOSS" && "✗ Perte : −" + parseFloat(pnlRaw).toFixed(2) + " €"}
-            {form.result === "BREAKEVEN" && "◎ Breakeven"}
+        <input type="text" inputMode="decimal" placeholder="" value={pnlRaw} onChange={e => { const v = e.target.value.replace(/,/g,".").replace(/[^0-9.]/g, ""); setPnlRaw(v); }} style={{ ...iStyle, fontSize:18, fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, color:"#1a1a1a" }} />
+        {/* Breakeven sign toggle — always visible in BE mode */}
+        {form.result === "BREAKEVEN" && (
+          <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center"}}>
+            <div style={{display:"flex",borderRadius:6,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+              <button onClick={()=>setBeSign(1)} style={{padding:"7px 16px",border:"none",background:beSign===1?"#2a6e3a":"transparent",color:beSign===1?"#fff":C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer",transition:"all 0.2s"}}>+ Positif</button>
+              <button onClick={()=>setBeSign(-1)} style={{padding:"7px 16px",border:"none",background:beSign===-1?"#c0392b":"transparent",color:beSign===-1?"#fff":C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer",transition:"all 0.2s"}}>− Négatif</button>
+            </div>
+            {pnlRaw && <span style={{fontSize:12,color:beSign===1?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{beSign===1?"+":"-"}{parseFloat(pnlRaw).toFixed(2)}{currency}</span>}
+          </div>
+        )}
+        {pnlRaw && !isNaN(parseFloat(pnlRaw)) && form.result !== "BREAKEVEN" && (
+          <div style={{ marginTop:5, fontSize:12, fontFamily:"'Josefin Sans',sans-serif" }}>
+            {form.result === "WIN" && <span style={{color:"#2a6e3a"}}>{`✓ Gain : +${parseFloat(pnlRaw).toFixed(2)} ${currency}`}</span>}
+            {form.result === "LOSS" && <span style={{color:"#c0392b"}}>{`✗ Perte : −${parseFloat(pnlRaw).toFixed(2)} ${currency}`}</span>}
           </div>
         )}
       </Field>
@@ -585,7 +660,7 @@ export default function App() {
       <Field label="Prix de sortie"><input type="text" inputMode="decimal" placeholder="" value={form.exit} onChange={e => set("exit", e.target.value)} style={iStyle} /></Field>
       <Field label="Risk / Reward"><input type="text" inputMode="decimal" placeholder="" value={form.rr} onChange={e => set("rr", e.target.value)} style={iStyle} /></Field>
       <Field label="Notes">
-        <textarea rows={3} placeholder={`"Je n'ai pas attendu l'étape 3"`} value={form.notes} onChange={e => set("notes", e.target.value)} style={{ ...iStyle, resize:"vertical", lineHeight:1.6 }} />
+        <textarea rows={3} placeholder="ex: Je n'ai pas attendu la confirmation" value={form.notes} onChange={e => set("notes", e.target.value)} style={{ ...iStyle, resize:"vertical", lineHeight:1.6 }} />
       </Field>
 
       {propfirms.length > 0 && (
@@ -627,7 +702,7 @@ export default function App() {
           </div>
         </Field>
       )}
-      <button onClick={addTrade} disabled={computedPnl() === null} style={{ width:"100%", padding:"14px", borderRadius:4, border:"none", background:computedPnl() !== null ? C.accent : C.gray3, color:computedPnl() !== null ? "#fff" : C.gray2, fontSize:12, fontWeight:600, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.2em", textTransform:"uppercase", cursor:computedPnl() !== null ? "pointer" : "not-allowed", transition:"all 0.3s" }}>
+      <button onClick={addTrade} disabled={computedPnl() === null} style={{ width:"100%", padding:"14px", borderRadius:4, border:"none", background:computedPnl() !== null ? C.accent : C.gray3, color:computedPnl() !== null ? (darkMode?"#111":"#fff") : C.gray2, fontSize:12, fontWeight:600, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.2em", textTransform:"uppercase", cursor:computedPnl() !== null ? "pointer" : "not-allowed", transition:"all 0.3s" }}>
         {saved ? "✓  Trade enregistré" : "Enregistrer  →"}
       </button>
     </div>
@@ -636,6 +711,64 @@ export default function App() {
   // ── History JSX ──
   const historyContent = (
     <div>
+      <PageTitle sub="Classements" title="Statistiques" />
+      {(() => {
+        if (trades.length === 0) return null;
+        const calcBest = (groupFn) => {
+          const groups = {};
+          trades.forEach(t => {
+            const k = groupFn(t);
+            if (!k) return;
+            if (!groups[k]) groups[k] = {pnl:0,wins:0,total:0};
+            groups[k].pnl += t.pnl||0;
+            groups[k].total++;
+            if (t.result==="WIN") groups[k].wins++;
+          });
+          return Object.entries(groups)
+            .map(([k,v]) => ({name:k, pnl:v.pnl, wr:v.total?Math.round(v.wins/v.total*100):0, count:v.total}))
+            .sort((a,b) => b.pnl - a.pnl);
+        };
+        const sections = [
+          { title:"Stratégie", sub:"Par stratégie utilisée", data: calcBest(t => { const s = strategies.find(s=>s.id===t.strategyId); return s?.name||null; }) },
+          { title:"Session", sub:"Par session de trading", data: calcBest(t => t.session) },
+          { title:"Instrument", sub:"Par instrument tradé", data: calcBest(t => t.instrument) },
+          { title:"Émotion", sub:"Par état émotionnel", data: calcBest(t => t.emotion) },
+        ];
+        return (
+          <div style={{marginBottom:20}}>
+            {sections.map(sec => (
+              <div key={sec.title} style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:10,padding:"16px",marginBottom:12}}>
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{sec.title}</div>
+                  <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{sec.sub}</div>
+                </div>
+                {sec.data.length === 0 ? (
+                  <div style={{fontSize:12,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif"}}>Aucune donnée</div>
+                ) : sec.data.map((item,i) => {
+                  const maxPnl = Math.max(...sec.data.map(d=>Math.abs(d.pnl)),1);
+                  return (
+                    <div key={item.name} style={{marginBottom:i<sec.data.length-1?12:0}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontSize:11,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",minWidth:18}}>#{i+1}</span>
+                          <span style={{fontSize:13,color:C.white,fontFamily:"'Josefin Sans',sans-serif",fontWeight:i===0?600:300}}>{item.name}</span>
+                        </div>
+                        <div style={{textAlign:"right"}}>
+                          <span style={{fontSize:13,color:item.pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{item.pnl>=0?"+":""}{item.pnl.toFixed(0)}{currency}</span>
+                          <span style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginLeft:6}}>{item.wr}% · {item.count}T</span>
+                        </div>
+                      </div>
+                      <div style={{height:4,background:C.gray3,borderRadius:2}}>
+                        <div style={{width:(Math.abs(item.pnl)/maxPnl*100)+"%",height:"100%",borderRadius:2,background:item.pnl>=0?"#2a6e3a":"#c0392b",transition:"width 0.5s"}}/>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
       <PageTitle sub="Historique" title="Mes Trades" />
       {trades.length === 0 ? (
         <div style={{ textAlign:"center", padding:"60px 0" }}>
@@ -786,7 +919,7 @@ export default function App() {
         <textarea rows={3} placeholder={"- Max 1 trade/jour\n- Stop après 1 win\n- Pas de trade sans bias"} value={strat.rules||""} onChange={e=>updateStrat(strat.id,{rules:e.target.value})} style={{...iStyle,resize:"vertical",lineHeight:1.9}}/>
       </Field>
       <Field label="Notes personnelles">
-        <textarea rows={3} placeholder="Tout ce que tu veux que l'IA sache..." value={strat.notes||""} onChange={e=>updateStrat(strat.id,{notes:e.target.value})} style={{...iStyle,resize:"vertical",lineHeight:1.6}}/>
+        <textarea rows={3} placeholder="Tout ce que vous souhaitez que l'IA sache..." value={strat.notes||""} onChange={e=>updateStrat(strat.id,{notes:e.target.value})} style={{...iStyle,resize:"vertical",lineHeight:1.6}}/>
       </Field>
       {strategies.length > 1 && (
         <button onClick={()=>{ setStrategies(p=>p.filter(s=>s.id!==strat.id)); setActiveStratId(null); }} style={{width:"100%",padding:"11px",borderRadius:4,border:"1px solid rgba(192,57,43,0.3)",background:"rgba(192,57,43,0.05)",color:"rgba(192,57,43,0.8)",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",marginBottom:8}}>
@@ -803,7 +936,7 @@ export default function App() {
   const aiContent = (
     <div>
       <PageTitle sub="Intelligence" title="Analyse IA" />
-      <div style={{ fontSize:13, color:C.gray1, lineHeight:1.7, marginBottom:18 }}>L'IA croise tes trades avec ta stratégie pour détecter chaque déviation de ton plan.</div>
+      <div style={{ fontSize:13, color:C.gray1, lineHeight:1.7, marginBottom:18 }}>L'IA croise vos trades avec votre stratégie pour détecter chaque déviation de votre plan.</div>
       {!strategies[0]?.description && !strategies[0]?.steps?.length && (
         <div style={{ marginBottom:14, padding:"10px 12px", borderRadius:4, background:"rgba(0,0,0,0.04)", border:`1px solid ${C.borderGold}` }}>
           <div style={{ fontSize:11, color:C.dim, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>◆ Remplis l'onglet Stratégie pour un coaching ultra-personnalisé</div>
@@ -855,18 +988,18 @@ export default function App() {
 
     if (pf.type === "propfirm") {
       const remaining = target - pnl;
-      if (pnl >= target) alerts.push({ type:"success", msg:"🎉 Profit target atteint ! Félicitations." });
-      else if (remaining <= target * 0.2) alerts.push({ type:"warn", msg:`🟡 Encore ${remaining.toFixed(0)}€ pour valider le profit target.` });
-      else alerts.push({ type:"info", msg:`📈 Il te manque ${remaining.toFixed(0)}€ pour valider.` });
-      if (drawdown >= maxLoss) alerts.push({ type:"danger", msg:"🔴 Max drawdown atteint — STOP trading." });
-      else if (drawdown >= maxLoss * 0.8) alerts.push({ type:"danger", msg:`🔴 Attention — tu es à ${Math.round(drawdown/maxLoss*100)}% du max drawdown.` });
+      if (pnl >= target) alerts.push({ type:"success", msg:"Profit target atteint — Félicitations." });
+      else if (remaining <= target * 0.2) alerts.push({ type:"warn", msg:`Encore ${remaining.toFixed(0)}${currency} pour valider le profit target.` });
+      else alerts.push({ type:"info", msg:`Il vous manque ${remaining.toFixed(0)}${currency} pour valider.` });
+      if (drawdown >= maxLoss) alerts.push({ type:"danger", msg:"Max drawdown atteint — Arrêtez de trader." });
+      else if (drawdown >= maxLoss * 0.8) alerts.push({ type:"danger", msg:`Attention — vous êtes à ${Math.round(drawdown/maxLoss*100)}% du max drawdown.` });
     }
 
     if (pf.hasDailyLoss && dailyLoss > 0) {
       const todayPnl = trades.filter(t => t.date === new Date().toISOString().split("T")[0]).reduce((s,t)=>s+(t.pnl||0),0);
       const todayLoss = Math.abs(Math.min(0, todayPnl));
-      if (todayLoss >= dailyLoss) alerts.push({ type:"danger", msg:"🔴 Daily loss limit atteinte aujourd'hui — ne plus trader." });
-      else if (todayLoss >= dailyLoss * 0.7) alerts.push({ type:"warn", msg:`🟡 Daily loss: ${todayLoss.toFixed(0)}€ / ${dailyLoss}€ utilisés.` });
+      if (todayLoss >= dailyLoss) alerts.push({ type:"danger", msg:"Daily loss limit atteinte — Arrêtez de trader aujourd'hui." });
+      else if (todayLoss >= dailyLoss * 0.7) alerts.push({ type:"warn", msg:`Daily loss : ${todayLoss.toFixed(0)}${currency} / ${dailyLoss}${currency} utilisés.` });
     }
     return alerts;
   };
@@ -879,7 +1012,7 @@ export default function App() {
           <button onClick={()=>setPfView("list")} style={{ padding:"9px 16px", borderRadius:4, border:`1px solid ${C.border}`, background:"transparent", color:C.gray1, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", marginBottom:24 }}>← Retour</button>
         )}
         {pfView==="list" && (
-          <button onClick={()=>setPfView("add-type")} style={{ padding:"9px 16px", borderRadius:4, border:"none", background:C.accent, color:"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", marginBottom:24 }}>+ Ajouter</button>
+          <button onClick={()=>setPfView("add-type")} style={{ padding:"9px 16px", borderRadius:4, border:"none", background:C.accent, color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", marginBottom:24 }}>+ Ajouter</button>
         )}
       </div>
 
@@ -887,12 +1020,12 @@ export default function App() {
       {pfView==="add-type" && (
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:8}}>
           <button onClick={()=>{pfSet("type","propfirm");setPfView("add-propfirm");}} style={{padding:"32px 16px",borderRadius:10,border:`1px solid ${C.border}`,background:C.bg2,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:12,transition:"all 0.2s"}}>
-            <span style={{fontSize:32}}>🏢</span>
+            <div style={{fontSize:28,color:C.dim,fontFamily:"serif"}}>▤</div>
             <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:13,color:C.white,letterSpacing:"0.1em",textTransform:"uppercase"}}>Prop Firm</div>
             <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.5,textAlign:"center"}}>Compte financé avec règles d'évaluation</div>
           </button>
           <button onClick={()=>{pfSet("type","personal");setPfView("add-personal");}} style={{padding:"32px 16px",borderRadius:10,border:`1px solid ${C.border}`,background:C.bg2,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:12,transition:"all 0.2s"}}>
-            <span style={{fontSize:32}}>💼</span>
+            <div style={{fontSize:28,color:C.dim,fontFamily:"serif"}}>◈</div>
             <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:13,color:C.white,letterSpacing:"0.1em",textTransform:"uppercase"}}>Fond Propre</div>
             <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.5,textAlign:"center"}}>Compte personnel avec ton propre capital</div>
           </button>
@@ -920,11 +1053,11 @@ export default function App() {
             </Field>
             <Field label={pfPctMode?"Profit Target * (%)":"Profit Target * (€)"}>
               <input type="text" inputMode="numeric" placeholder="" value={pfPctMode?pfPctValues.target:pfForm.target} onChange={e=>{const v=e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,"");if(pfPctMode){setPfPctValues(p=>({...p,target:v}));pfSet("target",pfForm.capital?String((parseFloat(pfForm.capital)*(parseFloat(v)||0)/100).toFixed(0)):"");}else pfSet("target",v);}} style={iStyle}/>
-              {pfPctMode&&pfPctValues.target&&pfForm.capital&&<div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>= {(parseFloat(pfForm.capital)*(parseFloat(pfPctValues.target)||0)/100).toFixed(0)}€</div>}
+              {pfPctMode&&pfPctValues.target&&pfForm.capital&&<div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>= {(parseFloat(pfForm.capital)*(parseFloat(pfPctValues.target)||0)/100).toFixed(0)}{currency}</div>}
             </Field>
             <Field label={pfPctMode?"Max Drawdown * (%)":"Max Drawdown * (€)"}>
               <input type="text" inputMode="numeric" placeholder="" value={pfPctMode?pfPctValues.maxLoss:pfForm.maxLoss} onChange={e=>{const v=e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,"");if(pfPctMode){setPfPctValues(p=>({...p,maxLoss:v}));pfSet("maxLoss",pfForm.capital?String((parseFloat(pfForm.capital)*(parseFloat(v)||0)/100).toFixed(0)):"");}else pfSet("maxLoss",v);}} style={iStyle}/>
-              {pfPctMode&&pfPctValues.maxLoss&&pfForm.capital&&<div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>= {(parseFloat(pfForm.capital)*(parseFloat(pfPctValues.maxLoss)||0)/100).toFixed(0)}€</div>}
+              {pfPctMode&&pfPctValues.maxLoss&&pfForm.capital&&<div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>= {(parseFloat(pfForm.capital)*(parseFloat(pfPctValues.maxLoss)||0)/100).toFixed(0)}{currency}</div>}
             </Field>
           </div>
           <Divider/>
@@ -937,7 +1070,7 @@ export default function App() {
           {pfForm.hasDailyLoss && (
             <Field label={pfPctMode?"Daily Loss (%)":"Daily Loss (€)"}>
               <input type="text" inputMode="numeric" placeholder="" value={pfPctMode?pfPctValues.dailyLoss:pfForm.dailyLoss} onChange={e=>{const v=e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,"");if(pfPctMode){setPfPctValues(p=>({...p,dailyLoss:v}));pfSet("dailyLoss",pfForm.capital?String((parseFloat(pfForm.capital)*(parseFloat(v)||0)/100).toFixed(0)):"");}else pfSet("dailyLoss",v);}} style={iStyle}/>
-              {pfPctMode&&pfPctValues.dailyLoss&&pfForm.capital&&<div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>= {(parseFloat(pfForm.capital)*(parseFloat(pfPctValues.dailyLoss)||0)/100).toFixed(0)}€</div>}
+              {pfPctMode&&pfPctValues.dailyLoss&&pfForm.capital&&<div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>= {(parseFloat(pfForm.capital)*(parseFloat(pfPctValues.dailyLoss)||0)/100).toFixed(0)}{currency}</div>}
             </Field>
           )}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,marginTop:4}}>
@@ -977,7 +1110,7 @@ export default function App() {
           {pfForm.hasDailyLoss && (
             <Field label={pfPctMode?"Daily Loss (%)":"Daily Loss (€)"}>
               <input type="text" inputMode="numeric" placeholder="" value={pfPctMode?pfPctValues.dailyLoss:pfForm.dailyLoss} onChange={e=>{const v=e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,"");if(pfPctMode){setPfPctValues(p=>({...p,dailyLoss:v}));pfSet("dailyLoss",pfForm.capital?String((parseFloat(pfForm.capital)*(parseFloat(v)||0)/100).toFixed(0)):"");}else pfSet("dailyLoss",v);}} style={iStyle}/>
-              {pfPctMode&&pfPctValues.dailyLoss&&pfForm.capital&&<div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>= {(parseFloat(pfForm.capital)*(parseFloat(pfPctValues.dailyLoss)||0)/100).toFixed(0)}€</div>}
+              {pfPctMode&&pfPctValues.dailyLoss&&pfForm.capital&&<div style={{fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4}}>= {(parseFloat(pfForm.capital)*(parseFloat(pfPctValues.dailyLoss)||0)/100).toFixed(0)}{currency}</div>}
             </Field>
           )}
           <Divider/>
@@ -1043,13 +1176,12 @@ export default function App() {
                 <div>
                   <div style={{fontFamily:"'Barlow',sans-serif",fontWeight:600,fontSize:16,color:C.white,letterSpacing:"0.08em"}}>{pf.firm||"Fond Propre"}</div>
                   {pf.name && <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{pf.name}</div>}
-                  <div style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",marginTop:4,textTransform:"uppercase"}}>{cap.toLocaleString()}€{pf.type==="propfirm"?` · Target ${target.toLocaleString()}€`:" · Fond Propre"}</div>
+                  <div style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",marginTop:4,textTransform:"uppercase"}}>{cap.toLocaleString()}{currency}{pf.type==="propfirm"?` · ${progress.toFixed(0)}% / ${target.toLocaleString()}${currency}`:" · Fond Propre"}</div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{textAlign:"right"}}>
-                    <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,fontSize:20,color:pnl>=0?"#2a6e3a":"#c0392b",letterSpacing:"0.03em"}}>{pnl>=0?"+":""}{pnl.toFixed(0)}€</div>
-                    <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>P&L actuel</div>
-                    {(()=>{ const pfTrades=trades.filter(t=>!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id)); const byD={}; pfTrades.forEach(t=>{byD[t.date]=(byD[t.date]||0)+(t.pnl||0);}); const vals=Object.values(byD); if(!vals.length) return null; const best=Math.max(...vals); const worst=Math.min(...vals); return (<div style={{display:"flex",gap:8,marginTop:3,justifyContent:"flex-end"}}><span style={{fontSize:9,color:"#2a6e3a",fontFamily:"'Josefin Sans',sans-serif"}}>↑{best.toFixed(0)}€</span><span style={{fontSize:9,color:"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>↓{worst.toFixed(0)}€</span></div>); })()}
+                    <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,fontSize:20,color:pnl>=0?"#2a6e3a":"#c0392b",letterSpacing:"0.03em"}}>{(cap+pnl).toFixed(0)}{currency}</div>
+                    <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{pnl>=0?"+":""}{pnl.toFixed(0)}{currency} · Capital actuel</div>
                   </div>
 
                 </div>
@@ -1061,15 +1193,33 @@ export default function App() {
                 <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Profit Target</span>
                 <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{progress.toFixed(0)}%</span>
               </div>
-              <div style={{height:5,background:C.gray3,borderRadius:3}}>
+              <div style={{height:5,background:C.gray3,borderRadius:3,marginBottom:pf.hasDailyLoss&&parseFloat(pf.dailyLoss)>0?8:0}}>
                 <div style={{width:progress+"%",height:"100%",borderRadius:3,background:"#2a6e3a",transition:"width 0.5s"}}/>
               </div>
+              {pf.hasDailyLoss && parseFloat(pf.dailyLoss)>0 && (()=>{
+                const dl=parseFloat(pf.dailyLoss);
+                const todayStr=new Date().toISOString().split("T")[0];
+                const todayLoss=Math.abs(Math.min(0,trades.filter(t=>t.date===todayStr&&(!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id))).reduce((s,t)=>s+(t.pnl||0),0)));
+                const dlPct=Math.min(100,(todayLoss/dl)*100);
+                const over=todayLoss>=dl;
+                return (
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                      <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Daily Loss</span>
+                      <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{todayLoss.toFixed(0)}{currency} / {dl}€</span>
+                    </div>
+                    <div style={{height:5,background:C.gray3,borderRadius:3}}>
+                      <div style={{width:dlPct+"%",height:"100%",borderRadius:3,background:over?"rgba(192,57,43,0.9)":dlPct>=70?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.3)",transition:"width 0.5s"}}/>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>}
 
             {pf.type==="propfirm" && <div style={{marginBottom:12}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                 <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Drawdown</span>
-                <span style={{fontSize:10,color:ddProgress>=80?"rgba(192,57,43,0.8)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{drawdown.toFixed(0)}€ / {maxLoss}€</span>
+                <span style={{fontSize:10,color:ddProgress>=80?"rgba(192,57,43,0.8)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{drawdown.toFixed(0)}{currency} / {maxLoss}{currency}</span>
               </div>
               <div style={{height:5,background:C.gray3,borderRadius:3}}>
                 <div style={{width:ddProgress+"%",height:"100%",borderRadius:3,background:ddProgress>=80?"rgba(192,57,43,0.9)":ddProgress>=50?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.25)",transition:"width 0.5s"}}/>
@@ -1102,11 +1252,11 @@ export default function App() {
                       <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Josefin Sans',sans-serif"}}>Aujourd'hui</div>
                       {pf.hasConsistency && pf.consistencyPct && pf.target && (
                         <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.06em"}}>
-                          max {(parseFloat(pf.target)*parseFloat(pf.consistencyPct)/100).toFixed(0)}€
+                          max {(parseFloat(pf.target)*parseFloat(pf.consistencyPct)/100).toFixed(0)}{currency}
                         </div>
                       )}
                     </div>
-                    <div style={{fontSize:14,color:todayPnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,marginBottom:pf.hasConsistency&&pf.consistencyPct&&pf.target?8:0}}>{todayPnl>=0?"+":""}{todayPnl.toFixed(0)}€ · {todayTrades.length} trade{todayTrades.length!==1?"s":""}</div>
+                    <div style={{fontSize:14,color:todayPnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,marginBottom:pf.hasConsistency&&pf.consistencyPct&&pf.target?8:0}}>{todayPnl>=0?"+":""}{todayPnl.toFixed(0)}{currency} · {todayTrades.length} trade{todayTrades.length!==1?"s":""}</div>
                     {pf.hasConsistency && pf.consistencyPct && pf.target && (() => {
                       const maxD = parseFloat(pf.target)*parseFloat(pf.consistencyPct)/100;
                       const todayGain = Math.max(0, todayPnl);
@@ -1118,7 +1268,7 @@ export default function App() {
                             <div style={{width:gaugePct+"%",height:"100%",borderRadius:2,background:isOver?"rgba(192,57,43,0.7)":gaugePct>=80?"rgba(180,120,0,0.6)":C.accent,transition:"width 0.5s"}}/>
                           </div>
                           <div style={{fontSize:10,color:isOver?"rgba(192,57,43,0.8)":C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>
-                            {isOver ? "🔴 Limite de consistance atteinte" : `${(maxD-todayGain).toFixed(0)}€ restants`}
+                            {isOver ? "Limite de consistance atteinte" : `${(maxD-todayGain).toFixed(0)}{currency} restants`}
                           </div>
                         </div>
                       );
@@ -1185,6 +1335,7 @@ export default function App() {
 
     // Today
     const todayTrades = acctTrades.filter(t=>t.date===todayStr);
+    const statsTrades = acctView==="global" ? acctTrades : todayTrades;
     const todayPnl = todayTrades.reduce((s,t)=>s+(t.pnl||0),0);
 
     // Session breakdown (all time)
@@ -1219,18 +1370,25 @@ export default function App() {
     );
 
     return (
-      <div>
+      <div style={{animation:`${accountLeaving?"slideOutAccount":"slideInAccount"} 0.28s cubic-bezier(.4,0,.2,1)`}}>
         {/* ── HEADER ── */}
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-          <button onClick={()=>{setSelectedPf(null);setConfirmDeletePf(false);}} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 12px",color:C.gray1,cursor:"pointer",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>← Retour</button>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+          <button onClick={closeAccount} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 12px",color:C.gray1,cursor:"pointer",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>← Retour</button>
           <div>
             <div style={{fontFamily:"'Barlow',sans-serif",fontWeight:600,fontSize:18,color:C.white,letterSpacing:"0.1em"}}>{pf.firm}</div>
             {pf.name && <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{pf.name}</div>}
           </div>
           <div style={{marginLeft:"auto",textAlign:"right"}}>
             <div style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",textTransform:"uppercase",letterSpacing:"0.1em"}}>{pf.type==="propfirm"?"Prop Firm":"Fond Propre"} · {cap.toLocaleString()}€</div>
-            <div style={{fontSize:20,color:allPnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300}}>{allPnl>=0?"+":""}{allPnl.toFixed(0)}€ <span style={{fontSize:12,color:cap>0?(allPnl/cap*100>=0?"#2a6e3a":"#c0392b"):C.dim}}>{cap>0?`(${(allPnl/cap*100).toFixed(1)}%)`:"" }</span></div>
+            <div style={{fontSize:20,color:allPnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300}}>{allPnl>=0?"+":""}{allPnl.toFixed(0)}{currency} <span style={{fontSize:12,color:cap>0?(allPnl/cap*100>=0?"#2a6e3a":"#c0392b"):C.dim}}>{cap>0?`(${(allPnl/cap*100).toFixed(1)}%)`:"" }</span></div>
           </div>
+        </div>
+
+        {/* ── GLOBAL / TODAY TOGGLE ── */}
+        <div style={{display:"flex",gap:6,marginBottom:16,background:C.bg2,borderRadius:10,padding:4,border:`1px solid ${C.border}`}}>
+          {[{k:"today",l:"Aujourd'hui"},{k:"global",l:"Global"}].map(opt=>(
+            <button key={opt.k} onClick={()=>setAcctView(opt.k)} style={{flex:1,padding:"9px",borderRadius:7,border:"none",background:acctView===opt.k?C.accent:"transparent",color:acctView===opt.k?(darkMode?"#111":"#fff"):C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:acctView===opt.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>{opt.l}</button>
+          ))}
         </div>
 
         {/* ── ALERTS ── */}
@@ -1246,7 +1404,7 @@ export default function App() {
             <div style={{marginBottom:10}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                 <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Profit Target</span>
-                <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{allPnl.toFixed(0)}€ / {target}€ · {progress.toFixed(0)}%</span>
+                <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{allPnl.toFixed(0)}{currency} / {target}{currency} · {progress.toFixed(0)}%</span>
               </div>
               <div style={{height:6,background:C.gray3,borderRadius:3}}>
                 <div style={{width:progress+"%",height:"100%",borderRadius:3,background:progress>=100?"#2a6e3a":"#2a6e3a",transition:"width 0.6s"}}/>
@@ -1255,12 +1413,29 @@ export default function App() {
             <div>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                 <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Drawdown Max</span>
-                <span style={{fontSize:10,color:ddProgress>=80?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{drawdown.toFixed(0)}€ / {maxLoss}€</span>
+                <span style={{fontSize:10,color:ddProgress>=80?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{drawdown.toFixed(0)}{currency} / {maxLoss}{currency}</span>
               </div>
               <div style={{height:6,background:C.gray3,borderRadius:3}}>
                 <div style={{width:ddProgress+"%",height:"100%",borderRadius:3,background:ddProgress>=80?"rgba(192,57,43,0.9)":ddProgress>=50?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.25)",transition:"width 0.6s"}}/>
               </div>
             </div>
+            {pf.hasDailyLoss && parseFloat(pf.dailyLoss)>0 && (()=>{
+              const dl=parseFloat(pf.dailyLoss);
+              const todayLossDL=Math.abs(Math.min(0,todayPnl));
+              const dlPct=Math.min(100,(todayLossDL/dl)*100);
+              const over=todayLossDL>=dl;
+              return (
+                <div style={{marginTop:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Daily Loss</span>
+                    <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{todayLossDL.toFixed(0)}{currency} / {dl}€{over?" 🔴":""}</span>
+                  </div>
+                  <div style={{height:6,background:C.gray3,borderRadius:3}}>
+                    <div style={{width:dlPct+"%",height:"100%",borderRadius:3,background:over?"rgba(192,57,43,0.9)":dlPct>=70?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.3)",transition:"width 0.6s"}}/>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -1269,7 +1444,7 @@ export default function App() {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:pf.hasConsistency&&pf.consistencyPct&&pf.target?10:0}}>
             <div>
               <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Aujourd'hui</div>
-              <div style={{fontSize:22,color:todayPnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300}}>{todayPnl>=0?"+":""}{todayPnl.toFixed(0)}€</div>
+              <div style={{fontSize:22,color:todayPnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300}}>{todayPnl>=0?"+":""}{todayPnl.toFixed(0)}{currency}</div>
               <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{todayTrades.length} trade{todayTrades.length!==1?"s":""}</div>
             </div>
             {pf.hasConsistency&&pf.consistencyPct&&pf.target&&(()=>{
@@ -1279,11 +1454,11 @@ export default function App() {
               const over=g>=maxD;
               return (
                 <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Josefin Sans',sans-serif",marginBottom:4}}>Consistance · max {maxD.toFixed(0)}€</div>
+                  <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Josefin Sans',sans-serif",marginBottom:4}}>Consistance · max {maxD.toFixed(0)}{currency}</div>
                   <div style={{width:120,height:6,background:C.gray3,borderRadius:3,marginLeft:"auto",marginBottom:4}}>
                     <div style={{width:gp+"%",height:"100%",borderRadius:3,background:over?"rgba(192,57,43,0.8)":gp>=80?"rgba(180,120,0,0.6)":"#2a6e3a",transition:"width 0.5s"}}/>
                   </div>
-                  <div style={{fontSize:10,color:over?"rgba(192,57,43,0.8)":C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{over?"🔴 Limite atteinte":`${(maxD-g).toFixed(0)}€ restants`}</div>
+                  <div style={{fontSize:10,color:over?"rgba(192,57,43,0.8)":C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{over?"🔴 Limite atteinte":`${(maxD-g).toFixed(0)}{currency} restants`}</div>
                 </div>
               );
             })()}
@@ -1292,41 +1467,38 @@ export default function App() {
 
         {/* ── TODAY METRICS ── */}
         {(() => {
-          const todayWins=todayTrades.filter(t=>t.result==="WIN").length;
-          const todayLosses=todayTrades.filter(t=>t.result==="LOSS").length;
-          const todayTotal=todayTrades.length;
+          const todayWins=statsTrades.filter(t=>t.result==="WIN").length;
+          const todayLosses=statsTrades.filter(t=>t.result==="LOSS").length;
+          const todayTotal=statsTrades.length;
           const todayWR=todayTotal?Math.round(todayWins/todayTotal*100):0;
-          const todayAvgW=todayWins?todayTrades.filter(t=>t.result==="WIN").reduce((s,t)=>s+(t.pnl||0),0)/todayWins:0;
-          const todayAvgL=todayLosses?Math.abs(todayTrades.filter(t=>t.result==="LOSS").reduce((s,t)=>s+(t.pnl||0),0)/todayLosses):0;
+          const todayAvgW=todayWins?statsTrades.filter(t=>t.result==="WIN").reduce((s,t)=>s+(t.pnl||0),0)/todayWins:0;
+          const todayAvgL=todayLosses?Math.abs(statsTrades.filter(t=>t.result==="LOSS").reduce((s,t)=>s+(t.pnl||0),0)/todayLosses):0;
           const todayPF=todayAvgL>0?(todayAvgW*todayWins/(todayAvgL*todayLosses)).toFixed(2):todayWins>0?"∞":"—";
-          const todayRR=todayTotal?(todayTrades.reduce((s,t)=>s+(parseFloat(t.rr)||0),0)/todayTotal).toFixed(1):"—";
-          const longT=todayTrades.filter(t=>t.direction==="LONG");
-          const shortT=todayTrades.filter(t=>t.direction==="SHORT");
+          const todayRR=todayTotal?(statsTrades.reduce((s,t)=>s+(parseFloat(t.rr)||0),0)/todayTotal).toFixed(1):"—";
+          const longT=statsTrades.filter(t=>t.direction==="LONG");
+          const shortT=statsTrades.filter(t=>t.direction==="SHORT");
           const longWR=longT.length?Math.round(longT.filter(t=>t.result==="WIN").length/longT.length*100):0;
           const shortWR=shortT.length?Math.round(shortT.filter(t=>t.result==="WIN").length/shortT.length*100):0;
           return (
             <div style={{marginBottom:12}}>
-              <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>Statistiques · Aujourd'hui</div>
+              <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>Statistiques · {acctView==="global"?"Global":"Aujourd'hui"}</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
-                <MiniCard label="Win Rate" value={todayTotal?todayWR+"%":"—"} color={todayWR>=50?"#2a6e3a":"#c0392b"} sub={`${todayWins}W · ${todayLosses}L`}/>
-                <MiniCard label="Profit Factor" value={todayPF} color={parseFloat(todayPF)>=1||todayPF==="∞"?"#2a6e3a":"#c0392b"}/>
+<MiniCard label="Profit Factor" value={todayPF==="—"||todayPF==="∞"?todayPF:todayPF+"x"} color={parseFloat(todayPF)>=1||todayPF==="∞"?"#2a6e3a":"#c0392b"}/>
                 <MiniCard label="RR Moyen" value={todayRR==="—"?"—":todayRR+":1"} color={C.dim}/>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8}}>
                 <MiniCard label="Nb Trades" value={todayTotal||"—"} color={C.white}/>
-                <MiniCard label="Long" value={longT.length?longWR+"%":"—"} color={longWR>=50?"#2a6e3a":"#c0392b"} sub={longT.length+"T"}/>
-                <MiniCard label="Short" value={shortT.length?shortWR+"%":"—"} color={shortWR>=50?"#2a6e3a":"#c0392b"} sub={shortT.length+"T"}/>
               </div>
             </div>
           );
         })()}
 
-        {/* ── WIN/LOSS DONUT + SESSION RADAR (side by side) ── */}
+        {/* ── WIN/LOSS + DIRECTION ── */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-          {/* Win/Loss gauge — TODAY */}
+          {/* Win/Loss gauge */}
           <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px",display:"flex",flexDirection:"column",alignItems:"center"}}>
             <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4,alignSelf:"flex-start"}}>Winrate · Aujourd'hui</div>
-            {(() => { const tw=todayTrades.filter(t=>t.result==="WIN").length; const tl=todayTrades.filter(t=>t.result==="LOSS").length; const tt=todayTrades.length; return tt>0 ? (((wins, losses, total, size=130) => {
+            {(() => { const tw=statsTrades.filter(t=>t.result==="WIN").length; const tl=statsTrades.filter(t=>t.result==="LOSS").length; const tt=statsTrades.length; return tt>0 ? (((wins, losses, total, size=130) => {
               const r=46, cx=size/2, cy=size*0.52, sw=13, PI=Math.PI;
               const wFrac=total>0?wins/total:0;
               const lFrac=total>0?losses/total:0;
@@ -1358,13 +1530,13 @@ export default function App() {
                   <text x={size-4} y={labY} textAnchor="end" fontSize={10} fontWeight="600" fill="#c0392b" fontFamily="'Josefin Sans',sans-serif">{losses}L</text>
                 </svg>
               );
-            })(tw,tl,tt,140)) : <div style={{padding:"20px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Aucun trade<br/>aujourd'hui</div>; })()}
+            })(tw,tl,tt,140)) : <div style={{padding:"20px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Aucun trade{acctView==="today"?" aujourd'hui":""}</div>; })()}
           </div>
           {/* Direction breakdown — TODAY */}
           <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px"}}>
-            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Direction · Aujourd'hui</div>
+            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Direction · {acctView==="global"?"Global":"Aujourd'hui"}</div>
             {[{d:"LONG",color:"#2a6e3a"},{d:"SHORT",color:"#c0392b"}].map(({d,color})=>{
-              const dt=todayTrades.filter(t=>t.direction===d);
+              const dt=(acctView==="global"?acctTrades:todayTrades).filter(t=>t.direction===d);
               const dw=dt.filter(t=>t.result==="WIN").length;
               const dpnl=dt.reduce((s,t)=>s+(t.pnl||0),0);
               const dwr=dt.length?Math.round(dw/dt.length*100):0;
@@ -1372,7 +1544,7 @@ export default function App() {
                 <div key={d} style={{marginBottom:10}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                     <span style={{fontSize:11,color:C.white,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{d}</span>
-                    <span style={{fontSize:11,color:dpnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{dpnl>=0?"+":""}{dpnl.toFixed(0)}€ · {dwr}%</span>
+                    <span style={{fontSize:11,color:dpnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{dpnl>=0?"+":""}{dpnl.toFixed(0)}{currency} · {dwr}%</span>
                   </div>
                   <div style={{height:4,background:C.gray3,borderRadius:2}}>
                     <div style={{width:dwr+"%",height:"100%",borderRadius:2,background:color,transition:"width 0.5s"}}/>
@@ -1387,19 +1559,19 @@ export default function App() {
         {/* ── EQUITY CURVE ── */}
         <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"16px 14px 10px",marginBottom:12}}>
           <div style={{fontSize:9,color:C.dim,letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Courbe d'équité</div>
-          {acctTrades.length>1 ? <PnlChart filtered={acctTrades} capital={pf.capital} pnlSum={allPnl} height={160}/>
+          {(acctView==="global"?acctTrades:todayTrades).length>1 ? <PnlChart filtered={acctView==="global"?acctTrades:todayTrades} capital={pf.capital} pnlSum={acctView==="global"?allPnl:todayTrades.reduce((s,t)=>s+(t.pnl||0),0)} height={160} cur={currency}/>
           : <div style={{textAlign:"center",padding:"32px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif"}}>Aucun trade</div>}
         </div>
 
         {/* ── SESSIONS today only ── */}
-        {(() => { const todaySessions = SESSIONS.map(s=>{const st=todayTrades.filter(t=>t.session===s);const wr=st.length?Math.round(st.filter(t=>t.result==="WIN").length/st.length*100):0;return{name:s,count:st.length,wr,pnl:st.reduce((a,t)=>a+(t.pnl||0),0)};}).filter(s=>s.count>0); return todaySessions.length>0 && (
+        {(() => { const todaySessions = SESSIONS.map(s=>{const st=(acctView==="global"?acctTrades:todayTrades).filter(t=>t.session===s);const wr=st.length?Math.round(st.filter(t=>t.result==="WIN").length/st.length*100):0;return{name:s,count:st.length,wr,pnl:st.reduce((a,t)=>a+(t.pnl||0),0)};}).filter(s=>s.count>0); return todaySessions.length>0 && (
           <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px 16px",marginBottom:12}}>
-            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Sessions · Aujourd'hui</div>
+            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Sessions · {acctView==="global"?"Global":"Aujourd'hui"}</div>
             {todaySessions.map(s=>(
               <div key={s.name} style={{marginBottom:10}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                   <span style={{fontSize:11,color:C.white,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.06em",textTransform:"uppercase"}}>{s.name}</span>
-                  <span style={{fontSize:11,color:s.pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{s.pnl>=0?"+":""}{s.pnl.toFixed(0)}€ · {s.wr}% · {s.count}T</span>
+                  <span style={{fontSize:11,color:s.pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{s.pnl>=0?"+":""}{s.pnl.toFixed(0)}{currency} · {s.wr}% · {s.count}T</span>
                 </div>
                 <div style={{height:5,background:C.gray3,borderRadius:3}}>
                   <div style={{width:s.wr+"%",height:"100%",borderRadius:3,background:s.pnl>=0?"#2a6e3a":"#c0392b",transition:"width 0.5s"}}/>
@@ -1411,14 +1583,14 @@ export default function App() {
         })()}
 
         {/* ── INSTRUMENTS today only ── */}
-        {(() => { const todayInstr = (() => { const byI={}; todayTrades.forEach(t=>{ if(!byI[t.instrument]) byI[t.instrument]={count:0,wins:0,pnl:0}; byI[t.instrument].count++; if(t.result==="WIN") byI[t.instrument].wins++; byI[t.instrument].pnl+=t.pnl||0; }); return Object.entries(byI).map(([name,v])=>({name,count:v.count,wr:Math.round(v.wins/v.count*100),pnl:v.pnl})); })(); return todayInstr.length>0 && (
+        {(() => { const todayInstr = (() => { const byI={}; (acctView==="global"?acctTrades:todayTrades).forEach(t=>{ if(!byI[t.instrument]) byI[t.instrument]={count:0,wins:0,pnl:0}; byI[t.instrument].count++; if(t.result==="WIN") byI[t.instrument].wins++; byI[t.instrument].pnl+=t.pnl||0; }); return Object.entries(byI).map(([name,v])=>({name,count:v.count,wr:Math.round(v.wins/v.count*100),pnl:v.pnl})); })(); return todayInstr.length>0 && (
           <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px 16px",marginBottom:12}}>
-            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Instruments · Aujourd'hui</div>
+            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Instruments · {acctView==="global"?"Global":"Aujourd'hui"}</div>
             {todayInstr.map(i=>(
               <div key={i.name} style={{marginBottom:10}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                   <span style={{fontSize:11,color:C.white,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{i.name}</span>
-                  <span style={{fontSize:11,color:i.pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{i.pnl>=0?"+":""}{i.pnl.toFixed(0)}€ · {i.wr}% · {i.count}T</span>
+                  <span style={{fontSize:11,color:i.pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{i.pnl>=0?"+":""}{i.pnl.toFixed(0)}{currency} · {i.wr}% · {i.count}T</span>
                 </div>
                 <div style={{height:4,background:C.gray3,borderRadius:2}}>
                   <div style={{width:i.wr+"%",height:"100%",borderRadius:2,background:i.pnl>=0?"#2a6e3a":"#c0392b",transition:"width 0.5s"}}/>
@@ -1432,13 +1604,13 @@ export default function App() {
         {/* ── EMOTIONS today only ── */}
         {(() => {
           const todayEmotions = EMOTIONS.map(e => {
-            const et = todayTrades.filter(t=>t.emotion===e);
+            const et = (acctView==="global"?acctTrades:todayTrades).filter(t=>t.emotion===e);
             const wr = et.length ? Math.round(et.filter(t=>t.result==="WIN").length/et.length*100) : 0;
             return { name:e, count:et.length, wr, pnl:et.reduce((a,t)=>a+(t.pnl||0),0) };
           }).filter(e=>e.count>0);
           return todayEmotions.length>0 ? (
             <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px 16px",marginBottom:12}}>
-              <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Émotions · Aujourd'hui</div>
+              <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Émotions · {acctView==="global"?"Global":"Aujourd'hui"}</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 {todayEmotions.map(e=>(
                   <div key={e.name} style={{background:C.bg3,borderRadius:6,padding:"10px 12px"}}>
@@ -1446,7 +1618,7 @@ export default function App() {
                       <span style={{fontSize:11,color:C.white,fontFamily:"'Josefin Sans',sans-serif"}}>{e.name}</span>
                       <span style={{fontSize:10,color:e.wr>=50?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{e.wr}%</span>
                     </div>
-                    <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{e.count}T · {e.pnl>=0?"+":""}{e.pnl.toFixed(0)}€</div>
+                    <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{e.count}T · {e.pnl>=0?"+":""}{e.pnl.toFixed(0)}{currency}</div>
                     <div style={{height:3,background:C.gray2,borderRadius:2,marginTop:6}}>
                       <div style={{width:e.wr+"%",height:"100%",borderRadius:2,background:e.wr>=50?"#2a6e3a":"#c0392b"}}/>
                     </div>
@@ -1470,8 +1642,8 @@ export default function App() {
         {/* ── RECENT TRADES ── */}
         {true && (
           <div style={{marginBottom:12}}>
-            <div style={{fontSize:9,color:C.dim,letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Trades · Aujourd'hui</div>
-            {todayTrades.length===0?<div style={{padding:"12px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Aucun trade aujourd'hui</div>:[...todayTrades].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>{
+            <div style={{fontSize:9,color:C.dim,letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Trades · {acctView==="global"?"Global":"Aujourd'hui"}</div>
+            {(acctView==="global"?acctTrades:todayTrades).length===0?<div style={{padding:"12px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Aucun trade aujourd'hui</div>:[...(acctView==="global"?acctTrades:todayTrades)].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>{
               const pnl=t.pnl||0;
               return (
                 <div key={t.id} style={{background:C.bg2,border:`1px solid ${C.border}`,borderLeft:`3px solid ${t.result==="WIN"?"#2a6e3a":t.result==="LOSS"?"#c0392b":C.gray3}`,borderRadius:6,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -1481,7 +1653,7 @@ export default function App() {
                     <div style={{fontSize:9,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{t.date} · {t.session} · {t.emotion}</div>
                   </div>
                   <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:15,fontWeight:300,color:pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{pnl>=0?"+":""}{pnl.toFixed(0)}€</div>
+                    <div style={{fontSize:15,fontWeight:300,color:pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{pnl>=0?"+":""}{pnl.toFixed(0)}{currency}</div>
                     {t.rr && <div style={{fontSize:9,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>RR {t.rr}</div>}
                   </div>
                 </div>
@@ -1497,14 +1669,14 @@ export default function App() {
         {eodText && <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:20,fontSize:13,lineHeight:1.8,color:C.white,whiteSpace:"pre-wrap",fontFamily:"'Cormorant Garamond',serif",marginBottom:10}}>{eodText}</div>}
 
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:4}}>
-          <button onClick={()=>{setEditingPf({...pf});setSelectedPf(null);setPfView("list");}} style={{padding:"13px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg2,color:C.white,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",cursor:"pointer"}}>✎ Modifier</button>
+          <button onClick={()=>{setEditingPf({...pf});closeAccount();setPfView("list");}} style={{padding:"13px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg2,color:C.white,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",cursor:"pointer"}}>✎ Modifier</button>
           {!confirmDeletePf ? (
             <button onClick={()=>setConfirmDeletePf(true)} style={{padding:"13px",borderRadius:8,border:"1px solid rgba(192,57,43,0.3)",background:"rgba(192,57,43,0.05)",color:"rgba(192,57,43,0.8)",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",cursor:"pointer"}}>Supprimer</button>
           ) : (
             <div style={{borderRadius:8,border:"1px solid rgba(192,57,43,0.4)",background:"rgba(192,57,43,0.08)",padding:"10px 14px",display:"flex",flexDirection:"column",gap:8}}>
               <div style={{fontSize:11,color:"rgba(192,57,43,0.9)",fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Êtes-vous sûr ?</div>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>{deletePf(pf.id);setSelectedPf(null);setConfirmDeletePf(false);}} style={{flex:1,padding:"8px",borderRadius:6,border:"none",background:"rgba(192,57,43,0.8)",color:"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>Oui</button>
+                <button onClick={()=>{deletePf(pf.id);closeAccount();}} style={{flex:1,padding:"8px",borderRadius:6,border:"none",background:"rgba(192,57,43,0.8)",color:"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>Oui</button>
                 <button onClick={()=>setConfirmDeletePf(false)} style={{flex:1,padding:"8px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",cursor:"pointer"}}>Annuler</button>
               </div>
             </div>
@@ -1639,7 +1811,7 @@ export default function App() {
     const summary = todayTrades.map(t=>`${t.instrument}|${t.direction}|${t.session}|${t.emotion}|RR:${t.rr||"—"}|P&L:${t.pnl}€|${t.result}${t.notes?`|"${t.notes}"`:""}`).join("\n");
     const todayPnl = todayTrades.reduce((s,t)=>s+(t.pnl||0),0);
     const systemMsg = "Tu es un coach de trading direct et exigeant. Fais un debriefing de fin de journée. Analyse : 1) ✅ Ce qui s'est bien passé 2) ❌ Ce qui doit être amélioré 3) 📌 1 règle à appliquer demain. Sois court, direct, sans blabla. Réponds en français.";
-    const userMsg = `Compte: ${pf.firm}${pf.name?" "+pf.name:""}\nP&L du jour: ${todayPnl>=0?"+":""}${todayPnl.toFixed(0)}€\n${todayTrades.length} trades:\n${summary}`;
+    const userMsg = `Compte: ${pf.firm}${pf.name?" "+pf.name:""}\nP&L du jour: ${todayPnl>=0?"+":""}${todayPnl.toFixed(0)}{currency}\n${todayTrades.length} trades:\n${summary}`;
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:600,system:systemMsg,messages:[{role:"user",content:userMsg}]})});
       if(!res.ok){const e=await res.json().catch(()=>({}));setEodText("Erreur: "+(e?.error?.message||"inconnue"));setEodLoading(false);return;}
@@ -1673,7 +1845,7 @@ export default function App() {
             </div>
           </Field>
           <div style={{marginBottom:8,padding:"10px 12px",borderRadius:6,background:"rgba(0,0,0,0.03)",border:`1px solid ${C.border}`,fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.6}}>
-            {csvPlatform==="mt5" ? "MT5 : Toolbox → History → clic droit → Export CSV | MT4 : Terminal → Account History → clic droit → Save as Report" : "Tradovate : Accounts → ⚙️ → Orders → Download CSV"}
+            {csvPlatform==="mt5" ? "MT5 : Toolbox → History → clic droit → Export CSV | MT4 : Terminal → Account History → clic droit → Save as Report" : "Tradovate : Accounts → icône paramètres → Orders → Download CSV"}
           </div>
           <Field label="Contenu CSV">
             <textarea rows={8} placeholder="Colle ici le contenu de ton fichier CSV..." value={csvText} onChange={e=>setCsvText(e.target.value)} style={{...iStyle,resize:"vertical",lineHeight:1.5,fontSize:12}}/>
@@ -1747,12 +1919,71 @@ export default function App() {
     </div>
   );
 
+
+  // Currency helper
+  const cur = (val, decimals=0) => {
+    if (val === null || val === undefined) return "—";
+    const v = parseFloat(val);
+    if (isNaN(v)) return "—";
+    return `${v>=0?"+":""}${Math.abs(v).toFixed(decimals)}${currency}`;
+  };
+  const curAbs = (val, decimals=0) => {
+    const v = parseFloat(val);
+    if (isNaN(v)) return "—";
+    return `${Math.abs(v).toFixed(decimals)}${currency}`;
+  };
+
+  // ── Settings Content ──
+  const settingsContent = (
+    <div>
+      <PageTitle sub="Paramètres" title="Réglages" />
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px",marginBottom:12}}>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:14}}>Devise</div>
+        <div style={{display:"flex",gap:8}}>
+          {["€","$","£"].map(c=>(
+            <button key={c} onClick={()=>setCurrency(c)} style={{flex:1,padding:"12px",borderRadius:8,border:`1px solid ${currency===c?C.accent:C.border}`,background:currency===c?"rgba(0,0,0,0.08)":"transparent",color:currency===c?C.accent:C.gray1,fontSize:18,cursor:"pointer",fontFamily:"'Josefin Sans',sans-serif",fontWeight:currency===c?600:300,transition:"all 0.2s"}}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px",marginBottom:12}}>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:14}}>Langue</div>
+        <div style={{display:"flex",gap:8}}>
+          {[{k:"fr",l:"Français"},{k:"en",l:"English"},{k:"es",l:"Español"}].map(lg=>(
+            <button key={lg.k} onClick={()=>setLang(lg.k)} style={{flex:1,padding:"10px",borderRadius:8,border:`1px solid ${lang===lg.k?C.accent:C.border}`,background:lang===lg.k?"rgba(0,0,0,0.08)":"transparent",color:lang===lg.k?C.accent:C.gray1,fontSize:12,cursor:"pointer",fontFamily:"'Josefin Sans',sans-serif",fontWeight:lang===lg.k?600:300,letterSpacing:"0.06em",transition:"all 0.2s"}}>
+              {lg.l}
+            </button>
+          ))}
+        </div>
+        {lang!=="fr"&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:6,background:"rgba(180,120,0,0.08)",border:"1px solid rgba(180,120,0,0.2)",fontSize:11,color:"rgba(180,120,0,0.9)",fontFamily:"'Josefin Sans',sans-serif"}}>La traduction complète sera disponible prochainement.</div>}
+      </div>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px",marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Apparence</div>
+            <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{darkMode?"Mode sombre":"Mode clair"}</div>
+          </div>
+          <button onClick={()=>setDarkMode(d=>!d)} style={{width:52,height:28,borderRadius:14,border:"none",background:darkMode?"#f0ede8":"#ccc",cursor:"pointer",position:"relative",transition:"background 0.3s",flexShrink:0}}>
+            <div style={{position:"absolute",top:3,left:darkMode?26:3,width:22,height:22,borderRadius:11,background:darkMode?"#111":"#fff",transition:"left 0.25s",boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
+          </button>
+        </div>
+      </div>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px"}}>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Version</div>
+        <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>FYLTRE v1.0 · Trading Journal</div>
+        <div style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:4,letterSpacing:"0.06em"}}>Créé par Smile</div>
+      </div>
+    </div>
+  );
+
   const getContent = (desktop) => {
     if (view === "propfirm")  return selectedPf ? accountDetailContent(selectedPf, desktop) : propfirmContent;
     if (view === "add")       return addTradeContent;
     if (view === "history")   return historyContent;
     if (view === "strategy")  return strategyContent;
     if (view === "ai")        return aiContent;
+    if (view === "settings")  return settingsContent;
     return null;
   };
 
@@ -1784,20 +2015,20 @@ export default function App() {
 
           </div>
           <div style={{ padding:"22px 18px", maxWidth:560, margin:"0 auto" }}>
-            {getContent(false)}
+            <div key={view+(selectedPf?.id||"")} style={{animation:"tabFadeIn 0.25s cubic-bezier(.4,0,.2,1)"}}>{getContent(false)}</div>
           </div>
           {showMenu && (
             <>
               <div onClick={closeMenu} style={{position:"fixed",inset:0,zIndex:298}}/>
-              <div style={{position:"fixed",top:70,right:16,zIndex:299,animation:`${menuClosing?"slideToRight":"slideFromRight"} 0.22s cubic-bezier(.4,0,.2,1)`,display:"flex",flexDirection:"column",gap:6,background:"rgba(14,14,14,0.96)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:20,padding:"10px",boxShadow:"0 16px 48px rgba(0,0,0,0.35)",border:"1px solid rgba(255,255,255,0.07)",minWidth:160}}>
-                {[{k:"history",l:"Historique",i:"≡"},{k:"strategy",l:"Plan",i:"◈"}].map(item=>(
+              <div style={{position:"fixed",top:70,right:16,zIndex:299,animation:`${menuClosing?"slideToRight":"slideFromRight"} 0.24s cubic-bezier(.4,0,.2,1)`,display:"flex",flexDirection:"column",gap:6,background:"rgba(14,14,14,0.96)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:20,padding:"10px",boxShadow:"0 16px 48px rgba(0,0,0,0.35)",border:"1px solid rgba(255,255,255,0.07)",minWidth:160}}>
+                {[{k:"history",l:"Statistiques",i:"≡"},{k:"strategy",l:"Plan",i:"◈"},{k:"settings",l:"Paramètres",i:"◎"}].map(item=>(
                   <button key={item.k} onClick={()=>{setView(item.k);setShowMenu(false);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent",transition:"background 0.15s"}}>
                     <span style={{fontSize:17,color:"rgba(255,255,255,0.6)",lineHeight:1,width:20,textAlign:"center"}}>{item.i}</span>
                     <span style={{fontSize:13,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.06em",color:"rgba(255,255,255,0.7)"}}>{item.l}</span>
                   </button>
                 ))}
                 <div style={{height:1,background:"rgba(255,255,255,0.06)",margin:"2px 8px"}}/>
-                <button onClick={()=>setShowMenu(false)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent"}}>
+                <button onClick={closeMenu} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent"}}>
                   <span style={{fontSize:17,color:"rgba(255,255,255,0.3)",lineHeight:1,width:20,textAlign:"center"}}>×</span>
                   <span style={{fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,color:"rgba(255,255,255,0.3)",letterSpacing:"0.06em"}}>Fermer</span>
                 </button>
@@ -1805,12 +2036,12 @@ export default function App() {
             </>
           )}
           {selectedDay && (
-            <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center",paddingBottom:90}} onClick={closeDay}>
+            <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center",paddingBottom:90,overflowY:"auto"}} onClick={closeDay}>
               <div onClick={e=>e.stopPropagation()} style={{width:"calc(100% - 32px)",maxWidth:480,background:"rgba(14,14,14,0.97)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:24,padding:"20px",boxShadow:"0 -8px 48px rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",animation:`${dayClosing?"fadeOutDown":"fadeInUp"} 0.25s cubic-bezier(.4,0,.2,1)`}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:13,color:"rgba(255,255,255,0.9)",fontFamily:"'Barlow',sans-serif",fontWeight:600,letterSpacing:"0.08em"}}>{new Date(selectedDay.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</div>
-                    <div style={{fontSize:20,color:selectedDay.pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,marginTop:2}}>{selectedDay.pnl>=0?"+":""}{selectedDay.pnl.toFixed(0)}€ · {selectedDay.trades.length} trade{selectedDay.trades.length!==1?"s":""}</div>
+                    <div style={{fontSize:20,color:selectedDay.pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,marginTop:2}}>{selectedDay.pnl>=0?"+":""}{selectedDay.pnl.toFixed(0)}{currency} · {selectedDay.trades.length} trade{selectedDay.trades.length!==1?"s":""}</div>
                   </div>
                   <button onClick={closeDay} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:50,width:32,height:32,color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
                 </div>
@@ -1851,14 +2082,14 @@ export default function App() {
                               {dayEmotions.map(e=>(
                                 <div key={e.name} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                                   <span style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontFamily:"'Josefin Sans',sans-serif"}}>{e.name}</span>
-                                  <span style={{fontSize:10,color:e.wr>=50?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{e.wr}% · {e.pnl>=0?"+":""}{e.pnl.toFixed(0)}€</span>
+                                  <span style={{fontSize:10,color:e.wr>=50?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{e.wr}% · {e.pnl>=0?"+":""}{e.pnl.toFixed(0)}{currency}</span>
                                 </div>
                               ))}
                               {daySess.length>0&&<div style={{fontSize:7,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>Sessions</div>}
                               {daySess.map(s=>(
                                 <div key={s.name} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                                   <span style={{fontSize:10,color:"rgba(255,255,255,0.45)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.04em"}}>{s.name}</span>
-                                  <span style={{fontSize:10,color:s.pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif"}}>{s.wr}% · {s.pnl>=0?"+":""}{s.pnl.toFixed(0)}€</span>
+                                  <span style={{fontSize:10,color:s.pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif"}}>{s.wr}% · {s.pnl>=0?"+":""}{s.pnl.toFixed(0)}{currency}</span>
                                 </div>
                               ))}
                             </div>
@@ -1901,7 +2132,7 @@ export default function App() {
                   return (
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginBottom:12}}>
                       {[
-                        {l:"Profit Factor",v:dPF,c:parseFloat(dPF)>=1||dPF==="∞"?"#4caf6e":"#e05a5a"},
+                        {l:"Profit Factor",v:dPF==="—"||dPF==="∞"?dPF:dPF+"x",c:parseFloat(dPF)>=1||dPF==="∞"?"#4caf6e":"#e05a5a"},
                         {l:"RR Moyen",v:dRR==="—"?"—":dRR+":1",c:"rgba(255,255,255,0.5)"},
                         {l:"Nb Trades",v:dTotal,c:"rgba(255,255,255,0.7)"},
                         {l:"Long",v:dLong.length?dLW+"%":"—",c:dLW>=50?"#4caf6e":"#e05a5a",sub:dLong.length+"T"},
@@ -1916,37 +2147,7 @@ export default function App() {
                     </div>
                   );
                 })()}
-                <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:380,overflowY:"auto"}}>
-                  {selectedDay.trades.map(t=>{
-                    const pnl=t.pnl||0;
-                    return (
-                      <div key={t.id} style={{background:"rgba(255,255,255,0.05)",borderRadius:10,padding:"14px",borderLeft:`3px solid ${t.result==="WIN"?"#4caf6e":t.result==="LOSS"?"#e05a5a":"rgba(255,255,255,0.2)"}`}}>
-                        {/* Header */}
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                          <div>
-                            <span style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:16,color:"rgba(255,255,255,0.95)"}}>{t.instrument}</span>
-                            <span style={{marginLeft:8,fontSize:10,color:t.direction==="LONG"?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,letterSpacing:"0.1em"}}>{t.direction}</span>
-                            <span style={{marginLeft:8,fontSize:10,color:t.result==="WIN"?"#4caf6e":t.result==="LOSS"?"#e05a5a":"rgba(255,255,255,0.4)",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.08em"}}>{t.result}</span>
-                          </div>
-                          <span style={{fontSize:18,fontWeight:300,color:pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif"}}>{pnl>=0?"+":""}{pnl.toFixed(0)}€</span>
-                        </div>
-                        {/* Tags */}
-                        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:t.notes?8:0}}>
-                          {[
-                            {l:t.session},
-                            {l:t.emotion},
-                            t.rr?{l:`RR ${t.rr}`}:null,
-                            t.entry?{l:`Entrée ${t.entry}`}:null,
-                            t.exit?{l:`Sortie ${t.exit}`}:null,
-                          ].filter(Boolean).map((tag,i)=>(
-                            <span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.07)",padding:"3px 9px",borderRadius:4,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.06em"}}>{tag.l}</span>
-                          ))}
-                        </div>
-                        {t.notes&&<div style={{fontSize:11,color:"rgba(255,255,255,0.45)",fontStyle:"italic",fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.6,borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:8}}>{t.notes}</div>}
-                      </div>
-                    );
-                  })}
-                </div>
+
               </div>
             </div>
           )}
@@ -1958,15 +2159,53 @@ export default function App() {
           <Sidebar view={view} setView={setView} />
           <div style={{ marginLeft:220, flex:1, display:"flex", flexDirection:"column" }}>
             <div style={{ padding:"20px 36px 18px", borderBottom:`1px solid ${C.border}`, background:C.bg, position:"sticky", top:0, zIndex:40, backdropFilter:"blur(12px)" }}>
-              <div style={{ fontSize:11, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", marginBottom:2, fontFamily:"'Josefin Sans',sans-serif" }}>{NAV.find(n => n.key === view)?.label}</div>
+              <div style={{ fontSize:11, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", marginBottom:2, fontFamily:"'Josefin Sans',sans-serif" }}>{FULL_NAV.find(n => n.key === view)?.label}</div>
               <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:30, fontWeight:600, color:C.white, letterSpacing:"-0.01em" }}>
-                {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Historique" : view === "strategy" ? "Plan de Trading" : view === "tools" ? "Outils" : "Analyse IA"}
+                {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Statistiques" : view === "strategy" ? "Plan de Trading" : view === "tools" ? "Outils" : "Analyse IA"}
               </div>
             </div>
-            <div style={{ padding:"28px 36px", flex:1, maxWidth:760, margin:"0 auto", width:"100%" }}>
-              {getContent(true)}
+            <div style={{ padding:"28px 36px", flex:1 }}>
+              <div key={view+(selectedPf?.id||"")} style={{animation:"tabFadeIn 0.25s cubic-bezier(.4,0,.2,1)"}}>{getContent(true)}</div>
             </div>
           </div>
+          {/* Day popup for desktop */}
+          {selectedDay && (
+            <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.4)",backdropFilter:"blur(4px)"}} onClick={closeDay}>
+              <div onClick={e=>e.stopPropagation()} style={{width:"90%",maxWidth:520,background:"rgba(14,14,14,0.97)",backdropFilter:"blur(24px)",borderRadius:24,padding:"24px",boxShadow:"0 24px 80px rgba(0,0,0,0.5)",border:"1px solid rgba(255,255,255,0.08)",animation:`${dayClosing?"fadeOutDown":"fadeInUp"} 0.25s cubic-bezier(.4,0,.2,1)`,maxHeight:"85vh",overflowY:"auto"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                  <div>
+                    <div style={{fontSize:14,color:"rgba(255,255,255,0.9)",fontFamily:"'Barlow',sans-serif",fontWeight:600,letterSpacing:"0.08em"}}>{new Date(selectedDay.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</div>
+                    <div style={{fontSize:22,color:selectedDay.pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,marginTop:2}}>{selectedDay.pnl>=0?"+":""}{selectedDay.pnl.toFixed(0)}{currency} · {selectedDay.trades.length} trade{selectedDay.trades.length!==1?"s":""}</div>
+                  </div>
+                  <button onClick={closeDay} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:50,width:36,height:36,color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+                </div>
+                {/* Reuse same popup content — trades list */}
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {selectedDay.trades.map(t=>{
+                    const pnl=t.pnl||0;
+                    return (
+                      <div key={t.id} style={{background:"rgba(255,255,255,0.05)",borderRadius:10,padding:"14px",borderLeft:`3px solid ${t.result==="WIN"?"#4caf6e":t.result==="LOSS"?"#e05a5a":"rgba(255,255,255,0.2)"}`}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                          <div>
+                            <span style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:16,color:"rgba(255,255,255,0.95)"}}>{t.instrument}</span>
+                            <span style={{marginLeft:8,fontSize:10,color:t.direction==="LONG"?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,letterSpacing:"0.1em"}}>{t.direction}</span>
+                            <span style={{marginLeft:8,fontSize:10,color:t.result==="WIN"?"#4caf6e":t.result==="LOSS"?"#e05a5a":"rgba(255,255,255,0.4)",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{t.result}</span>
+                          </div>
+                          <span style={{fontSize:18,fontWeight:300,color:pnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif"}}>{pnl>=0?"+":""}{pnl.toFixed(0)}{currency}</span>
+                        </div>
+                        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                          {[t.session,t.emotion,t.rr?`RR ${t.rr}`:null,t.entry?`Entrée ${t.entry}`:null,t.exit?`Sortie ${t.exit}`:null].filter(Boolean).map((tag,i)=>(
+                            <span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.07)",padding:"3px 9px",borderRadius:4,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.06em"}}>{tag}</span>
+                          ))}
+                        </div>
+                        {t.notes&&<div style={{marginTop:8,fontSize:11,color:"rgba(255,255,255,0.45)",fontStyle:"italic",fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.6,borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:8}}>{t.notes}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
