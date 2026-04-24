@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, PieChart, Pie, Cell, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, Radar } from "recharts";
+import { supabase } from "./supabase";
 
 /* ─── Constants ─────────────────────────────────────────────────── */
 const BASE_INSTRUMENTS = ["MNQ","NQ","ES","MES","CL","GC","EUR/USD"];
@@ -67,9 +68,10 @@ const useIsMobile = () => {
 /* ─── Base UI ────────────────────────────────────────────────────── */
 const iStyle = {
   width:"100%", background:C.bg3, border:`1px solid ${C.border}`,
-  borderRadius:6, padding:"13px 14px", color:C.white, fontSize:16,
+  borderRadius:10, padding:"13px 14px", color:C.white, fontSize:16,
   fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, outline:"none",
   WebkitAppearance:"none", appearance:"none", letterSpacing:"0.05em",
+  boxShadow:"inset 0 2px 6px rgba(0,0,0,0.18), inset 0 1px 2px rgba(0,0,0,0.1)",
 };
 
 function Label({ children }) {
@@ -85,8 +87,27 @@ function Divider() {
 }
 
 function Chip({ label, active, onClick }) {
+  const isDark = C.bg === "#0f0f0f";
   return (
-    <button onClick={onClick} style={{ padding:"8px 12px", borderRadius:4, cursor:"pointer", transition:"all 0.15s", border:active ? `1px solid ${C.accent}` : `1px solid ${C.gray2}`, background:active ? "rgba(0,0,0,0.08)" : "transparent", color:active ? C.accent : C.gray1, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:active ? 600 : 300, letterSpacing:"0.08em", textTransform:"uppercase", flex:"1 1 auto", minWidth:44 }}>
+    <button onClick={onClick} style={{
+      padding:"8px 14px", borderRadius:20, cursor:"pointer",
+      transition:"all 0.22s cubic-bezier(.4,0,.2,1)",
+      border: active ? "none" : isDark ? `1px solid ${C.gray2}` : "1px solid rgba(0,0,0,0.28)",
+      background: active
+        ? isDark
+          ? "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.92) 0%, rgba(210,210,210,0.84) 55%, rgba(225,225,225,0.88) 100%)"
+          : "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(25,25,25,0.92) 0%, rgba(55,55,55,0.84) 55%, rgba(40,40,40,0.88) 100%)"
+        : isDark ? "transparent" : C.bg3,
+      color: active ? (isDark ? "#111" : "#f0ede8") : isDark ? C.gray1 : C.white,
+      fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:active ? 600 : 500,
+      letterSpacing:"0.08em", textTransform:"uppercase", flex:"1 1 auto", minWidth:44,
+      boxShadow: active
+        ? isDark
+          ? "0 0 24px 7px rgba(255,255,255,0.22), 0 0 50px 14px rgba(255,255,255,0.09), 0 4px 14px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5)"
+          : "0 0 14px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.18)"
+        : isDark ? "none" : "inset 0 2px 4px rgba(0,0,0,0.15)",
+      transform: active ? "translateY(-1px)" : "translateY(0)",
+    }}>
       {label}
     </button>
   );
@@ -97,9 +118,9 @@ function ChipGroup({ options, value, onChange }) {
 }
 
 function StatCard({ label, value, color, small }) {
+  const isDark = C.bg === "#0f0f0f";
   return (
-    <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderTop:`2px solid ${color||C.accent}`, borderRadius:10, padding:small ? (!isMobile?"20px 22px":"16px 18px") : (!isMobile?"28px 24px":"20px 18px"), position:"relative", overflow:"hidden" }}>
-      <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at top left,rgba(0,0,0,0.02),transparent 70%)", pointerEvents:"none" }} />
+    <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderTop:`2px solid ${color||C.accent}`, borderRadius:14, padding:small ? (!isMobile?"20px 22px":"16px 18px") : (!isMobile?"28px 24px":"20px 18px"), position:"relative", boxShadow: isDark ? "0 6px 32px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1), 0 -2px 28px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.36)" : "0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.06)" }}>
       <div style={{ fontSize:9, color:C.dim, textTransform:"uppercase", letterSpacing:"0.18em", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, marginBottom:6 }}>{label}</div>
       <div style={{ fontSize:small ? 16 : 24, fontWeight:300, color:color||C.white, fontFamily:"'Josefin Sans',sans-serif", lineHeight:1, letterSpacing:"0.05em" }}>{value}</div>
     </div>
@@ -117,15 +138,17 @@ function PageTitle({ sub, title }) {
 
 /* ─── Mobile Pill Nav ────────────────────────────────────────────── */
 function PillNav({ view, setView, darkMode }) {
+  const [hovered, setHovered] = useState(null);
   return (
-    <div style={{ position:"fixed", bottom:24, left:"50%", transform:"translateX(-50%)", zIndex:200, display:"flex", alignItems:"center", background:"rgba(18,18,18,0.92)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderRadius:50, padding:"6px 8px", gap:2, boxShadow:"0 8px 32px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15)", border:"1px solid rgba(255,255,255,0.08)" }}>
+    <div style={{ position:"fixed", bottom:24, left:"50%", transform:"translateX(-50%)", zIndex:200, display:"flex", alignItems:"center", background:"linear-gradient(180deg, rgba(60,60,60,0.97) 0%, rgba(18,18,18,0.99) 55%, rgba(8,8,8,1) 100%)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderRadius:50, padding:"6px 8px", gap:2, boxShadow:"0 6px 20px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.4), 0 0 60px rgba(255,255,255,0.11), 0 0 0 1px rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -2px 0 rgba(0,0,0,0.8)", border:"1px solid rgba(255,255,255,0.1)" }}>
       {NAV.map(item => {
         const active = view === item.key;
+        const isHovered = hovered === item.key && !active;
         return (
-          <button key={item.key} onClick={() => setView(item.key)} style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"8px 14px", borderRadius:44, border:"none", cursor:"pointer", background:active ? "rgba(255,255,255,0.15)" : "transparent", transition:"all 0.25s cubic-bezier(.4,0,.2,1)", minWidth:52, position:"relative" }}>
+          <button key={item.key} onClick={() => setView(item.key)} onMouseEnter={() => setHovered(item.key)} onMouseLeave={() => setHovered(null)} style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"8px 14px", borderRadius:44, border:"none", cursor:"pointer", background:active ? "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(252,252,252,0.93) 0%, rgba(225,225,225,0.85) 55%, rgba(200,200,200,0.75) 100%)" : isHovered ? "rgba(255,255,255,0.05)" : "transparent", boxShadow:active ? "0 0 26px 8px rgba(255,255,255,0.22), 0 0 50px 16px rgba(255,255,255,0.09), 0 6px 20px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3)" : "none", transform:active ? "translateY(-2px)" : isHovered ? "translateY(-1px)" : "translateY(0)", transition:"all 0.25s cubic-bezier(.4,0,.2,1)", minWidth:52, position:"relative", zIndex:1 }}>
             {item.key==="ai" && <span style={{position:"absolute",top:3,right:4,background:"linear-gradient(135deg,rgba(210,180,120,0.18),rgba(210,180,120,0.06))",border:"1px solid rgba(210,180,120,0.3)",color:"rgba(210,180,120,0.9)",fontSize:6,fontFamily:"'Josefin Sans',sans-serif",fontWeight:400,letterSpacing:"0.22em",padding:"2px 5px",borderRadius:4,textTransform:"uppercase",lineHeight:1.4,backdropFilter:"blur(4px)"}}>bientôt</span>}
-            <span style={{ fontSize:16, lineHeight:1, color:active ? "#fff" : "rgba(255,255,255,0.4)", transition:"color 0.2s" }}>{item.icon}</span>
-            <span style={{ fontSize:8, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:active ? "#fff" : "rgba(255,255,255,0.35)", transition:"color 0.2s" }}>{item.label}</span>
+            <span style={{ fontSize:16, lineHeight:1, color:active ? "#111" : "rgba(255,255,255,0.4)", transition:"color 0.2s" }}>{item.icon}</span>
+            <span style={{ fontSize:8, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.35)", transition:"color 0.2s" }}>{item.label}</span>
           </button>
         );
       })}
@@ -143,8 +166,9 @@ const FULL_NAV = [
   { key:"settings",  icon:"◎",  label:"Paramètres" },
 ];
 function Sidebar({ view, setView, darkMode }) {
+  const [hovered, setHovered] = useState(null);
   return (
-    <div style={{ width:220, minHeight:"100vh", background:C.bg2, borderRight:`1px solid ${C.border}`, flexDirection:"column", position:"fixed", left:0, top:0, padding:"28px 0", zIndex:50, display:"flex" }}>
+    <div style={{ width:220, minHeight:"100vh", background:C.bg2, borderRight:`1px solid ${C.border}`, flexDirection:"column", position:"fixed", left:0, top:0, padding:"28px 0", zIndex:50, display:"flex", boxShadow:"4px 0 24px rgba(0,0,0,0.12)" }}>
       <div style={{ padding:"0 20px 24px", borderBottom:`1px solid ${C.border}` }}>
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
           <img src={darkMode?"/fyltra_logo_white.svg":"/fyltra_logo_black.svg"} style={{width:42,height:42,flexShrink:0,borderRadius:8}} alt="Fyltra"/>
@@ -156,29 +180,36 @@ function Sidebar({ view, setView, darkMode }) {
 
       </div>
       <div style={{ padding:"16px 12px", flex:1, display:"flex", flexDirection:"column", justifyContent:"center" }}>
-        <div style={{ background:"rgba(15,15,15,0.95)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", borderRadius:24, padding:"10px", boxShadow:"0 12px 40px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)", border:"1px solid rgba(255,255,255,0.07)" }}>
+        <div style={{ background:"linear-gradient(180deg, rgba(60,60,60,0.97) 0%, rgba(18,18,18,0.99) 55%, rgba(8,8,8,1) 100%)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", borderRadius:24, padding:"10px", boxShadow:"0 6px 20px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.4), 0 0 60px rgba(255,255,255,0.11), 0 0 0 1px rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -2px 0 rgba(0,0,0,0.8)", border:"1px solid rgba(255,255,255,0.1)" }}>
           {FULL_NAV.map(item => {
             const active = view === item.key;
+            const isHovered = hovered === item.key && !active;
             return (
-              <button key={item.key} onClick={() => setView(item.key)} style={{
+              <button key={item.key} onClick={() => setView(item.key)} onMouseEnter={() => setHovered(item.key)} onMouseLeave={() => setHovered(null)} style={{
                 display:"flex", alignItems:"center", gap:14, width:"100%",
                 padding: active ? "10px 18px" : "10px 14px",
                 borderRadius:16, border:"none", cursor:"pointer",
-                background: active ? "#ffffff" : "transparent",
+                background: active ? "radial-gradient(ellipse 110% 100% at 50% 35%, rgba(252,252,252,0.93) 0%, rgba(225,225,225,0.85) 55%, rgba(200,200,200,0.75) 100%)" : isHovered ? "rgba(255,255,255,0.05)" : "transparent",
                 marginBottom:4,
                 transition:"all 0.25s cubic-bezier(.4,0,.2,1)",
-                boxShadow: active ? "0 2px 12px rgba(0,0,0,0.25)" : "none",
-                position:"relative",
+                boxShadow: active ? "0 0 20px 6px rgba(230,230,230,0.1), 0 6px 20px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.3)" : isHovered ? "0 2px 8px rgba(0,0,0,0.2)" : "none",
+                transform: active ? "translateY(-1px)" : isHovered ? "translateY(-0.5px)" : "translateY(0)",
+                position:"relative", zIndex:1,
               }}>
                 <span style={{ fontSize:17, color:active ? "#111" : "rgba(255,255,255,0.4)", lineHeight:1, width:22, textAlign:"center", transition:"color 0.25s" }}>{item.icon}</span>
-                <span style={{ fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#111" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
+                <span style={{ fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
                 {item.key==="ai" && <span style={{marginLeft:"auto",background:"linear-gradient(135deg,rgba(210,180,120,0.15),rgba(210,180,120,0.05))",border:"1px solid rgba(210,180,120,0.25)",color:"rgba(210,180,120,0.85)",fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.22em",padding:"3px 8px",borderRadius:4,textTransform:"uppercase",backdropFilter:"blur(4px)"}}>bientôt</span>}
               </button>
             );
           })}
         </div>
       </div>
-      <div style={{ padding:"0 20px", fontSize:9, color:C.gray2, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.08em" }}>v1.0 · Fyltra</div>
+      <div style={{ padding:"12px 20px", borderTop:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <div style={{ fontSize:9, color:C.gray2, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.08em" }}>v1.0 · Fyltra</div>
+        <button onClick={() => supabase.auth.signOut()} style={{ background:"none", border:"none", cursor:"pointer", fontSize:9, color:"rgba(229,100,100,0.55)", fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em", textTransform:"uppercase", padding:"4px 8px", borderRadius:6, transition:"color 0.2s" }}>
+          Déconnexion
+        </button>
+      </div>
     </div>
   );
 }
@@ -231,7 +262,7 @@ function Calendar({ filtered, calMonth, calYear, onPrev, onNext, onDayClick, cur
               const bg = hasTrade ? (pnl >= 0 ? `rgba(42,110,58,${intensity})` : `rgba(192,57,43,${intensity})`) : "transparent";
               const isToday = now.getDate() === day && now.getMonth() === m && now.getFullYear() === yr;
               return (
-                <div key={day} onClick={()=>{ if(onDayClick&&!isToday&&hasTrade){onDayClick({day,month:m,year:yr,pnl});}}} title={hasTrade ? `${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)}${cur||"€"}` : ""} style={{ aspectRatio:"1", borderRadius:4, background:bg, border:isToday ? `1px solid ${C.accent}` : `1px solid ${hasTrade ? bg : C.gray3}`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:hasTrade&&!isToday?"pointer":"default" }}>
+                <div key={day} onClick={()=>{ if(onDayClick&&!isToday&&hasTrade){onDayClick({day,month:m,year:yr,pnl});}}} title={hasTrade ? `${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)}${cur||"€"}` : ""} style={{ aspectRatio:"1", borderRadius:8, background:bg, border:isToday ? `1px solid ${C.accent}` : `1px solid ${hasTrade ? "transparent" : C.gray3}`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:hasTrade&&!isToday?"pointer":"default", boxShadow:hasTrade ? "0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.3)" : "none", transform:hasTrade ? "translateY(-1px)" : "none", transition:"all 0.15s" }}>
                   <span style={{ fontSize:9, color:hasTrade ? "#fff" : C.gray1, fontFamily:"'Josefin Sans',sans-serif", lineHeight:1, fontWeight:hasTrade ? 600 : 300 }}>{day}</span>
                   {hasTrade && <span style={{ fontSize:7, color:"rgba(255,255,255,0.9)", lineHeight:1, marginTop:1 }}>{pnl >= 0 ? "+" : ""}{Math.round(pnl)}</span>}
                 </div>
@@ -302,9 +333,100 @@ function PnlChart({ filtered, capital, pnlSum, height, cur }) {
   );
 }
 
+/* ─── AUTH SCREEN ────────────────────────────────────────────────── */
+function AuthScreen() {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const isDark = true;
+
+  const submit = async () => {
+    if (!email || !password) { setError("Remplis tous les champs."); return; }
+    setLoading(true); setError(""); setSuccess("");
+    if (mode === "login") {
+      const { error: e } = await supabase.auth.signInWithPassword({ email, password });
+      if (e) setError(e.message === "Invalid login credentials" ? "Email ou mot de passe incorrect." : e.message);
+    } else {
+      const { error: e } = await supabase.auth.signUp({ email, password });
+      if (e) setError(e.message);
+      else setSuccess("Compte créé ! Vérifie ton email pour confirmer.");
+    }
+    setLoading(false);
+  };
+
+  const inputStyle = {
+    width:"100%", background:"#1a1a1a", border:"1px solid rgba(255,255,255,0.12)",
+    borderRadius:10, padding:"14px 16px", color:"#f0ede8", fontSize:14,
+    fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, outline:"none",
+    letterSpacing:"0.05em", boxShadow:"inset 0 2px 6px rgba(0,0,0,0.3)",
+  };
+
+  return (
+    <div style={{ minHeight:"100vh", background:"#0f0f0f", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Josefin Sans',sans-serif", padding:24 }}>
+      <style>{FONTS}</style>
+      <div style={{ width:"100%", maxWidth:380 }}>
+        {/* Logo */}
+        <div style={{ textAlign:"center", marginBottom:40 }}>
+          <img src="/fyltra_logo_white.svg" style={{ width:52, height:52, marginBottom:14 }} alt="Fyltra" />
+          <img src="/fyltra_wordmark_white.svg" style={{ height:20, display:"block", margin:"0 auto" }} alt="FYLTRA" />
+          <div style={{ marginTop:10, fontSize:10, color:"rgba(255,255,255,0.35)", letterSpacing:"0.25em", textTransform:"uppercase" }}>
+            Trading Journal
+          </div>
+        </div>
+
+        {/* Mode switch */}
+        <div style={{ display:"flex", gap:4, marginBottom:28, background:"#1a1a1a", borderRadius:12, padding:4, border:"1px solid rgba(255,255,255,0.08)" }}>
+          {["login","signup"].map(m => (
+            <button key={m} onClick={() => { setMode(m); setError(""); setSuccess(""); }} style={{
+              flex:1, padding:"9px", borderRadius:8, border:"none", cursor:"pointer",
+              background: mode === m ? "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)" : "transparent",
+              color: mode === m ? "#111" : "rgba(255,255,255,0.45)",
+              fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: mode === m ? 600 : 300,
+              letterSpacing:"0.1em", textTransform:"uppercase", transition:"all 0.22s",
+              boxShadow: mode === m ? "0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.9)" : "none",
+              transform: mode === m ? "translateY(-1px)" : "none",
+            }}>
+              {m === "login" ? "Connexion" : "Créer un compte"}
+            </button>
+          ))}
+        </div>
+
+        {/* Fields */}
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle} />
+          <input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle} />
+        </div>
+
+        {/* Error / Success */}
+        {error && <div style={{ marginTop:14, fontSize:12, color:"#e05a5a", fontFamily:"'Josefin Sans',sans-serif", textAlign:"center" }}>{error}</div>}
+        {success && <div style={{ marginTop:14, fontSize:12, color:"#4caf6e", fontFamily:"'Josefin Sans',sans-serif", textAlign:"center" }}>{success}</div>}
+
+        {/* Submit */}
+        <button onClick={submit} disabled={loading} style={{
+          width:"100%", marginTop:20, padding:"14px", borderRadius:10, border:"none",
+          background: loading ? "#333" : "#f0ede8",
+          color: loading ? "#888" : "#111",
+          fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600,
+          letterSpacing:"0.2em", textTransform:"uppercase", cursor: loading ? "not-allowed" : "pointer",
+          transition:"all 0.2s", boxShadow: loading ? "none" : "0 4px 20px rgba(240,237,232,0.15)",
+        }}>
+          {loading ? "..." : mode === "login" ? "Se connecter" : "Créer le compte"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── MAIN APP ───────────────────────────────────────────────────── */
 export default function App() {
   const isMobile = useIsMobile();
+  const [user,        setUser]        = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [trades,      setTrades]      = useState(() => load(KEYS.trades, []));
   const [extraInstr,  setExtraInstr]  = useState(() => load(KEYS.instruments, []));
   const [extraEmotions, setExtraEmotions] = useState(() => load('fyltra_emotions_v1', []));
@@ -392,7 +514,43 @@ export default function App() {
   const instruments = [...BASE_INSTRUMENTS, ...extraInstr, "Autre"];
   const availableYears = Array.from({ length:now0.getFullYear() - 2019 }, (_, i) => now0.getFullYear() - i);
 
-  useEffect(() => { save(KEYS.trades,      trades);    }, [trades]);
+  // ── Supabase helpers ──
+  const dbToTrade = r => ({
+    id:r.id, date:r.date, instrument:r.instrument, direction:r.direction,
+    result:r.result, pnl:r.pnl, session:r.session, emotion:r.emotion,
+    notes:r.notes, tags:r.tags||[], rr:r.rr, tradeMode:r.trade_mode,
+    size:r.size, entry:r.entry, exit:r.exit, sizeUnit:r.size_unit,
+    accountIds:r.account_ids||[], strategyId:r.strategy_id,
+  });
+  const tradeToDb = t => ({
+    user_id:user.id, date:t.date, instrument:t.instrument, direction:t.direction,
+    result:t.result, pnl:t.pnl, session:t.session, emotion:t.emotion,
+    notes:t.notes||"", tags:t.tags||[], rr:t.rr?parseFloat(t.rr):null,
+    trade_mode:t.tradeMode||tradeMode, size:t.size?parseFloat(t.size):null,
+    entry:t.entry||null, exit:t.exit||null, size_unit:t.sizeUnit||null,
+    account_ids:t.accountIds||[], strategy_id:t.strategyId||null,
+  });
+
+  // ── Auth ──
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data:{ session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+    const { data:{ subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ── Load trades from DB when user logs in ──
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("trades").select("*").eq("user_id", user.id).order("created_at", { ascending:false })
+      .then(({ data }) => { if (data) setTrades(data.map(dbToTrade)); });
+  }, [user]);
+
+  useEffect(() => { if (!user) save(KEYS.trades, trades); }, [trades]);
   useEffect(() => { save(KEYS.instruments, extraInstr);}, [extraInstr]);
   useEffect(() => { save('fyltra_emotions_v1', extraEmotions); }, [extraEmotions]);
   useEffect(() => { save(KEYS.strategies,  strategies); }, [strategies]);
@@ -438,9 +596,10 @@ export default function App() {
     return Math.abs(a);
   };
 
-  const addTrade = () => {
+  const addTrade = async () => {
     const p = computedPnl();
     if (p === null) return;
+    let newTrade;
     if (tradeFixedMode === "fixe") {
       const tp  = savedTS.tpFixed.enabled && savedTS.tpFixed.value ? parseFloat(savedTS.tpFixed.value) : null;
       const sl  = savedTS.slFixed.enabled && savedTS.slFixed.value ? Math.abs(parseFloat(savedTS.slFixed.value)) : null;
@@ -450,23 +609,34 @@ export default function App() {
       const pnl = form.result === "WIN" ? ((tp ?? 0) || parseFloat(pnlRaw) || 0)
                 : form.result === "LOSS" ? -((sl ?? 0) || parseFloat(pnlRaw) || 0)
                 : 0;
-      setTrades(prev => [{ ...form, pnl, rr, size:sz, sizeUnit:szu, id:Date.now() }, ...prev]);
+      newTrade = { ...form, pnl, rr, size:sz, sizeUnit:szu };
     } else {
-      setTrades(prev => [{ ...form, pnl:p, id:Date.now() }, ...prev]);
+      newTrade = { ...form, pnl:p };
+    }
+    if (user) {
+      const { data } = await supabase.from("trades").insert(tradeToDb(newTrade)).select().single();
+      if (data) setTrades(prev => [dbToTrade(data), ...prev]);
+    } else {
+      setTrades(prev => [{ ...newTrade, id:Date.now() }, ...prev]);
     }
     setPnlRaw(""); setForm(f => ({ ...f, entry:"", exit:"", rr:"", size:"", notes:"", accountIds:[], strategyId:null }));
     setSaved(true); setTimeout(() => setSaved(false), 2500);
   };
 
-  const deleteTrade = id => setTrades(p => p.filter(t => t.id !== id));
+  const deleteTrade = async (id) => {
+    if (user) await supabase.from("trades").delete().eq("id", id);
+    setTrades(p => p.filter(t => t.id !== id));
+  };
   const updateTrade = (id, ch) => setTrades(p => p.map(t => t.id === id ? { ...t, ...ch } : t));
   const startEdit = t => { setEditingTrade({ ...t }); setEditPnlRaw(String(Math.abs(t.pnl || 0))); };
   const cancelEdit = () => { setEditingTrade(null); setEditPnlRaw(""); };
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingTrade) return;
     const a = parseFloat(editPnlRaw);
     const p = isNaN(a) ? editingTrade.pnl : (editingTrade.result === "LOSS" ? -Math.abs(a) : editingTrade.result === "BREAKEVEN" ? 0 : Math.abs(a));
-    updateTrade(editingTrade.id, { ...editingTrade, pnl:p });
+    const updated = { ...editingTrade, pnl:p };
+    if (user) await supabase.from("trades").update(tradeToDb(updated)).eq("id", editingTrade.id);
+    updateTrade(editingTrade.id, updated);
     setEditingTrade(null); setEditPnlRaw("");
   };
 
@@ -561,7 +731,7 @@ export default function App() {
 
       {desktop ? (
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:16 }}>
-          <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, padding:"16px 14px 10px" }}>
+          <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:10, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:"16px 14px 10px" }}>
             <div style={{ marginBottom:8 }}>
               <div style={{ fontSize:10, color:C.dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600 }}>Évolution P&L</div>
             </div>
@@ -578,13 +748,13 @@ export default function App() {
             <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={160} cur={currency}/>
             {filtered.length < 2 && <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>Aucun trade ce mois</div>}
           </div>
-          <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, padding:"16px 14px" }}>
+          <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:10, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:"16px 14px" }}>
             <Calendar filtered={calFiltered} calMonth={calMonth} calYear={calYear} onPrev={prevMonth} onNext={nextMonth} />
           </div>
         </div>
       ) : (
         <div>
-          <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, padding:"16px 14px 10px", marginBottom:14 }}>
+          <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:10, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:"16px 14px 10px", marginBottom:14 }}>
               <div style={{ marginBottom:8 }}>
                 <div style={{ fontSize:10, color:C.dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600 }}>Évolution P&L</div>
               </div>
@@ -600,14 +770,14 @@ export default function App() {
               )}
               {filtered.length > 1 ? <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={150} cur={currency}/> : <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>Aucun trade ce mois</div>}
             </div>
-          <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, padding:"16px 14px", marginBottom:14 }}>
+          <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:10, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:"16px 14px", marginBottom:14 }}>
               <Calendar filtered={calFiltered} calMonth={calMonth} calYear={calYear} onPrev={prevMonth} onNext={nextMonth} />
             </div>
         </div>
       )}
 
       {sessionStats.length > 0 && (
-        <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, padding:18 }}>
+        <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:10, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:18 }}>
           <div style={{ fontSize:10, color:C.dim, letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:14, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600 }}>Performance par Session</div>
           {sessionStats.map(s => (
             <div key={s.name} style={{ marginBottom:12 }}>
@@ -627,7 +797,7 @@ export default function App() {
         <div style={{ textAlign:"center", padding:"48px 0" }}>
           <div style={{ fontSize:44, marginBottom:12, color:C.gray2 }}>◎</div>
           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:C.gray1, marginBottom:14 }}>Commencez à enregistrer vos trades</div>
-          <button onClick={() => setView("add")} style={{ background:C.accent, border:"none", borderRadius:4, padding:"11px 24px", color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer" }}>+ Premier trade</button>
+          <button onClick={() => setView("add")} style={{ background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)", border:"none", borderRadius:12, padding:"11px 24px", color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer" }}>+ Premier trade</button>
         </div>
       )}
     </div>
@@ -639,12 +809,12 @@ export default function App() {
       <PageTitle sub="Enregistrer" title="Nouveau Trade" />
 
       {/* ── MODE SWITCH ── */}
-      <div style={{display:"flex",gap:8,marginBottom:20,padding:4,background:C.bg2,borderRadius:12,border:`1px solid ${C.border}`}}>
+      <div style={{display:"flex",gap:8,marginBottom:20,padding:5,background:darkMode?"linear-gradient(180deg,rgba(85,85,85,0.98) 0%,rgba(28,28,28,0.99) 100%)":"linear-gradient(180deg,rgba(60,60,60,0.95) 0%,rgba(18,18,18,0.97) 100%)",borderRadius:16,border:darkMode?"1px solid rgba(255,255,255,0.18)":"1px solid rgba(255,255,255,0.14)",boxShadow:darkMode?"0 12px 40px rgba(0,0,0,0.75), 0 4px 10px rgba(0,0,0,0.5), 0 0 50px rgba(255,255,255,0.1), 0 0 0 1px rgba(255,255,255,0.12), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.75)":"0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -2px 0 rgba(0,0,0,0.55)"}}>
         {[
           {k:"swing", label:"Swing / Day"},
           {k:"scalping", label:"Scalping"},
         ].map(m => (
-          <button key={m.k} onClick={()=>setTradeMode(m.k)} style={{flex:1,padding:"10px 12px",borderRadius:9,border:"none",background:tradeMode===m.k?C.accent:"transparent",color:tradeMode===m.k?(darkMode?"#111":"#fff"):C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:tradeMode===m.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.22s",position:"relative",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <button key={m.k} onClick={()=>setTradeMode(m.k)} style={{flex:1,padding:"10px 12px",borderRadius:11,border:"none",background:tradeMode===m.k?"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)":"transparent",color:tradeMode===m.k?"#111":"rgba(255,255,255,0.55)",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:tradeMode===m.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.22s cubic-bezier(.4,0,.2,1)",position:"relative",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:tradeMode===m.k?"0 6px 20px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.12)":"none",transform:tradeMode===m.k?"translateY(-2px)":"translateY(0)"}}>
             {m.label}
             {m.k==="scalping" && tradeMode==="scalping" && (
               <span style={{background:"linear-gradient(135deg,rgba(210,180,120,0.2),rgba(210,180,120,0.06))",border:"1px solid rgba(210,180,120,0.3)",color:"rgba(210,180,120,0.9)",fontSize:7,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.2em",padding:"2px 7px",borderRadius:4,textTransform:"uppercase",whiteSpace:"nowrap"}}>Saisie rapide</span>
@@ -691,9 +861,9 @@ export default function App() {
         </Field>
       )}
       {/* ── VARIABLE / FIXE SWITCH — after emotion ── */}
-      <div style={{display:"flex",gap:6,margin:"14px 0",padding:3,background:C.bg2,borderRadius:10,border:`1px solid ${C.border}`}}>
+      <div style={{display:"flex",gap:6,margin:"14px 0",padding:4,background:darkMode?"linear-gradient(180deg,rgba(85,85,85,0.98) 0%,rgba(28,28,28,0.99) 100%)":"linear-gradient(180deg,rgba(60,60,60,0.95) 0%,rgba(18,18,18,0.97) 100%)",borderRadius:14,border:darkMode?"1px solid rgba(255,255,255,0.18)":"1px solid rgba(255,255,255,0.14)",boxShadow:darkMode?"0 12px 40px rgba(0,0,0,0.75), 0 4px 10px rgba(0,0,0,0.5), 0 0 50px rgba(255,255,255,0.1), 0 0 0 1px rgba(255,255,255,0.12), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.75)":"0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -2px 0 rgba(0,0,0,0.55)"}}>
         {[{k:"variable",l:"Variable"},{k:"fixe",l:"Fixe"}].map(opt=>(
-          <button key={opt.k} onClick={()=>setTradeFixedMode(opt.k)} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:tradeFixedMode===opt.k?C.accent:"transparent",color:tradeFixedMode===opt.k?(darkMode?"#111":"#fff"):C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:tradeFixedMode===opt.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>
+          <button key={opt.k} onClick={()=>setTradeFixedMode(opt.k)} style={{flex:1,padding:"8px",borderRadius:10,border:"none",background:tradeFixedMode===opt.k?"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)":"transparent",color:tradeFixedMode===opt.k?"#111":"rgba(255,255,255,0.55)",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:tradeFixedMode===opt.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.22s cubic-bezier(.4,0,.2,1)",boxShadow:tradeFixedMode===opt.k?"0 6px 20px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.12)":"none",transform:tradeFixedMode===opt.k?"translateY(-2px)":"translateY(0)"}}>
             {opt.l}
           </button>
         ))}
@@ -867,7 +1037,7 @@ export default function App() {
         return (
           <div style={{marginBottom:20}}>
             {sections.map(sec => (
-              <div key={sec.title} style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:10,padding:"16px",marginBottom:12}}>
+              <div key={sec.title} style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:14,boxShadow:"0 6px 32px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.1), 0 -2px 28px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.36)",padding:"16px",marginBottom:12}}>
                 <div style={{marginBottom:12}}>
                   <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{sec.title}</div>
                   <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{sec.sub}</div>
@@ -924,7 +1094,7 @@ export default function App() {
                 </div>
                 <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
                   {[t.date, t.session, t.emotion, t.rr ? `RR ${t.rr}` : null].filter(Boolean).map((tag, i) => (
-                    <span key={i} style={{ fontSize:10, color:C.gray1, background:C.bg3, padding:"2px 7px", borderRadius:3, letterSpacing:"0.07em", fontFamily:"'Josefin Sans',sans-serif", border:`1px solid ${C.gray3}` }}>{tag}</span>
+                    <span key={i} style={{ fontSize:10, color:C.gray1, background:C.bg3, padding:"2px 8px", borderRadius:8, letterSpacing:"0.07em", fontFamily:"'Josefin Sans',sans-serif", border:`1px solid ${C.gray3}`, boxShadow:"0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)" }}>{tag}</span>
                   ))}
                 </div>
                 {t.notes && <div style={{ marginTop:7, fontSize:12, color:C.gray1, lineHeight:1.6, fontStyle:"italic", fontFamily:"'Cormorant Garamond',serif" }}>{t.notes}</div>}
@@ -941,7 +1111,7 @@ export default function App() {
                   <Label>Résultat</Label>
                   <div style={{ display:"flex", gap:5 }}>
                     {["WIN","LOSS","BREAKEVEN"].map(r => (
-                      <button key={r} onClick={() => setEditingTrade(p => ({ ...p, result:r }))} style={{ flex:1, padding:"7px", borderRadius:4, border:`1px solid ${editingTrade.result === r ? C.accent : C.gray3}`, background:editingTrade.result === r ? "rgba(0,0,0,0.08)" : "transparent", color:editingTrade.result === r ? C.accent : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.result === r ? 600 : 300, cursor:"pointer", textTransform:"uppercase" }}>{r}</button>
+                      <button key={r} onClick={() => setEditingTrade(p => ({ ...p, result:r }))} style={{ flex:1, padding:"7px", borderRadius:4, border:"none", background:editingTrade.result === r ? "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.9) 0%, rgba(215,215,215,0.83) 100%)" : "transparent", color:editingTrade.result === r ? "#111" : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.result === r ? 600 : 300, cursor:"pointer", textTransform:"uppercase", boxShadow:editingTrade.result === r ? "0 0 12px 2px rgba(220,220,220,0.08), 0 3px 10px rgba(0,0,0,0.4)" : "none", transform:editingTrade.result === r ? "translateY(-1px)" : "translateY(0)", transition:"all 0.2s cubic-bezier(.4,0,.2,1)" }}>{r}</button>
                     ))}
                   </div>
                 </div>
@@ -949,7 +1119,7 @@ export default function App() {
                   <Label>Direction</Label>
                   <div style={{ display:"flex", gap:5 }}>
                     {["LONG","SHORT"].map(d => (
-                      <button key={d} onClick={() => setEditingTrade(p => ({ ...p, direction:d }))} style={{ flex:1, padding:"7px", borderRadius:4, border:`1px solid ${editingTrade.direction === d ? C.accent : C.gray3}`, background:editingTrade.direction === d ? "rgba(0,0,0,0.08)" : "transparent", color:editingTrade.direction === d ? C.accent : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.direction === d ? 600 : 300, cursor:"pointer", textTransform:"uppercase" }}>{d}</button>
+                      <button key={d} onClick={() => setEditingTrade(p => ({ ...p, direction:d }))} style={{ flex:1, padding:"7px", borderRadius:4, border:"none", background:editingTrade.direction === d ? "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.9) 0%, rgba(215,215,215,0.83) 100%)" : "transparent", color:editingTrade.direction === d ? "#111" : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.direction === d ? 600 : 300, cursor:"pointer", textTransform:"uppercase", boxShadow:editingTrade.direction === d ? "0 0 12px 2px rgba(220,220,220,0.08), 0 3px 10px rgba(0,0,0,0.4)" : "none", transform:editingTrade.direction === d ? "translateY(-1px)" : "translateY(0)", transition:"all 0.2s cubic-bezier(.4,0,.2,1)" }}>{d}</button>
                     ))}
                   </div>
                 </div>
@@ -957,7 +1127,7 @@ export default function App() {
                   <Label>Session</Label>
                   <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
                     {SESSIONS.map(s => (
-                      <button key={s} onClick={() => setEditingTrade(p => ({ ...p, session:s }))} style={{ flex:"1 1 auto", padding:"7px", borderRadius:4, border:`1px solid ${editingTrade.session === s ? C.accent : C.gray3}`, background:editingTrade.session === s ? "rgba(0,0,0,0.08)" : "transparent", color:editingTrade.session === s ? C.accent : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.session === s ? 600 : 300, cursor:"pointer", textTransform:"uppercase" }}>{s}</button>
+                      <button key={s} onClick={() => setEditingTrade(p => ({ ...p, session:s }))} style={{ flex:"1 1 auto", padding:"7px", borderRadius:4, border:"none", background:editingTrade.session === s ? "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.9) 0%, rgba(215,215,215,0.83) 100%)" : "transparent", color:editingTrade.session === s ? "#111" : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.session === s ? 600 : 300, cursor:"pointer", textTransform:"uppercase", boxShadow:editingTrade.session === s ? "0 0 12px 2px rgba(220,220,220,0.08), 0 3px 10px rgba(0,0,0,0.4)" : "none", transform:editingTrade.session === s ? "translateY(-1px)" : "translateY(0)", transition:"all 0.2s cubic-bezier(.4,0,.2,1)" }}>{s}</button>
                     ))}
                   </div>
                 </div>
@@ -965,7 +1135,7 @@ export default function App() {
                   <Label>Émotion</Label>
                   <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
                     {EMOTIONS.map(e => (
-                      <button key={e} onClick={() => setEditingTrade(p => ({ ...p, emotion:e }))} style={{ flex:"1 1 auto", padding:"7px", borderRadius:4, border:`1px solid ${editingTrade.emotion === e ? C.accent : C.gray3}`, background:editingTrade.emotion === e ? "rgba(0,0,0,0.08)" : "transparent", color:editingTrade.emotion === e ? C.accent : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.emotion === e ? 600 : 300, cursor:"pointer", textTransform:"uppercase" }}>{e}</button>
+                      <button key={e} onClick={() => setEditingTrade(p => ({ ...p, emotion:e }))} style={{ flex:"1 1 auto", padding:"7px", borderRadius:4, border:"none", background:editingTrade.emotion === e ? "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.9) 0%, rgba(215,215,215,0.83) 100%)" : "transparent", color:editingTrade.emotion === e ? "#111" : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.emotion === e ? 600 : 300, cursor:"pointer", textTransform:"uppercase", boxShadow:editingTrade.emotion === e ? "0 0 12px 2px rgba(220,220,220,0.08), 0 3px 10px rgba(0,0,0,0.4)" : "none", transform:editingTrade.emotion === e ? "translateY(-1px)" : "translateY(0)", transition:"all 0.2s cubic-bezier(.4,0,.2,1)" }}>{e}</button>
                     ))}
                   </div>
                 </div>
@@ -989,7 +1159,7 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ display:"flex", gap:7 }}>
-                  <button onClick={saveEdit} style={{ flex:2, padding:"9px", borderRadius:4, border:"none", background:C.accent, color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer" }}>✓ Sauvegarder</button>
+                  <button onClick={saveEdit} style={{ flex:2, padding:"9px", borderRadius:4, border:"none", background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)", color:"#111", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer" }}>✓ Sauvegarder</button>
                   <button onClick={cancelEdit} style={{ flex:1, padding:"9px", borderRadius:4, border:`1px solid ${C.gray3}`, background:"transparent", color:C.gray1, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer" }}>Annuler</button>
                 </div>
               </>
@@ -1011,7 +1181,7 @@ export default function App() {
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:16 }}>
         <PageTitle sub="Mes Stratégies" title="Plan de Trading" />
-        <button onClick={()=>{ const ns={id:Date.now(),name:"Nouvelle stratégie",description:"",steps:[],rules:"",notes:""}; setStrategies(p=>[...p,ns]); setActiveStratId(ns.id); }} style={{ padding:"8px 14px", borderRadius:4, border:"none", background:C.accent, color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", marginBottom:22 }}>+ Nouvelle</button>
+        <button onClick={()=>{ const ns={id:Date.now(),name:"Nouvelle stratégie",description:"",steps:[],rules:"",notes:""}; setStrategies(p=>[...p,ns]); setActiveStratId(ns.id); }} style={{ padding:"8px 14px", borderRadius:4, border:"none", background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)", color:"#111", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", marginBottom:22 }}>+ Nouvelle</button>
       </div>
 
       {/* Strategy tabs */}
@@ -1140,7 +1310,7 @@ export default function App() {
           <button onClick={()=>setPfView("list")} style={{ padding:"9px 16px", borderRadius:4, border:`1px solid ${C.border}`, background:"transparent", color:C.gray1, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", marginBottom:24 }}>← Retour</button>
         )}
         {pfView==="list" && (
-          <button onClick={()=>setPfView("add-type")} style={{ padding:"9px 16px", borderRadius:4, border:"none", background:C.accent, color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", marginBottom:24 }}>+ Ajouter</button>
+          <button onClick={()=>setPfView("add-type")} style={{ padding:"9px 16px", borderRadius:4, border:"none", background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)", color:"#111", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", marginBottom:24 }}>+ Ajouter</button>
         )}
       </div>
 
@@ -1295,7 +1465,7 @@ export default function App() {
                   )}
                 </>}
                 <div style={{display:"flex",gap:7,marginTop:4}}>
-                  <button onClick={()=>{setPropfirms(p=>p.map(x=>x.id===editingPf.id?{...editingPf}:x));setEditingPf(null);}} style={{flex:2,padding:"9px",borderRadius:4,border:"none",background:C.accent,color:darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>✓ Sauvegarder</button>
+                  <button onClick={()=>{setPropfirms(p=>p.map(x=>x.id===editingPf.id?{...editingPf}:x));setEditingPf(null);}} style={{flex:2,padding:"9px",borderRadius:4,border:"none",background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)",color:"#111",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>✓ Sauvegarder</button>
                   <button onClick={()=>setEditingPf(null)} style={{flex:1,padding:"9px",borderRadius:4,border:`1px solid ${C.gray3}`,background:"transparent",color:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Annuler</button>
                 </div>
               </div>
@@ -1490,7 +1660,7 @@ export default function App() {
     const alerts = getPfAlerts(pf);
 
     const MiniCard = ({label, value, color, sub}) => (
-      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:10,padding:!isMobile?"20px 20px":"12px 14px"}}>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:14,boxShadow:"0 6px 32px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.1), 0 -2px 28px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.36)",padding:!isMobile?"20px 20px":"12px 14px"}}>
         <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:!isMobile?10:6}}>{label}</div>
         <div style={{fontSize:!isMobile?28:20,fontWeight:300,color:color||C.white,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1}}>{value}</div>
         {sub && <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:6}}>{sub}</div>}
@@ -1513,9 +1683,9 @@ export default function App() {
         </div>
 
         {/* ── GLOBAL / TODAY TOGGLE ── */}
-        <div style={{display:"flex",gap:6,marginBottom:16,background:C.bg2,borderRadius:10,padding:4,border:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",gap:6,marginBottom:16,background:darkMode?"linear-gradient(180deg,rgba(85,85,85,0.98) 0%,rgba(28,28,28,0.99) 100%)":"linear-gradient(180deg,rgba(60,60,60,0.95) 0%,rgba(18,18,18,0.97) 100%)",borderRadius:14,padding:4,border:darkMode?"1px solid rgba(255,255,255,0.18)":"1px solid rgba(255,255,255,0.14)",boxShadow:darkMode?"0 12px 40px rgba(0,0,0,0.75), 0 4px 10px rgba(0,0,0,0.5), 0 0 50px rgba(255,255,255,0.1), 0 0 0 1px rgba(255,255,255,0.12), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.75)":"0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -2px 0 rgba(0,0,0,0.55)"}}>
           {[{k:"today",l:"Aujourd'hui"},{k:"global",l:"Global"}].map(opt=>(
-            <button key={opt.k} onClick={()=>setAcctView(opt.k)} style={{flex:1,padding:"9px",borderRadius:7,border:"none",background:acctView===opt.k?C.accent:"transparent",color:acctView===opt.k?(darkMode?"#111":"#fff"):C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:acctView===opt.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>{opt.l}</button>
+            <button key={opt.k} onClick={()=>setAcctView(opt.k)} style={{flex:1,padding:"9px",borderRadius:10,border:"none",background:acctView===opt.k?"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)":"transparent",color:acctView===opt.k?"#111":"rgba(255,255,255,0.55)",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:acctView===opt.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.22s cubic-bezier(.4,0,.2,1)",boxShadow:acctView===opt.k?"0 6px 20px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.12)":"none",transform:acctView===opt.k?"translateY(-2px)":"translateY(0)"}}>{opt.l}</button>
           ))}
         </div>
 
@@ -1528,7 +1698,7 @@ export default function App() {
 
         {/* ── PROGRESS BARS (prop firm) ── */}
         {pf.type==="propfirm" && (
-          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
+          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
             <div style={{marginBottom:10}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                 <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Profit Target</span>
@@ -1568,7 +1738,7 @@ export default function App() {
         )}
 
         {/* ── TODAY CARD ── */}
-        <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
+        <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:pf.hasConsistency&&pf.consistencyPct&&pf.target?10:0}}>
             <div>
               <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Aujourd'hui</div>
@@ -1624,7 +1794,7 @@ export default function App() {
         {/* ── WIN/LOSS + DIRECTION ── */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
           {/* Win/Loss gauge */}
-          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:10,padding:!isMobile?"30px 24px":"14px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:14,boxShadow:"0 6px 32px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.1), 0 -2px 28px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.36)",padding:!isMobile?"30px 24px":"14px",display:"flex",flexDirection:"column",alignItems:"center"}}>
             <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4,alignSelf:"flex-start"}}>Winrate · Aujourd'hui</div>
             {(() => { const tw=statsTrades.filter(t=>t.result==="WIN").length; const tl=statsTrades.filter(t=>t.result==="LOSS").length; const tt=statsTrades.length; return tt>0 ? (((wins, losses, total, size=130) => {
               const r=46, cx=size/2, cy=size*0.52, sw=13, PI=Math.PI;
@@ -1661,7 +1831,7 @@ export default function App() {
             })(tw,tl,tt,140)) : <div style={{padding:"20px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Aucun trade{acctView==="today"?" aujourd'hui":""}</div>; })()}
           </div>
           {/* Direction breakdown — TODAY */}
-          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px"}}>
+          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"14px"}}>
             <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Direction · {acctView==="global"?"Global":"Aujourd'hui"}</div>
             {[{d:"LONG",color:"#2a6e3a"},{d:"SHORT",color:"#c0392b"}].map(({d,color})=>{
               const dt=(acctView==="global"?acctTrades:todayTrades).filter(t=>t.direction===d);
@@ -1685,7 +1855,7 @@ export default function App() {
         </div>
 
         {/* ── EQUITY CURVE ── */}
-        <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:!isMobile?"24px 20px 14px":"16px 14px 10px",marginBottom:!isMobile?16:12}}>
+        <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"24px 20px 14px":"16px 14px 10px",marginBottom:!isMobile?16:12}}>
           <div style={{fontSize:9,color:C.dim,letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Courbe d'équité</div>
           {(acctView==="global"?acctTrades:todayTrades).length>1 ? <PnlChart filtered={acctView==="global"?acctTrades:todayTrades} capital={pf.capital} pnlSum={acctView==="global"?allPnl:todayTrades.reduce((s,t)=>s+(t.pnl||0),0)} height={!isMobile?260:160} cur={currency}/>
           : <div style={{textAlign:"center",padding:"32px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif"}}>Aucun trade</div>}
@@ -1693,7 +1863,7 @@ export default function App() {
 
         {/* ── SESSIONS today only ── */}
         {(() => { const todaySessions = SESSIONS.map(s=>{const st=(acctView==="global"?acctTrades:todayTrades).filter(t=>t.session===s);const wr=st.length?Math.round(st.filter(t=>t.result==="WIN").length/st.length*100):0;return{name:s,count:st.length,wr,pnl:st.reduce((a,t)=>a+(t.pnl||0),0)};}).filter(s=>s.count>0); return todaySessions.length>0 && (
-          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
+          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
             <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Sessions · {acctView==="global"?"Global":"Aujourd'hui"}</div>
             {todaySessions.map(s=>(
               <div key={s.name} style={{marginBottom:10}}>
@@ -1712,7 +1882,7 @@ export default function App() {
 
         {/* ── INSTRUMENTS today only ── */}
         {(() => { const todayInstr = (() => { const byI={}; (acctView==="global"?acctTrades:todayTrades).forEach(t=>{ if(!byI[t.instrument]) byI[t.instrument]={count:0,wins:0,pnl:0}; byI[t.instrument].count++; if(t.result==="WIN") byI[t.instrument].wins++; byI[t.instrument].pnl+=t.pnl||0; }); return Object.entries(byI).map(([name,v])=>({name,count:v.count,wr:Math.round(v.wins/v.count*100),pnl:v.pnl})); })(); return todayInstr.length>0 && (
-          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
+          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
             <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Instruments · {acctView==="global"?"Global":"Aujourd'hui"}</div>
             {todayInstr.map(i=>(
               <div key={i.name} style={{marginBottom:10}}>
@@ -1737,7 +1907,7 @@ export default function App() {
             return { name:e, count:et.length, wr, pnl:et.reduce((a,t)=>a+(t.pnl||0),0) };
           }).filter(e=>e.count>0);
           return todayEmotions.length>0 ? (
-            <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
+            <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
               <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Émotions · {acctView==="global"?"Global":"Aujourd'hui"}</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 {todayEmotions.map(e=>(
@@ -1758,7 +1928,7 @@ export default function App() {
         })()}
 
         {/* ── CALENDAR ── */}
-        <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"16px 14px",marginBottom:12}}>
+        <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"16px 14px",marginBottom:12}}>
           <Calendar filtered={acctTrades} calMonth={pfCalMonth} calYear={pfCalYear} onPrev={prevPfMonth} onNext={nextPfMonth} cur={currency} onDayClick={({day,month,year})=>{
               const dateStr=`${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
               const dayTrades=acctTrades.filter(t=>t.date===dateStr);
@@ -1794,7 +1964,7 @@ export default function App() {
         <button onClick={()=>{setEodText("");runEOD(pf);}} disabled={eodLoading} style={{width:"100%",padding:"13px",borderRadius:8,border:`1px solid ${C.borderGold}`,background:eodLoading?"transparent":"rgba(0,0,0,0.04)",color:eodLoading?C.gray2:C.dim,fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:eodLoading?"not-allowed":"pointer",marginBottom:8,transition:"all 0.3s"}}>
           {eodLoading?"◌  Analyse en cours...":"◆  Debriefing fin de journée"}
         </button>
-        {eodText && <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:20,fontSize:13,lineHeight:1.8,color:C.white,whiteSpace:"pre-wrap",fontFamily:"'Cormorant Garamond',serif",marginBottom:10}}>{eodText}</div>}
+        {eodText && <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:20,fontSize:13,lineHeight:1.8,color:C.white,whiteSpace:"pre-wrap",fontFamily:"'Cormorant Garamond',serif",marginBottom:10}}>{eodText}</div>}
 
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:4}}>
           <button onClick={()=>{setEditingPf({...pf});closeAccount();setPfView("list");}} style={{padding:"13px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg2,color:C.white,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",cursor:"pointer"}}>✎ Modifier</button>
@@ -1984,12 +2154,12 @@ export default function App() {
               <div style={{fontSize:13,color:C.white,fontFamily:"'Josefin Sans',sans-serif",marginBottom:10}}><strong>{csvResult.trades.length}</strong> trade{csvResult.trades.length!==1?"s":""} détecté{csvResult.trades.length!==1?"s":""}. {csvResult.skipped>0?`(${csvResult.skipped} ligne${csvResult.skipped>1?"s":""} ignorée${csvResult.skipped>1?"s":""})`:""}
               </div>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={confirmImport} style={{flex:2,padding:"11px",borderRadius:4,border:"none",background:C.accent,color:darkMode?"#111":"#fff",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>✓ Importer</button>
+                <button onClick={confirmImport} style={{flex:2,padding:"11px",borderRadius:4,border:"none",background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)",color:"#111",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>✓ Importer</button>
                 <button onClick={()=>setCsvResult(null)} style={{flex:1,padding:"11px",borderRadius:4,border:`1px solid ${C.gray3}`,background:"transparent",color:C.gray1,fontSize:12,fontFamily:"'Josefin Sans',sans-serif",cursor:"pointer",textTransform:"uppercase",letterSpacing:"0.1em"}}>Annuler</button>
               </div>
             </div>
           )}
-          {!csvResult && <button onClick={importCSV} style={{width:"100%",padding:"14px",borderRadius:4,border:"none",background:C.accent,color:darkMode?"#111":"#fff",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.2em",textTransform:"uppercase",cursor:"pointer"}}>Analyser le CSV →</button>}
+          {!csvResult && <button onClick={importCSV} style={{width:"100%",padding:"14px",borderRadius:4,border:"none",background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)",color:"#111",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.2em",textTransform:"uppercase",cursor:"pointer"}}>Analyser le CSV →</button>}
         </div>
       )}
 
@@ -2017,7 +2187,7 @@ export default function App() {
           </div>
           <Field label="Risque max (€)"><input type="text" inputMode="decimal" placeholder="" value={calcRisk} onChange={e=>setCalcRisk(e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,""))} style={iStyle}/></Field>
           {calcResult ? (
-            <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"20px",marginTop:8}}>
+            <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"20px",marginTop:8}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
                 <div style={{textAlign:"center"}}>
                   <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",marginBottom:6}}>{calcResult.label}</div>
@@ -2065,7 +2235,7 @@ export default function App() {
   const settingsContent = (
     <div>
       <PageTitle sub="Paramètres" title="Réglages" />
-      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px",marginBottom:12}}>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
         <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:14}}>Devise</div>
         <div style={{display:"flex",gap:8}}>
           {["€","$","£"].map(c=>(
@@ -2075,7 +2245,7 @@ export default function App() {
           ))}
         </div>
       </div>
-      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px",marginBottom:12}}>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
         <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:14}}>Langue</div>
         <div style={{display:"flex",gap:8}}>
           {[{k:"fr",l:"Français"},{k:"en",l:"English"},{k:"es",l:"Español"}].map(lg=>(
@@ -2086,7 +2256,7 @@ export default function App() {
         </div>
         {lang!=="fr"&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:6,background:"rgba(180,120,0,0.08)",border:"1px solid rgba(180,120,0,0.2)",fontSize:11,color:"rgba(180,120,0,0.9)",fontFamily:"'Josefin Sans',sans-serif"}}>La traduction complète sera disponible prochainement.</div>}
       </div>
-      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px",marginBottom:12}}>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
             <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Apparence</div>
@@ -2099,7 +2269,7 @@ export default function App() {
       </div>
 
       {/* ── TRADE SETTINGS ── */}
-      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px",marginBottom:12}}>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
         <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>Réglages de trade</div>
         <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginBottom:16,letterSpacing:"0.04em",lineHeight:1.7}}>Activez les champs à appliquer en mode <strong style={{color:C.white}}>Fixe</strong> dans l'onglet Trade.</div>
         {[
@@ -2141,7 +2311,7 @@ export default function App() {
           {tsSaved?"✓ Sauvegardé":"Sauvegarder →"}
         </button>
       </div>
-      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:8,padding:"18px 16px"}}>
+      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px"}}>
         <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Version</div>
         <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>FYLTRA v1.0 · Trading Journal</div>
         <div style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:4,letterSpacing:"0.06em"}}>Créé par Smile</div>
@@ -2160,6 +2330,14 @@ export default function App() {
   };
 
   /* ── RENDER ── */
+  if (authLoading) return (
+    <div style={{ minHeight:"100vh", background:"#0f0f0f", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <style>{FONTS}</style>
+      <div style={{ fontSize:11, color:"rgba(255,255,255,0.3)", fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.2em", textTransform:"uppercase" }}>Chargement...</div>
+    </div>
+  );
+  if (!user) return <AuthScreen />;
+
   return (
     <div style={{ minHeight:"100vh", background:C.bg, color:C.white, fontFamily:"'Josefin Sans',sans-serif" }}>
       <style>{FONTS}</style>
@@ -2195,6 +2373,11 @@ export default function App() {
                     <span style={{fontSize:13,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.06em",color:"rgba(255,255,255,0.7)"}}>{item.l}</span>
                   </button>
                 ))}
+                <div style={{height:1,background:"rgba(255,255,255,0.06)",margin:"2px 8px"}}/>
+                <button onClick={()=>{ closeMenu(); supabase.auth.signOut(); }} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent"}}>
+                  <span style={{fontSize:15,color:"rgba(229,100,100,0.7)",lineHeight:1,width:20,textAlign:"center"}}>⏻</span>
+                  <span style={{fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,color:"rgba(229,100,100,0.7)",letterSpacing:"0.06em"}}>Déconnexion</span>
+                </button>
                 <div style={{height:1,background:"rgba(255,255,255,0.06)",margin:"2px 8px"}}/>
                 <button onClick={closeMenu} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent"}}>
                   <span style={{fontSize:17,color:"rgba(255,255,255,0.3)",lineHeight:1,width:20,textAlign:"center"}}>×</span>
