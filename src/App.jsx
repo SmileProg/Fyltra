@@ -42,7 +42,7 @@ const FONTS = `
   ::-webkit-scrollbar-track{background:var(--bg, #f8f7f5);}
   ::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px;}
   textarea{font-family:'Josefin Sans',sans-serif !important;}
-  input, textarea, select{color:inherit !important;}
+  input, textarea, select{color:#1a1a1a !important;}
   @keyframes slideFromRight{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
   @keyframes slideToRight{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(40px);}}
   @keyframes fadeInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
