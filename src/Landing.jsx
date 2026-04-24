@@ -128,7 +128,7 @@ export default function Landing() {
         </div>
 
         {/* Titre */}
-        <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(48px, 8vw, 96px)", fontWeight:300, lineHeight:1.05, letterSpacing:"-0.02em", marginBottom:24, animation:"landFadeUp 0.8s 0.2s both", maxWidth:800 }}>
+        <h1 style={{ fontFamily:\"'Josefin Sans',sans-serif\", fontSize:"clamp(48px, 8vw, 96px)", fontWeight:300, lineHeight:1.05, letterSpacing:"-0.02em", marginBottom:24, animation:"landFadeUp 0.8s 0.2s both", maxWidth:800 }}>
           Devenez le trader<br/>
           <span style={{ fontStyle:"italic", color:"rgba(255,255,255,0.55)" }}>que vous méritez</span><br/>
           d'être.
@@ -167,7 +167,7 @@ export default function Landing() {
         <Section>
           <div style={{ textAlign:"center", marginBottom:72 }}>
             <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:"0.3em", textTransform:"uppercase", marginBottom:16 }}>Fonctionnalités</div>
-            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(32px, 5vw, 56px)", fontWeight:300, lineHeight:1.1 }}>
+            <h2 style={{ fontFamily:\"'Josefin Sans',sans-serif\", fontSize:"clamp(32px, 5vw, 56px)", fontWeight:300, lineHeight:1.1 }}>
               Tout ce dont un trader<br/>
               <span style={{ fontStyle:"italic", color:"rgba(255,255,255,0.45)" }}>sérieux a besoin.</span>
             </h2>
@@ -181,7 +181,7 @@ export default function Landing() {
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 <div style={{ fontSize:22, color:"rgba(255,255,255,0.2)", marginBottom:20 }}>{f.icon}</div>
-                <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:400, marginBottom:12, letterSpacing:"0.02em" }}>{f.title}</h3>
+                <h3 style={{ fontFamily:\"'Josefin Sans',sans-serif\", fontSize:24, fontWeight:400, marginBottom:12, letterSpacing:"0.02em" }}>{f.title}</h3>
                 <p style={{ fontSize:11, color:"rgba(255,255,255,0.38)", lineHeight:1.9, fontWeight:300, letterSpacing:"0.05em" }}>{f.desc}</p>
               </div>
             </Section>
@@ -196,7 +196,7 @@ export default function Landing() {
       <section style={{ padding:"120px 24px", textAlign:"center", maxWidth:700, margin:"0 auto" }}>
         <Section>
           <div style={{ fontSize:9, color:"rgba(255,255,255,0.2)", letterSpacing:"0.3em", textTransform:"uppercase", marginBottom:32 }}>Philosophie</div>
-          <blockquote style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(24px, 4vw, 40px)", fontWeight:300, lineHeight:1.4, fontStyle:"italic", color:"rgba(255,255,255,0.75)" }}>
+          <blockquote style={{ fontFamily:\"'Josefin Sans',sans-serif\", fontSize:"clamp(24px, 4vw, 40px)", fontWeight:300, lineHeight:1.4, fontStyle:"italic", color:"rgba(255,255,255,0.75)" }}>
             "Les meilleurs traders ne sont pas ceux qui ont les meilleures entrées.<br/>Ce sont ceux qui se connaissent le mieux."
           </blockquote>
         </Section>
@@ -209,7 +209,7 @@ export default function Landing() {
       <section id="pricing" style={{ padding:"120px 24px", maxWidth:520, margin:"0 auto", textAlign:"center" }}>
         <Section>
           <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:"0.3em", textTransform:"uppercase", marginBottom:16 }}>Tarif</div>
-          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(32px, 5vw, 52px)", fontWeight:300, lineHeight:1.1, marginBottom:56 }}>
+          <h2 style={{ fontFamily:\"'Josefin Sans',sans-serif\", fontSize:"clamp(32px, 5vw, 52px)", fontWeight:300, lineHeight:1.1, marginBottom:56 }}>
             Simple.<br/><span style={{ fontStyle:"italic", color:"rgba(255,255,255,0.45)" }}>Transparent.</span>
           </h2>
 
@@ -224,8 +224,8 @@ export default function Landing() {
               {/* Prix */}
               <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:4, marginBottom:6 }}>
                 <span style={{ fontSize:18, color:"rgba(255,255,255,0.4)", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, marginTop:10 }}>$</span>
-                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:80, fontWeight:300, lineHeight:1, letterSpacing:"-0.02em" }}>24</span>
-                <span style={{ fontSize:28, color:"rgba(255,255,255,0.6)", fontFamily:"'Cormorant Garamond',serif", fontWeight:300, marginTop:16 }}>.99</span>
+                <span style={{ fontFamily:\"'Josefin Sans',sans-serif\", fontSize:80, fontWeight:300, lineHeight:1, letterSpacing:"-0.02em" }}>24</span>
+                <span style={{ fontSize:28, color:"rgba(255,255,255,0.6)", fontFamily:\"'Josefin Sans',sans-serif\", fontWeight:300, marginTop:16 }}>.99</span>
               </div>
               <div style={{ fontSize:10, color:"rgba(255,255,255,0.25)", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:40 }}>par mois · résiliable à tout moment</div>
 
@@ -270,7 +270,7 @@ export default function Landing() {
         <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.025) 0%, transparent 65%)", filter:"blur(60px)", pointerEvents:"none" }}/>
         <Section>
           <div style={{ position:"relative", zIndex:1 }}>
-            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(36px, 6vw, 72px)", fontWeight:300, lineHeight:1.1, marginBottom:20 }}>
+            <h2 style={{ fontFamily:\"'Josefin Sans',sans-serif\", fontSize:"clamp(36px, 6vw, 72px)", fontWeight:300, lineHeight:1.1, marginBottom:20 }}>
               Votre journal.<br/>
               <span style={{ fontStyle:"italic", color:"rgba(255,255,255,0.45)" }}>Votre progression.</span>
             </h2>
