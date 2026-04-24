@@ -86,6 +86,11 @@ export default function Landing() {
             onMouseLeave={e=>e.target.style.color="rgba(255,255,255,0.45)"}>
             Features
           </a>
+          <a href="#pricing" style={{ fontSize:10, color:"rgba(255,255,255,0.45)", letterSpacing:"0.15em", textTransform:"uppercase", textDecoration:"none", transition:"color 0.2s" }}
+            onMouseEnter={e=>e.target.style.color="rgba(255,255,255,0.9)"}
+            onMouseLeave={e=>e.target.style.color="rgba(255,255,255,0.45)"}>
+            Tarifs
+          </a>
           <button onClick={() => navigate("/app")} style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:8, padding:"8px 18px", color:"#f0ede8", fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.2s" }}
             onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.14)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.3)";}}
             onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.15)";}}>
@@ -136,11 +141,11 @@ export default function Landing() {
 
         {/* CTA */}
         <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", animation:"landFadeUp 0.8s 0.44s both" }}>
-          <button onClick={() => navigate("/app")} style={{ background:"#f0ede8", color:"#080808", border:"none", borderRadius:10, padding:"16px 36px", fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.22s", boxShadow:"0 8px 40px rgba(240,237,232,0.18), 0 2px 8px rgba(0,0,0,0.4)" }}
+          <a href="#pricing" style={{ background:"#f0ede8", color:"#080808", border:"none", borderRadius:10, padding:"16px 36px", fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.22s", boxShadow:"0 8px 40px rgba(240,237,232,0.18), 0 2px 8px rgba(0,0,0,0.4)", textDecoration:"none", display:"inline-block" }}
             onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 14px 50px rgba(240,237,232,0.25), 0 4px 12px rgba(0,0,0,0.5)";}}
             onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 8px 40px rgba(240,237,232,0.18), 0 2px 8px rgba(0,0,0,0.4)";}}>
-            Commencer gratuitement →
-          </button>
+            Commencer →
+          </a>
           <a href="#features" style={{ background:"transparent", color:"rgba(255,255,255,0.5)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, padding:"16px 28px", fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:400, letterSpacing:"0.2em", textTransform:"uppercase", cursor:"pointer", textDecoration:"none", transition:"all 0.22s", display:"inline-block" }}
             onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.3)"; e.currentTarget.style.color="rgba(255,255,255,0.8)";}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.12)"; e.currentTarget.style.color="rgba(255,255,255,0.5)";}}>
@@ -200,6 +205,66 @@ export default function Landing() {
       {/* ── DIVIDER ── */}
       <div style={{ height:1, background:"linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)", margin:"0 40px" }}/>
 
+      {/* ── PRICING ── */}
+      <section id="pricing" style={{ padding:"120px 24px", maxWidth:520, margin:"0 auto", textAlign:"center" }}>
+        <Section>
+          <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:"0.3em", textTransform:"uppercase", marginBottom:16 }}>Tarif</div>
+          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(32px, 5vw, 52px)", fontWeight:300, lineHeight:1.1, marginBottom:56 }}>
+            Simple.<br/><span style={{ fontStyle:"italic", color:"rgba(255,255,255,0.45)" }}>Transparent.</span>
+          </h2>
+
+          {/* Card */}
+          <div style={{ position:"relative", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:24, padding:"48px 40px", backdropFilter:"blur(20px)", boxShadow:"0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+            {/* Orbe derrière la card */}
+            <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", filter:"blur(40px)", pointerEvents:"none" }}/>
+
+            <div style={{ position:"relative", zIndex:1 }}>
+              <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:"0.25em", textTransform:"uppercase", marginBottom:20 }}>Accès complet</div>
+
+              {/* Prix */}
+              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:4, marginBottom:6 }}>
+                <span style={{ fontSize:18, color:"rgba(255,255,255,0.4)", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, marginTop:10 }}>$</span>
+                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:80, fontWeight:300, lineHeight:1, letterSpacing:"-0.02em" }}>24</span>
+                <span style={{ fontSize:28, color:"rgba(255,255,255,0.6)", fontFamily:"'Cormorant Garamond',serif", fontWeight:300, marginTop:16 }}>.99</span>
+              </div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.25)", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:40 }}>par mois · résiliable à tout moment</div>
+
+              {/* Features incluses */}
+              <div style={{ display:"flex", flexDirection:"column", gap:14, marginBottom:40, textAlign:"left" }}>
+                {[
+                  "Comptes illimités",
+                  "Trades illimités",
+                  "IA Coach intégrée",
+                  "Statistiques avancées",
+                  "Sync multi-appareils",
+                  "Mises à jour incluses",
+                ].map(f => (
+                  <div key={f} style={{ display:"flex", alignItems:"center", gap:12 }}>
+                    <div style={{ width:16, height:16, borderRadius:"50%", border:"1px solid rgba(255,255,255,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                      <div style={{ width:5, height:5, borderRadius:"50%", background:"rgba(255,255,255,0.7)" }}/>
+                    </div>
+                    <span style={{ fontSize:11, color:"rgba(255,255,255,0.55)", fontWeight:300, letterSpacing:"0.05em" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={() => navigate("/app")} style={{ width:"100%", background:"#f0ede8", color:"#080808", border:"none", borderRadius:10, padding:"16px", fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.22s", boxShadow:"0 8px 32px rgba(240,237,232,0.15)" }}
+                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 14px 44px rgba(240,237,232,0.22)";}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 8px 32px rgba(240,237,232,0.15)";}}>
+                Commencer maintenant →
+              </button>
+
+              <div style={{ marginTop:16, fontSize:9, color:"rgba(255,255,255,0.18)", letterSpacing:"0.1em" }}>
+                Aucune carte requise pour s'inscrire
+              </div>
+            </div>
+          </div>
+        </Section>
+      </section>
+
+      {/* ── DIVIDER ── */}
+      <div style={{ height:1, background:"linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)", margin:"0 40px" }}/>
+
       {/* ── CTA FINAL ── */}
       <section style={{ padding:"140px 24px", textAlign:"center", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.025) 0%, transparent 65%)", filter:"blur(60px)", pointerEvents:"none" }}/>
@@ -209,7 +274,7 @@ export default function Landing() {
               Votre journal.<br/>
               <span style={{ fontStyle:"italic", color:"rgba(255,255,255,0.45)" }}>Votre progression.</span>
             </h2>
-            <p style={{ fontSize:11, color:"rgba(255,255,255,0.3)", letterSpacing:"0.1em", marginBottom:44, fontWeight:300 }}>Gratuit. Sans carte bancaire.</p>
+            <p style={{ fontSize:11, color:"rgba(255,255,255,0.3)", letterSpacing:"0.1em", marginBottom:44, fontWeight:300 }}>$24.99 / mois · Résiliable à tout moment.</p>
             <button onClick={() => navigate("/app")} style={{ background:"#f0ede8", color:"#080808", border:"none", borderRadius:10, padding:"18px 44px", fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.22s", boxShadow:"0 8px 40px rgba(240,237,232,0.15)" }}
               onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 14px 50px rgba(240,237,232,0.22)";}}
               onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 8px 40px rgba(240,237,232,0.15)";}}>
