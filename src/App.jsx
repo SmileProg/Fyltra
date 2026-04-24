@@ -1459,6 +1459,12 @@ export default function App() {
             <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:13,color:C.white,letterSpacing:"0.1em",textTransform:"uppercase"}}>Fond Propre</div>
             <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.5,textAlign:"center"}}>Compte personnel avec ton propre capital</div>
           </button>
+          <button disabled style={{padding:"32px 16px",borderRadius:10,border:`1px solid ${C.border}`,background:C.bg2,cursor:"not-allowed",display:"flex",flexDirection:"column",alignItems:"center",gap:12,opacity:0.5,gridColumn:"1 / -1",position:"relative"}}>
+            <span style={{position:"absolute",top:12,right:12,background:"linear-gradient(135deg,rgba(210,180,120,0.2),rgba(210,180,120,0.06))",border:"1px solid rgba(210,180,120,0.3)",color:"rgba(210,180,120,0.9)",fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.22em",padding:"3px 8px",borderRadius:4,textTransform:"uppercase"}}>bientôt</span>
+            <div style={{fontSize:28,color:C.dim}}>⟳</div>
+            <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:13,color:C.white,letterSpacing:"0.1em",textTransform:"uppercase"}}>MT4 / MT5</div>
+            <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.5,textAlign:"center"}}>Importe automatiquement tes trades depuis MetaTrader</div>
+          </button>
         </div>
       )}
 
