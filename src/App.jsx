@@ -359,9 +359,10 @@ const AUTH_ANIM = `
   @keyframes authOrb1 { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(60px,-40px) scale(1.12);} 66%{transform:translate(-30px,50px) scale(0.92);} }
   @keyframes authOrb2 { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(-50px,60px) scale(0.9);} 66%{transform:translate(70px,-30px) scale(1.1);} }
   @keyframes authOrb3 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(40px,40px) scale(1.08);} }
-  @keyframes authGrain { 0%,100%{transform:translate(0,0);} 10%{transform:translate(-1%,-1%);} 20%{transform:translate(1%,1%);} 30%{transform:translate(-1%,1%);} 40%{transform:translate(1%,-1%);} 50%{transform:translate(-2%,0);} 60%{transform:translate(2%,1%);} 70%{transform:translate(-1%,2%);} 80%{transform:translate(1%,-2%);} 90%{transform:translate(-2%,1%);} }
   @keyframes authFadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:translateY(0);} }
   @keyframes authLogoIn { from{opacity:0;transform:translateY(-16px) scale(0.92);} to{opacity:1;transform:translateY(0) scale(1);} }
+  @keyframes authParticle { 0%{transform:translateY(0) translateX(0);opacity:0;} 10%{opacity:1;} 90%{opacity:0.6;} 100%{transform:translateY(-100vh) translateX(var(--dx));opacity:0;} }
+  @keyframes authSweep { 0%{transform:translateX(-100%);opacity:0;} 20%{opacity:1;} 80%{opacity:1;} 100%{transform:translateX(100vw);opacity:0;} }
 `;
 
 function AuthScreen() {
@@ -406,8 +407,39 @@ function AuthScreen() {
         <div style={{ position:"absolute", top:"50%", left:"50%", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", animation:"authOrb3 14s ease-in-out infinite", filter:"blur(60px)", transform:"translate(-50%,-50%)" }}/>
       </div>
 
-      {/* ── Grain ── */}
-      <div style={{ position:"absolute", inset:"-50%", pointerEvents:"none", opacity:0.032, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`, backgroundSize:"180px 180px", animation:"authGrain 0.4s steps(1) infinite" }}/>
+      {/* ── Particules ── */}
+      <div style={{ position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden" }}>
+        {[
+          { left:"8%",  delay:"0s",   dur:"7s",  size:2,   dx:"20px",  opacity:0.5 },
+          { left:"18%", delay:"1.2s", dur:"9s",  size:1.5, dx:"-15px", opacity:0.35 },
+          { left:"28%", delay:"0.4s", dur:"6s",  size:2.5, dx:"10px",  opacity:0.55 },
+          { left:"38%", delay:"2.1s", dur:"8s",  size:1,   dx:"25px",  opacity:0.3 },
+          { left:"48%", delay:"0.8s", dur:"11s", size:2,   dx:"-20px", opacity:0.45 },
+          { left:"57%", delay:"3.2s", dur:"7.5s",size:1.5, dx:"15px",  opacity:0.4 },
+          { left:"66%", delay:"1.6s", dur:"9.5s",size:2,   dx:"-10px", opacity:0.5 },
+          { left:"75%", delay:"0.2s", dur:"6.5s",size:1,   dx:"30px",  opacity:0.35 },
+          { left:"84%", delay:"2.8s", dur:"8.5s",size:2.5, dx:"-25px", opacity:0.45 },
+          { left:"92%", delay:"1s",   dur:"10s", size:1.5, dx:"20px",  opacity:0.3 },
+          { left:"12%", delay:"4s",   dur:"8s",  size:1,   dx:"-18px", opacity:0.4 },
+          { left:"62%", delay:"5s",   dur:"7s",  size:2,   dx:"12px",  opacity:0.5 },
+        ].map((p, i) => (
+          <div key={i} style={{
+            position:"absolute", bottom:"-10px", left:p.left,
+            width:p.size, height:p.size, borderRadius:"50%",
+            background:"rgba(255,255,255,0.9)",
+            boxShadow:`0 0 ${p.size*3}px rgba(255,255,255,0.6)`,
+            animation:`authParticle ${p.dur} ${p.delay} ease-in infinite`,
+            "--dx": p.dx,
+            opacity: p.opacity,
+          }}/>
+        ))}
+      </div>
+
+      {/* ── Ligne balayante ── */}
+      <div style={{ position:"absolute", top:0, left:0, right:0, bottom:0, pointerEvents:"none", overflow:"hidden" }}>
+        <div style={{ position:"absolute", top:"42%", left:0, width:200, height:1, background:"linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent)", animation:"authSweep 6s 1s ease-in-out infinite" }}/>
+        <div style={{ position:"absolute", top:"58%", left:0, width:150, height:1, background:"linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)", animation:"authSweep 8s 3.5s ease-in-out infinite" }}/>
+      </div>
 
       {/* ── Ligne de séparation haute ── */}
       <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:1, height:120, background:"linear-gradient(to bottom, transparent, rgba(255,255,255,0.12), transparent)", pointerEvents:"none" }}/>
