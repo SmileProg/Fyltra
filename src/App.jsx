@@ -337,6 +337,7 @@ function PnlChart({ filtered, capital, pnlSum, height, cur }) {
 function AuthScreen() {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -398,8 +399,13 @@ function AuthScreen() {
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
             onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle} />
-          <input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle} />
+          <div style={{ position:"relative" }}>
+            <input type={showPwd ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()} style={{ ...inputStyle, paddingRight:46 }} />
+            <button onClick={() => setShowPwd(v => !v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.35)", fontSize:16, lineHeight:1, padding:0 }}>
+              {showPwd ? "🙈" : "👁"}
+            </button>
+          </div>
         </div>
 
         {/* Error / Success */}
