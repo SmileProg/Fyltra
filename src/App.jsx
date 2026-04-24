@@ -355,6 +355,15 @@ function PnlChart({ filtered, capital, pnlSum, height, cur }) {
 }
 
 /* ─── AUTH SCREEN ────────────────────────────────────────────────── */
+const AUTH_ANIM = `
+  @keyframes authOrb1 { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(60px,-40px) scale(1.12);} 66%{transform:translate(-30px,50px) scale(0.92);} }
+  @keyframes authOrb2 { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(-50px,60px) scale(0.9);} 66%{transform:translate(70px,-30px) scale(1.1);} }
+  @keyframes authOrb3 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(40px,40px) scale(1.08);} }
+  @keyframes authGrain { 0%,100%{transform:translate(0,0);} 10%{transform:translate(-1%,-1%);} 20%{transform:translate(1%,1%);} 30%{transform:translate(-1%,1%);} 40%{transform:translate(1%,-1%);} 50%{transform:translate(-2%,0);} 60%{transform:translate(2%,1%);} 70%{transform:translate(-1%,2%);} 80%{transform:translate(1%,-2%);} 90%{transform:translate(-2%,1%);} }
+  @keyframes authFadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:translateY(0);} }
+  @keyframes authLogoIn { from{opacity:0;transform:translateY(-16px) scale(0.92);} to{opacity:1;transform:translateY(0) scale(1);} }
+`;
+
 function AuthScreen() {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -363,7 +372,6 @@ function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const isDark = true;
 
   const submit = async () => {
     if (!email || !password) { setError("Remplis tous les champs."); return; }
@@ -380,81 +388,98 @@ function AuthScreen() {
   };
 
   const inputStyle = {
-    width:"100%", background:"#1a1a1a", border:"1px solid rgba(255,255,255,0.12)",
+    width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)",
     borderRadius:10, padding:"14px 16px", color:"#f0ede8", fontSize:14,
     fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, outline:"none",
-    letterSpacing:"0.05em", boxShadow:"inset 0 2px 6px rgba(0,0,0,0.3)",
+    letterSpacing:"0.05em", boxShadow:"inset 0 2px 6px rgba(0,0,0,0.2)",
+    backdropFilter:"blur(4px)", transition:"border-color 0.2s",
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#0f0f0f", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Josefin Sans',sans-serif", padding:24 }}>
-      <style>{FONTS}</style>
-      <div style={{ width:"100%", maxWidth:380 }}>
+    <div style={{ minHeight:"100vh", background:"#080808", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Josefin Sans',sans-serif", padding:24, position:"relative", overflow:"hidden" }}>
+      <style>{FONTS + AUTH_ANIM}</style>
+
+      {/* ── Orbes ── */}
+      <div style={{ position:"absolute", inset:0, pointerEvents:"none" }}>
+        <div style={{ position:"absolute", top:"15%", left:"20%", width:500, height:500, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.055) 0%, transparent 70%)", animation:"authOrb1 18s ease-in-out infinite", filter:"blur(40px)" }}/>
+        <div style={{ position:"absolute", bottom:"10%", right:"15%", width:420, height:420, borderRadius:"50%", background:"radial-gradient(circle, rgba(200,185,150,0.045) 0%, transparent 70%)", animation:"authOrb2 22s ease-in-out infinite", filter:"blur(50px)" }}/>
+        <div style={{ position:"absolute", top:"50%", left:"50%", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", animation:"authOrb3 14s ease-in-out infinite", filter:"blur(60px)", transform:"translate(-50%,-50%)" }}/>
+      </div>
+
+      {/* ── Grain ── */}
+      <div style={{ position:"absolute", inset:"-50%", pointerEvents:"none", opacity:0.032, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`, backgroundSize:"180px 180px", animation:"authGrain 0.4s steps(1) infinite" }}/>
+
+      {/* ── Ligne de séparation haute ── */}
+      <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:1, height:120, background:"linear-gradient(to bottom, transparent, rgba(255,255,255,0.12), transparent)", pointerEvents:"none" }}/>
+
+      {/* ── Contenu ── */}
+      <div style={{ width:"100%", maxWidth:360, position:"relative", zIndex:1 }}>
+
         {/* Logo */}
-        <div style={{ textAlign:"center", marginBottom:40 }}>
-          <img src="/fyltra_logo_white.svg" style={{ width:52, height:52, marginBottom:14 }} alt="Fyltra" />
-          <img src="/fyltra_wordmark_white.svg" style={{ height:20, display:"block", margin:"0 auto" }} alt="FYLTRA" />
-          <div style={{ marginTop:10, fontSize:10, color:"rgba(255,255,255,0.35)", letterSpacing:"0.25em", textTransform:"uppercase" }}>
-            Trading Journal
+        <div style={{ textAlign:"center", marginBottom:44, animation:"authLogoIn 0.9s cubic-bezier(.22,1,.36,1) both" }}>
+          <div style={{ position:"relative", display:"inline-block", marginBottom:18 }}>
+            <div style={{ position:"absolute", inset:-20, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)", filter:"blur(12px)" }}/>
+            <img src="/fyltra_logo_white.svg" style={{ width:48, height:48, position:"relative", filter:"drop-shadow(0 0 20px rgba(255,255,255,0.25))" }} alt="Fyltra" />
           </div>
+          <img src="/fyltra_wordmark_white.svg" style={{ height:18, display:"block", margin:"0 auto", opacity:0.9 }} alt="FYLTRA" />
+          <div style={{ marginTop:10, fontSize:9, color:"rgba(255,255,255,0.28)", letterSpacing:"0.3em", textTransform:"uppercase" }}>Trading Journal</div>
         </div>
 
-        {/* Mode switch */}
-        <div style={{ display:"flex", gap:4, marginBottom:28, background:"#1a1a1a", borderRadius:12, padding:4, border:"1px solid rgba(255,255,255,0.08)" }}>
-          {["login","signup"].map(m => (
-            <button key={m} onClick={() => { setMode(m); setError(""); setSuccess(""); }} style={{
-              flex:1, padding:"9px", borderRadius:8, border:"none", cursor:"pointer",
-              background: mode === m ? "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)" : "transparent",
-              color: mode === m ? "#111" : "rgba(255,255,255,0.45)",
-              fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: mode === m ? 600 : 300,
-              letterSpacing:"0.1em", textTransform:"uppercase", transition:"all 0.22s",
-              boxShadow: mode === m ? "0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.9)" : "none",
-              transform: "translateY(0)",
-            }}>
-              {m === "login" ? "Connexion" : "Créer un compte"}
-            </button>
-          ))}
-        </div>
+        {/* Card */}
+        <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:20, padding:"28px 24px", backdropFilter:"blur(20px)", boxShadow:"0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.08)", animation:"authFadeUp 0.8s 0.15s cubic-bezier(.22,1,.36,1) both" }}>
 
-        {/* Fields */}
-        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle} />
-          <div style={{ position:"relative" }}>
-            <input type={showPwd ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && submit()} style={{ ...inputStyle, paddingRight:46 }} />
-            <button onClick={() => setShowPwd(v => !v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.35)", fontSize:16, lineHeight:1, padding:0 }}>
-              {showPwd ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              )}
-            </button>
+          {/* Mode switch */}
+          <div style={{ display:"flex", gap:3, marginBottom:24, background:"rgba(0,0,0,0.3)", borderRadius:10, padding:3, border:"1px solid rgba(255,255,255,0.06)" }}>
+            {["login","signup"].map(m => (
+              <button key={m} onClick={() => { setMode(m); setError(""); setSuccess(""); }} style={{
+                flex:1, padding:"9px", borderRadius:7, border:"none", cursor:"pointer",
+                background: mode === m ? "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)" : "transparent",
+                color: mode === m ? "#111" : "rgba(255,255,255,0.38)",
+                fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight: mode === m ? 600 : 400,
+                letterSpacing:"0.12em", textTransform:"uppercase", transition:"all 0.22s",
+                boxShadow: mode === m ? "0 4px 14px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.9)" : "none",
+              }}>
+                {m === "login" ? "Connexion" : "Créer un compte"}
+              </button>
+            ))}
           </div>
+
+          {/* Fields */}
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle} />
+            <div style={{ position:"relative" }}>
+              <input type={showPwd ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && submit()} style={{ ...inputStyle, paddingRight:46 }} />
+              <button onClick={() => setShowPwd(v => !v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", lineHeight:1, padding:0 }}>
+                {showPwd ? (
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                ) : (
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {error && <div style={{ marginTop:12, fontSize:11, color:"#e05a5a", fontFamily:"'Josefin Sans',sans-serif", textAlign:"center" }}>{error}</div>}
+          {success && <div style={{ marginTop:12, fontSize:11, color:"#4caf6e", fontFamily:"'Josefin Sans',sans-serif", textAlign:"center" }}>{success}</div>}
+
+          <button onClick={submit} disabled={loading} style={{
+            width:"100%", marginTop:18, padding:"14px", borderRadius:10, border:"none",
+            background: loading ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(220,220,220,0.9) 100%)",
+            color: loading ? "rgba(255,255,255,0.3)" : "#0a0a0a",
+            fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
+            letterSpacing:"0.22em", textTransform:"uppercase", cursor: loading ? "not-allowed" : "pointer",
+            transition:"all 0.22s", boxShadow: loading ? "none" : "0 8px 32px rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.8)",
+          }}>
+            {loading ? "···" : mode === "login" ? "Se connecter" : "Créer le compte"}
+          </button>
         </div>
 
-        {/* Error / Success */}
-        {error && <div style={{ marginTop:14, fontSize:12, color:"#e05a5a", fontFamily:"'Josefin Sans',sans-serif", textAlign:"center" }}>{error}</div>}
-        {success && <div style={{ marginTop:14, fontSize:12, color:"#4caf6e", fontFamily:"'Josefin Sans',sans-serif", textAlign:"center" }}>{success}</div>}
-
-        {/* Submit */}
-        <button onClick={submit} disabled={loading} style={{
-          width:"100%", marginTop:20, padding:"14px", borderRadius:10, border:"none",
-          background: loading ? "#333" : "#f0ede8",
-          color: loading ? "#888" : "#111",
-          fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600,
-          letterSpacing:"0.2em", textTransform:"uppercase", cursor: loading ? "not-allowed" : "pointer",
-          transition:"all 0.2s", boxShadow: loading ? "none" : "0 4px 20px rgba(240,237,232,0.15)",
-        }}>
-          {loading ? "..." : mode === "login" ? "Se connecter" : "Créer le compte"}
-        </button>
+        {/* Footer */}
+        <div style={{ textAlign:"center", marginTop:24, fontSize:9, color:"rgba(255,255,255,0.18)", letterSpacing:"0.15em", animation:"authFadeUp 0.8s 0.35s cubic-bezier(.22,1,.36,1) both" }}>
+          FYLTRA · TRADING JOURNAL
+        </div>
       </div>
     </div>
   );
