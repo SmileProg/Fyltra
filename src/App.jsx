@@ -167,8 +167,32 @@ const FULL_NAV = [
 ];
 function Sidebar({ view, setView, darkMode }) {
   const [hovered, setHovered] = useState(null);
+  const pillStyle = { background:"linear-gradient(180deg, rgba(60,60,60,0.97) 0%, rgba(18,18,18,0.99) 55%, rgba(8,8,8,1) 100%)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", borderRadius:24, padding:"10px", boxShadow:"0 6px 20px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.4), 0 0 60px rgba(255,255,255,0.11), 0 0 0 1px rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -2px 0 rgba(0,0,0,0.8)", border:"1px solid rgba(255,255,255,0.1)" };
+
+  const NavBtn = ({ item }) => {
+    const active = view === item.key;
+    const isHovered = hovered === item.key && !active;
+    return (
+      <button onClick={() => setView(item.key)} onMouseEnter={() => setHovered(item.key)} onMouseLeave={() => setHovered(null)} style={{
+        display:"flex", alignItems:"center", gap:14, width:"100%",
+        padding: active ? "10px 18px" : "10px 14px",
+        borderRadius:16, border:"none", cursor:"pointer",
+        background: active ? "radial-gradient(ellipse 110% 100% at 50% 35%, rgba(252,252,252,0.93) 0%, rgba(225,225,225,0.85) 55%, rgba(200,200,200,0.75) 100%)" : isHovered ? "rgba(255,255,255,0.05)" : "transparent",
+        marginBottom:4, transition:"all 0.25s cubic-bezier(.4,0,.2,1)",
+        boxShadow: active ? "0 0 26px 8px rgba(255,255,255,0.22), 0 0 50px 16px rgba(255,255,255,0.09), 0 6px 20px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3)" : isHovered ? "0 2px 8px rgba(0,0,0,0.2)" : "none",
+        transform: active ? "translateY(-1px)" : isHovered ? "translateY(-0.5px)" : "translateY(0)",
+        position:"relative", zIndex:1,
+      }}>
+        <span style={{ fontSize:17, color:active ? "#111" : "rgba(255,255,255,0.4)", lineHeight:1, width:22, textAlign:"center", transition:"color 0.25s" }}>{item.icon}</span>
+        <span style={{ fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
+        {item.key==="ai" && <span style={{marginLeft:"auto",background:"linear-gradient(135deg,rgba(210,180,120,0.15),rgba(210,180,120,0.05))",border:"1px solid rgba(210,180,120,0.25)",color:"rgba(210,180,120,0.85)",fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.22em",padding:"3px 8px",borderRadius:4,textTransform:"uppercase",backdropFilter:"blur(4px)"}}>bientôt</span>}
+      </button>
+    );
+  };
+
   return (
     <div style={{ width:220, minHeight:"100vh", background:C.bg2, borderRight:`1px solid ${C.border}`, flexDirection:"column", position:"fixed", left:0, top:0, padding:"28px 0", zIndex:50, display:"flex", boxShadow:"4px 0 24px rgba(0,0,0,0.12)" }}>
+      {/* Logo */}
       <div style={{ padding:"0 20px 24px", borderBottom:`1px solid ${C.border}` }}>
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
           <img src={darkMode?"/fyltra_logo_white.svg":"/fyltra_logo_black.svg"} style={{width:42,height:42,flexShrink:0,borderRadius:8}} alt="Fyltra"/>
@@ -177,33 +201,30 @@ function Sidebar({ view, setView, darkMode }) {
             <div style={{ fontSize:8, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300 }}>Carnet de santé trading</div>
           </div>
         </div>
-
       </div>
-      <div style={{ padding:"16px 12px", flex:1, display:"flex", flexDirection:"column", justifyContent:"center" }}>
-        <div style={{ background:"linear-gradient(180deg, rgba(60,60,60,0.97) 0%, rgba(18,18,18,0.99) 55%, rgba(8,8,8,1) 100%)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", borderRadius:24, padding:"10px", boxShadow:"0 6px 20px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.4), 0 0 60px rgba(255,255,255,0.11), 0 0 0 1px rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -2px 0 rgba(0,0,0,0.8)", border:"1px solid rgba(255,255,255,0.1)" }}>
-          {FULL_NAV.map(item => {
-            const active = view === item.key;
-            const isHovered = hovered === item.key && !active;
-            return (
-              <button key={item.key} onClick={() => setView(item.key)} onMouseEnter={() => setHovered(item.key)} onMouseLeave={() => setHovered(null)} style={{
-                display:"flex", alignItems:"center", gap:14, width:"100%",
-                padding: active ? "10px 18px" : "10px 14px",
-                borderRadius:16, border:"none", cursor:"pointer",
-                background: active ? "radial-gradient(ellipse 110% 100% at 50% 35%, rgba(252,252,252,0.93) 0%, rgba(225,225,225,0.85) 55%, rgba(200,200,200,0.75) 100%)" : isHovered ? "rgba(255,255,255,0.05)" : "transparent",
-                marginBottom:4,
-                transition:"all 0.25s cubic-bezier(.4,0,.2,1)",
-                boxShadow: active ? "0 0 20px 6px rgba(230,230,230,0.1), 0 6px 20px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.3)" : isHovered ? "0 2px 8px rgba(0,0,0,0.2)" : "none",
-                transform: active ? "translateY(-1px)" : isHovered ? "translateY(-0.5px)" : "translateY(0)",
-                position:"relative", zIndex:1,
-              }}>
-                <span style={{ fontSize:17, color:active ? "#111" : "rgba(255,255,255,0.4)", lineHeight:1, width:22, textAlign:"center", transition:"color 0.25s" }}>{item.icon}</span>
-                <span style={{ fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
-                {item.key==="ai" && <span style={{marginLeft:"auto",background:"linear-gradient(135deg,rgba(210,180,120,0.15),rgba(210,180,120,0.05))",border:"1px solid rgba(210,180,120,0.25)",color:"rgba(210,180,120,0.85)",fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.22em",padding:"3px 8px",borderRadius:4,textTransform:"uppercase",backdropFilter:"blur(4px)"}}>bientôt</span>}
-              </button>
-            );
-          })}
+
+      {/* Main nav pill */}
+      <div style={{ padding:"16px 12px 10px", flex:1 }}>
+        <div style={pillStyle}>
+          {[{key:"propfirm",icon:"◉",label:"Compte"},{key:"add",icon:"＋",label:"Trade"},{key:"history",icon:"≡",label:"Statistiques"},{key:"strategy",icon:"◈",label:"Plan"}].map(item => <NavBtn key={item.key} item={item} />)}
         </div>
       </div>
+
+      {/* IA pill */}
+      <div style={{ padding:"0 12px 10px" }}>
+        <div style={pillStyle}>
+          <NavBtn item={{key:"ai",icon:"◆",label:"IA"}} />
+        </div>
+      </div>
+
+      {/* Settings pill */}
+      <div style={{ padding:"0 12px 16px" }}>
+        <div style={pillStyle}>
+          <NavBtn item={{key:"settings",icon:"◎",label:"Paramètres"}} />
+        </div>
+      </div>
+
+      {/* Footer */}
       <div style={{ padding:"12px 20px", borderTop:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ fontSize:9, color:C.gray2, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.08em" }}>v1.0 · Fyltra</div>
         <button onClick={() => supabase.auth.signOut()} style={{ background:"none", border:"none", cursor:"pointer", fontSize:9, color:"rgba(229,100,100,0.55)", fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em", textTransform:"uppercase", padding:"4px 8px", borderRadius:6, transition:"color 0.2s" }}>
