@@ -1210,7 +1210,7 @@ export default function App() {
         </Field>
       )}
 
-      {strategies.length > 0 && (
+      {strategies.length > 0 ? (
         <Field label="Stratégie utilisée">
           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
             {strategies.map(s => {
@@ -1224,6 +1224,17 @@ export default function App() {
             })}
           </div>
         </Field>
+      ) : (
+        <button onClick={() => setView("strategy")} style={{ width:"100%", display:"flex", alignItems:"center", gap:12, padding:"13px 16px", borderRadius:8, border:`1px dashed ${C.border}`, background:"transparent", cursor:"pointer", marginBottom:16, transition:"all 0.2s" }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = C.gray1}
+          onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+          <span style={{ fontSize:16, color:C.gray2 }}>◈</span>
+          <div style={{ textAlign:"left" }}>
+            <div style={{ fontSize:11, color:C.white, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.08em" }}>Créer une stratégie</div>
+            <div style={{ fontSize:10, color:C.gray1, fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, marginTop:2 }}>Améliore l'analyse IA et le suivi de tes trades</div>
+          </div>
+          <span style={{ marginLeft:"auto", fontSize:11, color:C.gray2 }}>→</span>
+        </button>
       )}
       <button onClick={addTrade} disabled={computedPnl() === null} style={{ width:"100%", padding:"14px", borderRadius:4, border:"none", background:computedPnl() !== null ? C.accent : C.gray3, color:computedPnl() !== null ? (darkMode?"#111":"#fff") : C.gray2, fontSize:12, fontWeight:600, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.2em", textTransform:"uppercase", cursor:computedPnl() !== null ? "pointer" : "not-allowed", transition:"all 0.3s" }}>
         {saved ? "✓  Trade enregistré" : "Enregistrer  →"}
