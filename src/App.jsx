@@ -49,6 +49,11 @@ const FONTS = `
   @keyframes slideOutAccount{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(-24px);}}
   @keyframes fadeOutDown{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(20px);}}
   @keyframes tabFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes ledSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  .led-card{position:relative;}
+  .led-card::before{content:'';position:absolute;inset:-1px;border-radius:9px;padding:1px;background:conic-gradient(from 0deg,transparent 0%,transparent 82%,rgba(255,210,60,0) 86%,rgba(255,210,60,0.55) 90%,rgba(255,245,180,0.95) 93%,rgba(255,255,255,1) 94.5%,rgba(255,245,180,0.95) 96%,rgba(255,210,60,0.55) 98%,transparent 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:ledSpin 4s linear infinite;pointer-events:none;z-index:10;}
+  .led-card-b::before{animation-duration:5.5s;animation-delay:-1.8s;}
+  .led-card-c::before{animation-duration:3.2s;animation-delay:-3.1s;}
 `;
 
 /* ─── Utils ──────────────────────────────────────────────────────── */
@@ -700,6 +705,7 @@ export default function App() {
   const [accountLeaving, setAccountLeaving] = useState(false);
   const closeAccount = () => { setAccountLeaving(true); setTimeout(()=>{ setSelectedPf(null); setConfirmDeletePf(false); setAccountLeaving(false); setAcctView("today"); }, 260); }; // null = list, pf = detail
   const [acctCustomizing, setAcctCustomizing] = useState(false);
+  const [ledMode, setLedMode] = useState(() => localStorage.getItem("fyltra_led")==="true");
   const [acctLayout, setAcctLayout] = useState(() => load('fyltra_layout_v1', ['progress','today','stats','calendar','trades']));
   const [acctDragOver, setAcctDragOver] = useState(null);
   const [view,        setView]        = useState("propfirm");
@@ -795,6 +801,7 @@ export default function App() {
   useEffect(() => { save('fyltra_layout_v1', acctLayout); if (user) saveUserSettings({ acct_layout: acctLayout }); }, [acctLayout]);
   useEffect(() => { localStorage.setItem("fyltra_trade_mode", tradeMode); if (user) saveUserSettings({ trade_mode: tradeMode }); }, [tradeMode]);
   useEffect(() => { localStorage.setItem("fyltra_trade_fixed_mode", tradeFixedMode); if (user) saveUserSettings({ trade_fixed_mode: tradeFixedMode }); }, [tradeFixedMode]);
+  useEffect(() => { localStorage.setItem("fyltra_led", ledMode); }, [ledMode]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
   // Scroll to top on view change
@@ -1714,7 +1721,7 @@ export default function App() {
         </div>
       )}
 
-      {pfView==="list" && propfirms.map(pf => {
+      {pfView==="list" && propfirms.map((pf, pfIdx) => {
         const cap = parseFloat(pf.capital)||0;
         const target = parseFloat(pf.target)||0;
         const maxLoss = parseFloat(pf.maxLoss)||0;
@@ -1724,8 +1731,9 @@ export default function App() {
         const ddProgress = Math.min(100, (drawdown/maxLoss)*100);
         const alerts = getPfAlerts(pf);
         const isInDanger = alerts.some(a=>a.type==="danger");
+        const ledClass = ledMode && !isInDanger ? ["led-card","led-card led-card-b","led-card led-card-c"][pfIdx%3] : "";
         return (
-          <div key={pf.id} style={{background:C.bg2,border:`1px solid ${isInDanger?"rgba(192,57,43,0.3)":C.border}`,borderRadius:8,padding:!isMobile?"24px 20px":"18px 16px",marginBottom:!isMobile?18:14,cursor:editingPf?.id===pf.id?"default":"pointer"}} onClick={()=>{ if(!editingPf) setSelectedPf(pf); }}>
+          <div key={pf.id} className={ledClass} style={{background:C.bg2,border:`1px solid ${isInDanger?"rgba(192,57,43,0.3)":C.border}`,borderRadius:8,padding:!isMobile?"24px 20px":"18px 16px",marginBottom:!isMobile?18:14,cursor:editingPf?.id===pf.id?"default":"pointer"}} onClick={()=>{ if(!editingPf) setSelectedPf(pf); }}>
             {/* Header */}
             {editingPf?.id === pf.id ? (
               <div style={{marginBottom:12}}>
@@ -2582,13 +2590,22 @@ export default function App() {
         {lang!=="fr"&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:6,background:"rgba(180,120,0,0.08)",border:"1px solid rgba(180,120,0,0.2)",fontSize:11,color:"rgba(180,120,0,0.9)",fontFamily:"'Josefin Sans',sans-serif"}}>La traduction complète sera disponible prochainement.</div>}
       </div>
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
             <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Apparence</div>
             <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{darkMode?"Mode sombre":"Mode clair"}</div>
           </div>
           <button onClick={()=>setDarkMode(d=>!d)} style={{width:52,height:28,borderRadius:14,border:"none",background:darkMode?"#f0ede8":"#ccc",cursor:"pointer",position:"relative",transition:"background 0.3s",flexShrink:0}}>
             <div style={{position:"absolute",top:3,left:darkMode?26:3,width:22,height:22,borderRadius:11,background:darkMode?"#111":"#fff",transition:"left 0.25s",boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
+          </button>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Effet LED comptes</div>
+            <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{ledMode?"Activé — faisceau lumineux":"Désactivé"}</div>
+          </div>
+          <button onClick={()=>setLedMode(v=>!v)} style={{width:52,height:28,borderRadius:14,border:"none",background:ledMode?"rgba(255,210,60,0.85)":"rgba(255,255,255,0.1)",cursor:"pointer",position:"relative",transition:"background 0.3s",flexShrink:0}}>
+            <div style={{position:"absolute",top:3,left:ledMode?26:3,width:22,height:22,borderRadius:11,background:ledMode?"#111":"#888",transition:"left 0.25s",boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
           </button>
         </div>
       </div>
