@@ -639,15 +639,15 @@ export default function App() {
   const [extraEmotions, setExtraEmotions] = useState(() => load('fyltra_emotions_v1', []));
   const [customEmotion, setCustomEmotion] = useState('');
   const [beSign, setBeSign] = useState(1);
-  const [tradeMode, setTradeMode] = useState("swing");
-  const [tradeFixedMode, setTradeFixedMode] = useState("variable"); // "variable" | "fixe"
+  const [tradeMode, setTradeMode] = useState(() => localStorage.getItem("fyltra_trade_mode")||"swing");
+  const [tradeFixedMode, setTradeFixedMode] = useState(() => localStorage.getItem("fyltra_trade_fixed_mode")||"variable");
   const defaultTS = { tpFixed:{enabled:false,value:""}, slFixed:{enabled:false,value:""}, rrFixed:{enabled:false,value:""}, sizeFixed:{enabled:false,value:"",unit:"contrats"} };
   const [tradeSettings, setTradeSettings] = useState(() => load("fyltra_trade_settings_v1", defaultTS));
   const [savedTS, setSavedTS] = useState(() => load("fyltra_trade_settings_v1", defaultTS));
   const [scalpFields, setScalpFields] = useState({entry:false, rr:false, emotion:false, notes:false, size:false});
   const setTS = (key, changes) => setTradeSettings(p => ({...p, [key]:{...p[key],...changes}}));
   const [tsSaved, setTsSaved] = useState(false);
-  const saveTS = () => { save("fyltra_trade_settings_v1", tradeSettings); setSavedTS(tradeSettings); setTsSaved(true); setTimeout(()=>setTsSaved(false),2000); };
+  const saveTS = () => { save("fyltra_trade_settings_v1", tradeSettings); setSavedTS(tradeSettings); if (user) saveUserSettings({ trade_settings: tradeSettings }); setTsSaved(true); setTimeout(()=>setTsSaved(false),2000); };
   const toggleScalp = k => setScalpFields(p => ({...p, [k]:!p[k]}));
   const [showCustomEmotion, setShowCustomEmotion] = useState(false);
   const [strategies,  setStrategies]  = useState(() => {
@@ -766,6 +766,15 @@ export default function App() {
         if (data.strategies) setStrategies(data.strategies);
         if (data.capital !== undefined && data.capital !== null) setCapital(data.capital);
         if (data.extra_instruments) setExtraInstr(data.extra_instruments);
+        if (data.dark_mode !== undefined && data.dark_mode !== null) setDarkMode(data.dark_mode);
+        if (data.currency) setCurrency(data.currency);
+        if (data.lang) setLang(data.lang);
+        if (data.acct_layout) setAcctLayout(data.acct_layout);
+        if (data.extra_emotions) setExtraEmotions(data.extra_emotions);
+        if (data.trade_settings) { setSavedTS(data.trade_settings); setTradeSettings(data.trade_settings); }
+        if (data.coach_instructions) setCoachInstructions(data.coach_instructions);
+        if (data.trade_mode) setTradeMode(data.trade_mode);
+        if (data.trade_fixed_mode) setTradeFixedMode(data.trade_fixed_mode);
       });
   }, [user]);
 
@@ -776,14 +785,16 @@ export default function App() {
 
   useEffect(() => { if (!user) save(KEYS.trades, trades); }, [trades]);
   useEffect(() => { save(KEYS.instruments, extraInstr); if (user) saveUserSettings({ extra_instruments: extraInstr }); }, [extraInstr]);
-  useEffect(() => { save('fyltra_emotions_v1', extraEmotions); }, [extraEmotions]);
+  useEffect(() => { save('fyltra_emotions_v1', extraEmotions); if (user) saveUserSettings({ extra_emotions: extraEmotions }); }, [extraEmotions]);
   useEffect(() => { save(KEYS.strategies, strategies); if (user) saveUserSettings({ strategies }); }, [strategies]);
   useEffect(() => { save(KEYS.capital, capital); if (user) saveUserSettings({ capital }); }, [capital]);
   useEffect(() => { save(KEYS.propfirms, propfirms); if (user) saveUserSettings({ propfirms }); }, [propfirms]);
-  useEffect(() => { localStorage.setItem("fyltra_currency", currency); }, [currency]);
-  useEffect(() => { localStorage.setItem("fyltra_dark", darkMode); document.documentElement.style.setProperty("--bg", darkMode?"#0f0f0f":"#f8f7f5"); document.body.style.background = darkMode?"#0f0f0f":"#f8f7f5"; document.body.style.color = darkMode?"#f0ede8":"#1a1a1a"; C = darkMode ? DARK_THEME : LIGHT_THEME; }, [darkMode]);
-  useEffect(() => { localStorage.setItem("fyltra_lang", lang); }, [lang]);
-  useEffect(() => { save('fyltra_layout_v1', acctLayout); }, [acctLayout]);
+  useEffect(() => { localStorage.setItem("fyltra_currency", currency); if (user) saveUserSettings({ currency }); }, [currency]);
+  useEffect(() => { localStorage.setItem("fyltra_dark", darkMode); document.documentElement.style.setProperty("--bg", darkMode?"#0f0f0f":"#f8f7f5"); document.body.style.background = darkMode?"#0f0f0f":"#f8f7f5"; document.body.style.color = darkMode?"#f0ede8":"#1a1a1a"; C = darkMode ? DARK_THEME : LIGHT_THEME; if (user) saveUserSettings({ dark_mode: darkMode }); }, [darkMode]);
+  useEffect(() => { localStorage.setItem("fyltra_lang", lang); if (user) saveUserSettings({ lang }); }, [lang]);
+  useEffect(() => { save('fyltra_layout_v1', acctLayout); if (user) saveUserSettings({ acct_layout: acctLayout }); }, [acctLayout]);
+  useEffect(() => { localStorage.setItem("fyltra_trade_mode", tradeMode); if (user) saveUserSettings({ trade_mode: tradeMode }); }, [tradeMode]);
+  useEffect(() => { localStorage.setItem("fyltra_trade_fixed_mode", tradeFixedMode); if (user) saveUserSettings({ trade_fixed_mode: tradeFixedMode }); }, [tradeFixedMode]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
   // Scroll to top on view change
@@ -1488,7 +1499,7 @@ export default function App() {
           rows={3}
           placeholder={"Ex: Je trade principalement le MNQ en scalping. Je dois travailler ma discipline sur les stops. Sois très direct et sans pitié sur mes erreurs."}
           value={coachInstructions}
-          onChange={e => { setCoachInstructions(e.target.value); localStorage.setItem("fyltra_coach_instr", e.target.value); }}
+          onChange={e => { setCoachInstructions(e.target.value); localStorage.setItem("fyltra_coach_instr", e.target.value); if (user) saveUserSettings({ coach_instructions: e.target.value }); }}
           style={{...iStyle, resize:"vertical", lineHeight:1.6, fontSize:13}}
         />
         <div style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:5,letterSpacing:"0.05em"}}>Personnalise le comportement du coach. Il en tiendra compte dans chaque analyse.</div>
