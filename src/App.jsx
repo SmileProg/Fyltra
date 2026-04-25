@@ -51,7 +51,7 @@ const FONTS = `
   @keyframes tabFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
   @keyframes ledSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   .led-pill{position:relative;}
-  .led-pill::before{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:conic-gradient(from 0deg,transparent 0%,transparent 82%,rgba(255,210,60,0) 86%,rgba(255,210,60,0.55) 90%,rgba(255,245,180,0.95) 93%,rgba(255,255,255,1) 94.5%,rgba(255,245,180,0.95) 96%,rgba(255,210,60,0.55) 98%,transparent 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:ledSpin var(--led-dur,4s) linear infinite;animation-delay:var(--led-delay,0s);pointer-events:none;z-index:10;}
+  .led-pill::before{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:conic-gradient(from 0deg,transparent 0%,transparent 91%,rgba(0,210,255,0.04) 93%,rgba(0,210,255,0.7) 95.5%,rgba(255,255,255,1) 97%,rgba(0,210,255,0.7) 98.5%,rgba(0,210,255,0.04) 99.5%,transparent 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:ledSpin var(--led-dur,4s) linear infinite;animation-delay:var(--led-delay,0s);filter:drop-shadow(0 0 2px rgba(0,210,255,1)) drop-shadow(0 0 6px rgba(0,210,255,0.7)) drop-shadow(0 0 12px rgba(0,210,255,0.4));pointer-events:none;z-index:10;}
 `;
 
 /* ─── Utils ──────────────────────────────────────────────────────── */
