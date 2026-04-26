@@ -1447,12 +1447,12 @@ ${recentTrades}`;
             <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.2em",fontFamily:ff,fontWeight:600,marginBottom:8}}>Métriques Avancées</div>
             <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)",gap:8,marginBottom:10}}>
               {[
-                {l:"Expectancy / Trade",v:`${expectancy>=0?"+":""}${expectancy.toFixed(0)}${currency}`,c:expectancy>=0?"#4caf6e":"#e05a5a",sub:"Gain espéré par trade"},
-                {l:"Max Drawdown",v:`${maxDD.toFixed(1)}%`,c:maxDD<10?"#4caf6e":maxDD<25?"#d4c060":"#e05a5a",sub:`Actuel : ${currentDD.toFixed(1)}%`},
-                {l:"Profit Factor",v:pf>=99?"∞":pf.toFixed(2),c:pf>=1.5?"#4caf6e":pf>=1?"#d4c060":"#e05a5a",sub:"Gains / Pertes brutes"},
-                {l:"Kelly %",v:`${Math.max(0,kelly).toFixed(1)}%`,c:kelly>0?"#4caf6e":"#e05a5a",sub:"Taille de position optimale"},
+                {l:"Espérance / Trade",v:`${expectancy>=0?"+":""}${expectancy.toFixed(0)}${currency}`,c:expectancy>=0?"#4caf6e":"#e05a5a",sub:"Gain moyen espéré par trade"},
+                {l:"Drawdown Max",v:`${maxDD.toFixed(1)}%`,c:maxDD<10?"#4caf6e":maxDD<25?"#d4c060":"#e05a5a",sub:`Actuel : ${currentDD.toFixed(1)}%`},
+                {l:"Facteur de Profit",v:pf>=99?"∞":pf.toFixed(2),c:pf>=1.5?"#4caf6e":pf>=1?"#d4c060":"#e05a5a",sub:"Gains bruts / Pertes brutes"},
+                {l:"Critère de Kelly",v:`${Math.max(0,kelly).toFixed(1)}%`,c:kelly>0?"#4caf6e":"#e05a5a",sub:"Taille de position optimale"},
                 {l:"Consistance",v:`${consistency}%`,c:consistency>=60?"#4caf6e":consistency>=40?"#d4c060":"#e05a5a",sub:`${wVals.filter(v=>v>0).length}/${wVals.length} semaines`},
-                {l:"Sharpe Ratio",v:sharpe.toFixed(2),c:sharpe>=1?"#4caf6e":sharpe>=0?"#d4c060":"#e05a5a",sub:"Rendement / volatilité"},
+                {l:"Ratio de Sharpe",v:sharpe.toFixed(2),c:sharpe>=1?"#4caf6e":sharpe>=0?"#d4c060":"#e05a5a",sub:"Rendement / volatilité journalière"},
               ].map(m=>(
                 <div key={m.l} style={{...cardS,padding:"14px 12px"}}>
                   <div style={lbl}>{m.l}</div>
@@ -1482,9 +1482,9 @@ ${recentTrades}`;
                 })}
               </div>
               <div style={{display:"flex",gap:12,fontSize:9,color:C.gray2,fontFamily:ff,paddingTop:8,borderTop:`1px solid ${C.border}`}}>
-                <span>RR moyen : <strong style={{color:C.gray1}}>{avgRR.toFixed(2)}</strong></span>
-                <span>Break-even WR : <strong style={{color:C.gray1}}>{breakEvenWR}%</strong></span>
-                <span>Ton WR : <strong style={{color:Math.round(wr*100)>breakEvenWR?"#4caf6e":"#e05a5a"}}>{Math.round(wr*100)}%</strong></span>
+                <span>RR moyen : <strong style={{color:C.gray1,fontFamily:ff}}>{avgRR.toFixed(2)}</strong></span>
+                <span>WR d'équilibre : <strong style={{color:C.gray1,fontFamily:ff}}>{breakEvenWR}%</strong></span>
+                <span>Ton WR : <strong style={{color:Math.round(wr*100)>breakEvenWR?"#4caf6e":"#e05a5a",fontFamily:ff}}>{Math.round(wr*100)}%</strong></span>
               </div>
             </div>
 
@@ -1494,7 +1494,7 @@ ${recentTrades}`;
                 <div style={lbl}>Matrice Émotionnelle</div>
                 <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>Performance par état d'esprit</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 48px 48px 72px",gap:"10px 8px",alignItems:"center"}}>
-                  {["Émotion","T","WR","P&L"].map(h=>(
+                  {["Émotion","Nb","Réussite","P&L"].map(h=>(
                     <div key={h} style={{fontSize:8,color:C.dim,fontFamily:ff,letterSpacing:"0.1em",textTransform:"uppercase",textAlign:h==="Émotion"?"left":"center"}}>{h}</div>
                   ))}
                   {emoData.map(e=>(
@@ -1520,9 +1520,9 @@ ${recentTrades}`;
                 <div style={lbl}>Séries</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:12}}>
                   {[
-                    {l:"Actuelle",v:`${curS}×`,sub:curST==="W"?"WIN":"LOSS",c:curST==="W"?"#4caf6e":"#e05a5a"},
-                    {l:"Max wins",v:`${maxWS}×`,sub:"consécutifs",c:"#4caf6e"},
-                    {l:"Max losses",v:`${maxLS}×`,sub:"consécutives",c:"#e05a5a"},
+                    {l:"Actuelle",v:`${curS}×`,sub:curST==="W"?"Victoires":"Défaites",c:curST==="W"?"#4caf6e":"#e05a5a"},
+                    {l:"Meilleure série",v:`${maxWS}×`,sub:"victoires consécutives",c:"#4caf6e"},
+                    {l:"Pire série",v:`${maxLS}×`,sub:"défaites consécutives",c:"#e05a5a"},
                   ].map(s=>(
                     <div key={s.l} style={{textAlign:"center",background:isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",borderRadius:8,padding:"10px 6px"}}>
                       <div style={{fontSize:7,color:C.dim,fontFamily:ff,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>{s.l}</div>
@@ -1533,7 +1533,7 @@ ${recentTrades}`;
                 </div>
               </div>
               <div style={{...cardS,padding:"16px"}}>
-                <div style={lbl}>Détection Overtrading</div>
+                <div style={lbl}>Détection Surtrading</div>
                 <div style={{marginTop:12}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,alignItems:"center"}}>
                     <span style={{fontSize:9,color:C.gray1,fontFamily:ff}}>Moy. trades / jour</span>
@@ -1545,11 +1545,11 @@ ${recentTrades}`;
                   </div>
                   {otDays.length>0 && otDays.slice(0,2).map(d=>(
                     <div key={d.date} style={{display:"flex",justifyContent:"space-between",padding:"5px 8px",background:"rgba(224,90,90,0.08)",borderRadius:6,marginBottom:4,border:"1px solid rgba(224,90,90,0.15)"}}>
-                      <span style={{fontSize:9,color:C.gray1,fontFamily:ff}}>{d.date} · <strong style={{color:"#e05a5a"}}>{d.count}T</strong></span>
+                      <span style={{fontSize:9,color:C.gray1,fontFamily:ff}}>{d.date} · <strong style={{color:"#e05a5a",fontFamily:ff}}>{d.count} trades</strong></span>
                       <span style={{fontSize:9,fontFamily:ff,fontWeight:600,color:d.pnl>=0?"#4caf6e":"#e05a5a"}}>{d.pnl>=0?"+":""}{d.pnl.toFixed(0)}{currency}</span>
                     </div>
                   ))}
-                  {otDays.length===0 && <div style={{fontSize:10,color:"#4caf6e",fontFamily:ff,padding:"6px 10px",background:"rgba(76,175,110,0.08)",borderRadius:6,border:"1px solid rgba(76,175,110,0.15)"}}>✓ Aucun jour d'overtrading détecté</div>}
+                  {otDays.length===0 && <div style={{fontSize:10,color:"#4caf6e",fontFamily:ff,padding:"6px 10px",background:"rgba(76,175,110,0.08)",borderRadius:6,border:"1px solid rgba(76,175,110,0.15)"}}>✓ Aucun surtrading détecté</div>}
                 </div>
               </div>
             </div>
