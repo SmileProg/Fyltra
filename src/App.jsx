@@ -1341,7 +1341,7 @@ export default function App() {
       ) : [...trades].sort((a, b) => b.date.localeCompare(a.date)).map(t => {
         const pnl = t.pnl || 0; const isWin = t.result === "WIN"; const isLoss = t.result === "LOSS"; const isEditing = editingTrade?.id === t.id;
         return (
-          <div key={t.id} style={{ background:C.bg2, border:`1px solid ${isEditing ? C.accent : isWin ? "rgba(0,0,0,0.15)" : isLoss ? "rgba(0,0,0,0.08)" : C.border}`, borderLeft:`3px solid ${isEditing ? C.accent : isWin ? C.accent : isLoss ? C.gray2 : C.gray3}`, borderRadius:6, padding:"13px 15px", marginBottom:8, transition:"border 0.2s" }}>
+          <SpotlightCard key={t.id} style={{ background:C.bg2, border:`1px solid ${isEditing ? C.accent : isWin ? "rgba(0,0,0,0.15)" : isLoss ? "rgba(0,0,0,0.08)" : C.border}`, borderLeft:`3px solid ${isEditing ? C.accent : isWin ? C.accent : isLoss ? C.gray2 : C.gray3}`, borderRadius:12, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:"13px 15px", marginBottom:8, transition:"border 0.2s" }}>
             {!isEditing && (
               <>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:7 }}>
@@ -1427,7 +1427,7 @@ export default function App() {
                 </div>
               </>
             )}
-          </div>
+          </SpotlightCard>
         );
       })}
     </div>
