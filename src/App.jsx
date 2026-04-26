@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, PieChart, Pie, Cell, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, Radar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, LabelList, RadarChart, PolarGrid, PolarAngleAxis, Radar } from "recharts";
 import { supabase } from "./supabase";
 
 /* ─── Constants ─────────────────────────────────────────────────── */
@@ -2204,40 +2204,61 @@ ${recentTrades}`;
               );
             })(tw,tl,tt,140)) : <div style={{padding:"20px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Aucun trade{acctView==="today"?" aujourd'hui":""}</div>; })()}
           </div>
-          <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"14px"}}>
-            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Direction · {acctView==="global"?"Global":"Aujourd'hui"}</div>
-            {(()=>{
-              const srcTrades = acctView==="global"?acctTrades:todayTrades;
-              const total = srcTrades.length;
-              const barColor = C.bg === "#0f0f0f" ? "#ffffff" : "#111111";
-              const dirs = [{d:"LONG"},{d:"SHORT"}].map(({d})=>{
-                const dt=srcTrades.filter(t=>t.direction===d);
-                const dw=dt.filter(t=>t.result==="WIN").length;
-                const dpnl=dt.reduce((s,t)=>s+(t.pnl||0),0);
-                const dwr=dt.length?Math.round(dw/dt.length*100):0;
-                const usagePct=total?Math.round(dt.length/total*100):0;
-                return {d,dt,dpnl,dwr,usagePct};
-              });
-              const maxPct = Math.max(...dirs.map(x=>x.usagePct), 1);
+          {(()=>{
+            const srcTrades = acctView==="global"?acctTrades:todayTrades;
+            const total = srcTrades.length;
+            const isDark = C.bg === "#0f0f0f";
+            const barColor = isDark ? "#e8e8e8" : "#1a1a1a";
+            const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
+            const dirs = ["LONG","SHORT"].map(d=>{
+              const dt=srcTrades.filter(t=>t.direction===d);
+              const dw=dt.filter(t=>t.result==="WIN").length;
+              const dpnl=dt.reduce((s,t)=>s+(t.pnl||0),0);
+              const dwr=dt.length?Math.round(dw/dt.length*100):0;
+              const usagePct=total?Math.round(dt.length/total*100):0;
+              return {d,count:dt.length,dpnl,dwr,usagePct};
+            });
+            const chartData = dirs.map(x=>({d:x.d, pct:x.usagePct}));
+            const CustomTooltip = ({active,payload})=>{
+              if(!active||!payload?.length) return null;
+              const label = payload[0].payload.d;
+              const item = dirs.find(x=>x.d===label);
+              if(!item) return null;
               return (
-                <div style={{display:"flex",gap:12,alignItems:"flex-end",height:100,marginTop:4}}>
-                  {dirs.map(({d,dt,dpnl,dwr,usagePct})=>{
-                    const barH = Math.round((usagePct/maxPct)*72);
-                    return (
-                      <div key={d} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                        <span style={{fontSize:9,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>WR {dwr}%</span>
-                        <div style={{width:"100%",display:"flex",alignItems:"flex-end",height:72}}>
-                          <div style={{width:"100%",height:barH,borderRadius:"4px 4px 2px 2px",background:barColor,opacity:usagePct===0?0.15:1,transition:"height 0.5s cubic-bezier(.4,0,.2,1)"}}/>
-                        </div>
-                        <span style={{fontSize:10,color:C.white,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.06em"}}>{d}</span>
-                        <span style={{fontSize:9,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{usagePct}% · {dt.length}T</span>
-                      </div>
-                    );
-                  })}
+                <div style={{background:isDark?"rgba(18,18,18,0.95)":"rgba(255,255,255,0.97)",border:`1px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.1)"}`,borderRadius:8,padding:"10px 14px",boxShadow:"0 8px 24px rgba(0,0,0,0.2)",fontFamily:"'Josefin Sans',sans-serif"}}>
+                  <div style={{fontSize:11,color:C.white,fontWeight:700,marginBottom:4,letterSpacing:"0.1em"}}>{label}</div>
+                  <div style={{fontSize:10,color:C.gray1,marginBottom:2}}>{item.count} trade{item.count!==1?"s":""} · {item.usagePct}%</div>
+                  <div style={{fontSize:10,color:C.gray1,marginBottom:2}}>WR {item.dwr}%</div>
+                  <div style={{fontSize:10,color:item.dpnl>=0?"#4caf6e":"#e05a5a",fontWeight:600}}>{item.dpnl>=0?"+":""}{item.dpnl.toFixed(0)}{currency}</div>
                 </div>
               );
-            })()}
-          </div>
+            };
+            return (
+              <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"16px 16px 12px"}}>
+                <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:2}}>Direction · {acctView==="global"?"Global":"Aujourd'hui"}</div>
+                <div style={{fontSize:9,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginBottom:10}}>{total} trade{total!==1?"s":""} au total</div>
+                <ResponsiveContainer width="100%" height={130}>
+                  <BarChart data={chartData} margin={{top:22,right:12,left:12,bottom:0}} barCategoryGap="30%">
+                    <CartesianGrid vertical={false} stroke={gridColor} strokeDasharray="4 4"/>
+                    <XAxis dataKey="d" axisLine={false} tickLine={false} tick={{fontSize:10,fill:C.gray1,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.08em"}} dy={6}/>
+                    <Tooltip content={<CustomTooltip/>} cursor={{fill:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",radius:6}}/>
+                    <Bar dataKey="pct" fill={barColor} radius={[6,6,2,2]} maxBarSize={60}>
+                      <LabelList dataKey="pct" position="top" offset={8} formatter={v=>v+"%"} style={{fontSize:11,fill:C.white,fontFamily:"'Josefin Sans',sans-serif",fontWeight:700}}/>
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div style={{display:"flex",gap:8,marginTop:8}}>
+                  {dirs.map(x=>(
+                    <div key={x.d} style={{flex:1,background:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",borderRadius:8,padding:"8px 10px"}}>
+                      <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:3}}>{x.d}</div>
+                      <div style={{fontSize:12,color:C.white,fontFamily:"'Josefin Sans',sans-serif",fontWeight:700}}>{x.count}T · {x.dwr}%<span style={{fontWeight:400,color:C.gray1}}> WR</span></div>
+                      <div style={{fontSize:10,color:x.dpnl>=0?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginTop:1}}>{x.dpnl>=0?"+":""}{x.dpnl.toFixed(0)}{currency}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
         <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"24px 20px 14px":"16px 14px 10px",marginBottom:!isMobile?16:12}}>
           <div style={{fontSize:9,color:C.dim,letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Courbe d'équité</div>
