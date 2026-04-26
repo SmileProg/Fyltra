@@ -1325,6 +1325,267 @@ ${recentTrades}`;
   const historyContent = (
     <div>
       <PageTitle sub="Classements" title="Statistiques" />
+
+      {/* ══════════════════ ANALYTICS AVANCÉS ══════════════════ */}
+      {trades.length >= 3 && (() => {
+        const isDark = C.bg === "#0f0f0f";
+        const sorted = [...trades].sort((a,b)=>a.date.localeCompare(b.date));
+        const cardS = {background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),0 0 0 1px rgba(255,255,255,0.09),inset 0 1px 0 rgba(255,255,255,0.32)"};
+        const lbl = {fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600};
+        const ff = "'Josefin Sans',sans-serif";
+
+        // Equity & Drawdown
+        let cum=0,peak=0,maxDD=0;
+        sorted.forEach(t=>{
+          cum+=t.pnl||0;
+          if(cum>peak) peak=cum;
+          const dd=peak>0?(peak-cum)/peak*100:0;
+          if(dd>maxDD) maxDD=dd;
+        });
+        const currentDD = peak>0?(peak-cum)/peak*100:0;
+
+        // Win/Loss
+        const wins=sorted.filter(t=>t.result==="WIN");
+        const losses=sorted.filter(t=>t.result==="LOSS");
+        const wr=sorted.length?wins.length/sorted.length:0;
+        const avgWin=wins.length?wins.reduce((s,t)=>s+(t.pnl||0),0)/wins.length:0;
+        const avgLoss=losses.length?Math.abs(losses.reduce((s,t)=>s+(t.pnl||0),0)/losses.length):0;
+        const grossW=wins.reduce((s,t)=>s+(t.pnl||0),0);
+        const grossL=Math.abs(losses.reduce((s,t)=>s+(t.pnl||0),0));
+        const pf=grossL>0?grossW/grossL:grossW>0?99:0;
+
+        // Expectancy, Kelly
+        const expectancy=(wr*avgWin)-((1-wr)*avgLoss);
+        const kelly=avgLoss>0&&avgWin>0?((wr-(1-wr)/(avgWin/avgLoss))*100):0;
+
+        // Consistency (% semaines positives)
+        const weekMap={};
+        sorted.forEach(t=>{
+          const d=new Date(t.date+"T12:00:00");
+          const key=`${d.getFullYear()}-${d.getMonth()}-W${Math.ceil(d.getDate()/7)}`;
+          weekMap[key]=(weekMap[key]||0)+(t.pnl||0);
+        });
+        const wVals=Object.values(weekMap);
+        const consistency=wVals.length?Math.round(wVals.filter(v=>v>0).length/wVals.length*100):0;
+
+        // Sharpe simplifié (daily)
+        const dayMap={};
+        sorted.forEach(t=>{ dayMap[t.date]=(dayMap[t.date]||0)+(t.pnl||0); });
+        const dVals=Object.values(dayMap);
+        const avgD=dVals.reduce((s,v)=>s+v,0)/dVals.length;
+        const stdD=Math.sqrt(dVals.reduce((s,v)=>s+(v-avgD)**2,0)/dVals.length)||1;
+        const sharpe=avgD/stdD;
+
+        // Streaks
+        let maxWS=0,maxLS=0,tmpS=0,tmpT=null;
+        sorted.forEach(t=>{
+          if(t.result==="BREAKEVEN") return;
+          const tp=t.result==="WIN"?"W":"L";
+          if(tp===tmpT){tmpS++;}else{tmpS=1;tmpT=tp;}
+          if(tp==="W"&&tmpS>maxWS) maxWS=tmpS;
+          if(tp==="L"&&tmpS>maxLS) maxLS=tmpS;
+        });
+        let curS=0,curST=null;
+        for(let i=sorted.length-1;i>=0;i--){
+          const t=sorted[i];
+          if(t.result==="BREAKEVEN") continue;
+          const tp=t.result==="WIN"?"W":"L";
+          if(curST===null){curST=tp;curS=1;}
+          else if(tp===curST){curS++;}
+          else break;
+        }
+
+        // Overtrading
+        const avgTPD=sorted.length/Object.keys(dayMap).length;
+        const dayDetails=Object.entries(dayMap).map(([date,pnl])=>({date,pnl,count:sorted.filter(t=>t.date===date).length}));
+        const otDays=dayDetails.filter(d=>d.count>avgTPD*1.5).sort((a,b)=>b.count-a.count).slice(0,3);
+
+        // R-Multiple distribution
+        const rrBuckets=[
+          {label:"< 0",count:0,color:"#e05a5a"},
+          {label:"0–1",count:0,color:"#e0884a"},
+          {label:"1–2",count:0,color:"#d4c060"},
+          {label:"2–3",count:0,color:"#4caf6e"},
+          {label:"3+", count:0,color:"#2a9d5c"},
+        ];
+        sorted.forEach(t=>{
+          const r=parseFloat(t.rr);
+          if(isNaN(r)) return;
+          if(t.result==="LOSS"||r<0) rrBuckets[0].count++;
+          else if(r<1) rrBuckets[1].count++;
+          else if(r<2) rrBuckets[2].count++;
+          else if(r<3) rrBuckets[3].count++;
+          else rrBuckets[4].count++;
+        });
+        const rrTotal=rrBuckets.reduce((s,b)=>s+b.count,0);
+        const rrTrades=sorted.filter(t=>parseFloat(t.rr)>0);
+        const avgRR=rrTrades.length?rrTrades.reduce((s,t)=>s+parseFloat(t.rr),0)/rrTrades.length:1;
+        const breakEvenWR=avgRR>0?Math.round(1/(1+avgRR)*100):50;
+
+        // Matrice émotionnelle
+        const emoList=[...new Set(sorted.map(t=>t.emotion).filter(Boolean))];
+        const emoData=emoList.map(e=>{
+          const et=sorted.filter(t=>t.emotion===e);
+          const ew=et.filter(t=>t.result==="WIN").length;
+          return{e,count:et.length,wr:et.length?Math.round(ew/et.length*100):0,pnl:et.reduce((s,t)=>s+(t.pnl||0),0)};
+        }).sort((a,b)=>b.wr-a.wr);
+
+        // Monte Carlo
+        const MC=300,MCT=50;
+        const mcR=[];
+        for(let p=0;p<MC;p++){let eq=0;for(let i=0;i<MCT;i++){eq+=Math.random()<wr?avgWin:-avgLoss;}mcR.push(eq);}
+        mcR.sort((a,b)=>a-b);
+        const mcP10=mcR[Math.floor(MC*0.1)];
+        const mcP50=mcR[Math.floor(MC*0.5)];
+        const mcP90=mcR[Math.floor(MC*0.9)];
+        const mcWin=Math.round(mcR.filter(v=>v>0).length/MC*100);
+
+        return (
+          <div style={{marginBottom:8}}>
+
+            {/* ── MÉTRIQUES CLÉS ── */}
+            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.2em",fontFamily:ff,fontWeight:600,marginBottom:8}}>Métriques Avancées</div>
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)",gap:8,marginBottom:10}}>
+              {[
+                {l:"Expectancy / Trade",v:`${expectancy>=0?"+":""}${expectancy.toFixed(0)}${currency}`,c:expectancy>=0?"#4caf6e":"#e05a5a",sub:"Gain espéré par trade"},
+                {l:"Max Drawdown",v:`${maxDD.toFixed(1)}%`,c:maxDD<10?"#4caf6e":maxDD<25?"#d4c060":"#e05a5a",sub:`Actuel : ${currentDD.toFixed(1)}%`},
+                {l:"Profit Factor",v:pf>=99?"∞":pf.toFixed(2),c:pf>=1.5?"#4caf6e":pf>=1?"#d4c060":"#e05a5a",sub:"Gains / Pertes brutes"},
+                {l:"Kelly %",v:`${Math.max(0,kelly).toFixed(1)}%`,c:kelly>0?"#4caf6e":"#e05a5a",sub:"Taille de position optimale"},
+                {l:"Consistance",v:`${consistency}%`,c:consistency>=60?"#4caf6e":consistency>=40?"#d4c060":"#e05a5a",sub:`${wVals.filter(v=>v>0).length}/${wVals.length} semaines`},
+                {l:"Sharpe Ratio",v:sharpe.toFixed(2),c:sharpe>=1?"#4caf6e":sharpe>=0?"#d4c060":"#e05a5a",sub:"Rendement / volatilité"},
+              ].map(m=>(
+                <div key={m.l} style={{...cardS,padding:"14px 12px"}}>
+                  <div style={lbl}>{m.l}</div>
+                  <div style={{fontSize:22,fontFamily:"'Cormorant Garamond',serif",fontWeight:600,color:m.c,marginTop:4,letterSpacing:"-0.01em"}}>{m.v}</div>
+                  <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginTop:3}}>{m.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── R-MULTIPLE DISTRIBUTION ── */}
+            <div style={{...cardS,padding:"16px",marginBottom:10}}>
+              <div style={lbl}>Distribution R-Multiples</div>
+              <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>Où se situent tes sorties ?</div>
+              <div style={{display:"flex",gap:8,alignItems:"flex-end",height:90,marginBottom:10}}>
+                {rrBuckets.map(b=>{
+                  const h=rrTotal>0?Math.max(4,Math.round(b.count/rrTotal*74)):4;
+                  const pct=rrTotal>0?Math.round(b.count/rrTotal*100):0;
+                  return (
+                    <div key={b.label} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      <span style={{fontSize:9,color:C.gray1,fontFamily:ff}}>{b.count>0?pct+"%":""}</span>
+                      <div style={{width:"100%",display:"flex",alignItems:"flex-end",height:64}}>
+                        <div style={{width:"100%",height:b.count>0?h:2,borderRadius:"5px 5px 2px 2px",background:b.color,opacity:b.count>0?0.9:0.2,transition:"height 0.6s cubic-bezier(.4,0,.2,1)"}}/>
+                      </div>
+                      <span style={{fontSize:9,color:C.gray1,fontFamily:ff,letterSpacing:"0.05em"}}>{b.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{display:"flex",gap:12,fontSize:9,color:C.gray2,fontFamily:ff,paddingTop:8,borderTop:`1px solid ${C.border}`}}>
+                <span>RR moyen : <strong style={{color:C.gray1}}>{avgRR.toFixed(2)}</strong></span>
+                <span>Break-even WR : <strong style={{color:C.gray1}}>{breakEvenWR}%</strong></span>
+                <span>Ton WR : <strong style={{color:Math.round(wr*100)>breakEvenWR?"#4caf6e":"#e05a5a"}}>{Math.round(wr*100)}%</strong></span>
+              </div>
+            </div>
+
+            {/* ── MATRICE ÉMOTIONNELLE ── */}
+            {emoData.length>0 && (
+              <div style={{...cardS,padding:"16px",marginBottom:10}}>
+                <div style={lbl}>Matrice Émotionnelle</div>
+                <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>Performance par état d'esprit</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 48px 48px 72px",gap:"10px 8px",alignItems:"center"}}>
+                  {["Émotion","T","WR","P&L"].map(h=>(
+                    <div key={h} style={{fontSize:8,color:C.dim,fontFamily:ff,letterSpacing:"0.1em",textTransform:"uppercase",textAlign:h==="Émotion"?"left":"center"}}>{h}</div>
+                  ))}
+                  {emoData.map(e=>(
+                    <div key={e.e} style={{display:"contents"}}>
+                      <div>
+                        <div style={{fontSize:11,color:C.white,fontFamily:ff,marginBottom:3}}>{e.e}</div>
+                        <div style={{height:2,background:C.gray3,borderRadius:1}}>
+                          <div style={{width:e.wr+"%",height:"100%",borderRadius:1,background:e.wr>=50?"#4caf6e":"#e05a5a",transition:"width 0.5s"}}/>
+                        </div>
+                      </div>
+                      <div style={{fontSize:11,color:C.gray1,fontFamily:ff,textAlign:"center"}}>{e.count}</div>
+                      <div style={{fontSize:11,fontFamily:ff,textAlign:"center",fontWeight:600,color:e.wr>=50?"#4caf6e":"#e05a5a"}}>{e.wr}%</div>
+                      <div style={{fontSize:11,fontFamily:ff,textAlign:"center",fontWeight:600,color:e.pnl>=0?"#4caf6e":"#e05a5a"}}>{e.pnl>=0?"+":""}{e.pnl.toFixed(0)}{currency}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── STREAKS + OVERTRADING ── */}
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8,marginBottom:10}}>
+              <div style={{...cardS,padding:"16px"}}>
+                <div style={lbl}>Séries</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:12}}>
+                  {[
+                    {l:"Actuelle",v:`${curS}×`,sub:curST==="W"?"WIN":"LOSS",c:curST==="W"?"#4caf6e":"#e05a5a"},
+                    {l:"Max wins",v:`${maxWS}×`,sub:"consécutifs",c:"#4caf6e"},
+                    {l:"Max losses",v:`${maxLS}×`,sub:"consécutives",c:"#e05a5a"},
+                  ].map(s=>(
+                    <div key={s.l} style={{textAlign:"center",background:isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",borderRadius:8,padding:"10px 6px"}}>
+                      <div style={{fontSize:7,color:C.dim,fontFamily:ff,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>{s.l}</div>
+                      <div style={{fontSize:18,fontFamily:"'Cormorant Garamond',serif",fontWeight:600,color:s.c}}>{s.v}</div>
+                      <div style={{fontSize:8,color:C.gray2,fontFamily:ff}}>{s.sub}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{...cardS,padding:"16px"}}>
+                <div style={lbl}>Détection Overtrading</div>
+                <div style={{marginTop:12}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,alignItems:"center"}}>
+                    <span style={{fontSize:9,color:C.gray1,fontFamily:ff}}>Moy. trades / jour</span>
+                    <span style={{fontSize:12,color:C.white,fontFamily:ff,fontWeight:600}}>{avgTPD.toFixed(1)}</span>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,alignItems:"center"}}>
+                    <span style={{fontSize:9,color:C.gray1,fontFamily:ff}}>Jours suspects détectés</span>
+                    <span style={{fontSize:12,color:otDays.length>0?"#e05a5a":C.white,fontFamily:ff,fontWeight:600}}>{otDays.length}</span>
+                  </div>
+                  {otDays.length>0 && otDays.slice(0,2).map(d=>(
+                    <div key={d.date} style={{display:"flex",justifyContent:"space-between",padding:"5px 8px",background:"rgba(224,90,90,0.08)",borderRadius:6,marginBottom:4,border:"1px solid rgba(224,90,90,0.15)"}}>
+                      <span style={{fontSize:9,color:C.gray1,fontFamily:ff}}>{d.date} · <strong style={{color:"#e05a5a"}}>{d.count}T</strong></span>
+                      <span style={{fontSize:9,fontFamily:ff,fontWeight:600,color:d.pnl>=0?"#4caf6e":"#e05a5a"}}>{d.pnl>=0?"+":""}{d.pnl.toFixed(0)}{currency}</span>
+                    </div>
+                  ))}
+                  {otDays.length===0 && <div style={{fontSize:10,color:"#4caf6e",fontFamily:ff,padding:"6px 10px",background:"rgba(76,175,110,0.08)",borderRadius:6,border:"1px solid rgba(76,175,110,0.15)"}}>✓ Aucun jour d'overtrading détecté</div>}
+                </div>
+              </div>
+            </div>
+
+            {/* ── MONTE CARLO ── */}
+            <div style={{...cardS,padding:"16px",marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+                <div>
+                  <div style={lbl}>Monte Carlo — 50 prochains trades</div>
+                  <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginTop:2}}>Simulation sur {MC} chemins basée sur tes stats réelles</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:24,fontFamily:"'Cormorant Garamond',serif",fontWeight:600,color:mcWin>=60?"#4caf6e":mcWin>=40?"#d4c060":"#e05a5a"}}>{mcWin}%</div>
+                  <div style={{fontSize:8,color:C.gray2,fontFamily:ff}}>chances de profit</div>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                {[
+                  {l:"Pessimiste (P10)",v:mcP10,desc:"1 chance sur 10 de faire moins"},
+                  {l:"Médian (P50)",v:mcP50,desc:"Résultat le plus probable"},
+                  {l:"Optimiste (P90)",v:mcP90,desc:"1 chance sur 10 de faire mieux"},
+                ].map(s=>(
+                  <div key={s.l} style={{background:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",borderRadius:8,padding:"12px 10px",textAlign:"center"}}>
+                    <div style={{fontSize:7,color:C.dim,fontFamily:ff,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>{s.l}</div>
+                    <div style={{fontSize:18,fontFamily:"'Cormorant Garamond',serif",fontWeight:600,color:s.v>=0?"#4caf6e":"#e05a5a"}}>{s.v>=0?"+":""}{s.v.toFixed(0)}{currency}</div>
+                    <div style={{fontSize:8,color:C.gray2,fontFamily:ff,marginTop:4}}>{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        );
+      })()}
+      {/* ══════════════════ FIN ANALYTICS ══════════════════ */}
+
       {(() => {
         if (trades.length === 0) return null;
         const calcBest = (groupFn) => {
