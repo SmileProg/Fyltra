@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, LabelList, RadarChart, PolarGrid, PolarAngleAxis, Radar } from "recharts";
 import { supabase } from "./supabase";
 
@@ -49,6 +49,9 @@ const FONTS = `
   @keyframes slideOutAccount{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(-24px);}}
   @keyframes fadeOutDown{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(20px);}}
   @keyframes tabFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes scaleIn{from{opacity:0;transform:scale(0.88);}to{opacity:1;transform:scale(1);}}
+  @keyframes scaleOut{from{opacity:1;transform:scale(1);}to{opacity:0;transform:scale(0.88);}}
 `;
 
 /* ─── Utils ──────────────────────────────────────────────────────── */
@@ -224,7 +227,7 @@ function Sidebar({ view, setView, darkMode }) {
       {/* Footer */}
       <div style={{ padding:"12px 20px", borderTop:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ fontSize:9, color:C.gray2, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.08em" }}>v1.0 · Fyltra</div>
-        <button onClick={() => supabase.auth.signOut()} style={{ background:"none", border:"none", cursor:"pointer", fontSize:9, color:"rgba(229,100,100,0.55)", fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em", textTransform:"uppercase", padding:"4px 8px", borderRadius:6, transition:"color 0.2s" }}>
+        <button onClick={() => setShowSignOutConfirm(true)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:9, color:"rgba(229,100,100,0.55)", fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em", textTransform:"uppercase", padding:"4px 8px", borderRadius:6, transition:"color 0.2s" }}>
           Déconnexion
         </button>
       </div>
@@ -808,6 +811,10 @@ export default function App() {
   const [eodText, setEodText] = useState("");
   const [eodAccount, setEodAccount] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [signOutLeaving, setSignOutLeaving] = useState(false);
+  const confirmSignOut = () => { setSignOutLeaving(true); setTimeout(() => { setShowSignOutConfirm(false); setSignOutLeaving(false); supabase.auth.signOut(); }, 280); };
+  const cancelSignOut = () => { setSignOutLeaving(true); setTimeout(() => { setShowSignOutConfirm(false); setSignOutLeaving(false); }, 250); };
   const [currency, setCurrency] = useState(() => localStorage.getItem("fyltra_currency")||"€");
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("fyltra_dark")==="true");
   C = darkMode ? DARK_THEME : LIGHT_THEME; // Dynamic theme
@@ -3242,7 +3249,7 @@ ${recentTrades}`;
                   </button>
                 ))}
                 <div style={{height:1,background:"rgba(255,255,255,0.06)",margin:"2px 8px"}}/>
-                <button onClick={()=>{ closeMenu(); supabase.auth.signOut(); }} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent"}}>
+                <button onClick={()=>{ closeMenu(); setShowSignOutConfirm(true); }} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent"}}>
                   <span style={{fontSize:15,color:"rgba(229,100,100,0.7)",lineHeight:1,width:20,textAlign:"center"}}>⏻</span>
                   <span style={{fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,color:"rgba(229,100,100,0.7)",letterSpacing:"0.06em"}}>Déconnexion</span>
                 </button>
@@ -3496,6 +3503,25 @@ ${recentTrades}`;
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── CONFIRMATION DÉCONNEXION ── */}
+      {showSignOutConfirm && (
+        <div style={{position:"fixed",inset:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.55)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",animation:"fadeIn 0.2s ease"}} onClick={cancelSignOut}>
+          <div onClick={e=>e.stopPropagation()} style={{width:320,background:C.bg2,border:`1px solid ${C.border}`,borderRadius:20,padding:"32px 28px",boxShadow:"0 32px 80px rgba(0,0,0,0.6),0 8px 24px rgba(0,0,0,0.3),0 0 0 1px rgba(255,255,255,0.08),inset 0 1px 0 rgba(255,255,255,0.2)",animation:`${signOutLeaving?"scaleOut":"scaleIn"} 0.25s cubic-bezier(.4,0,.2,1)`,textAlign:"center"}}>
+            <div style={{width:52,height:52,borderRadius:16,background:"rgba(229,100,100,0.1)",border:"1px solid rgba(229,100,100,0.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",boxShadow:"0 0 24px rgba(229,100,100,0.12)"}}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(229,100,100,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:600,color:C.white,marginBottom:8,letterSpacing:"-0.01em"}}>Déconnexion</div>
+            <div style={{fontFamily:"'Josefin Sans',sans-serif",fontSize:11,color:C.gray1,letterSpacing:"0.04em",lineHeight:1.6,marginBottom:28}}>Êtes-vous sûr de vouloir<br/>vous déconnecter ?</div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={cancelSignOut} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${C.border}`,background:"transparent",color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",fontSize:11,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",cursor:"pointer"}}>Annuler</button>
+              <button onClick={confirmSignOut} style={{flex:1,padding:"11px",borderRadius:10,border:"1px solid rgba(229,100,100,0.4)",background:"rgba(229,100,100,0.1)",color:"rgba(229,100,100,0.9)",fontFamily:"'Josefin Sans',sans-serif",fontSize:11,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",cursor:"pointer"}}>Se déconnecter</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
