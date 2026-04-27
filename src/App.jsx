@@ -362,6 +362,141 @@ const AUTH_ANIM = `
   @keyframes authSweep { 0%{transform:translateX(-100%);opacity:0;} 20%{opacity:1;} 80%{opacity:1;} 100%{transform:translateX(100vw);opacity:0;} }
 `;
 
+function DatePicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [view, setView] = useState(() => {
+    const d = value ? new Date(value+"T12:00:00") : new Date();
+    return { y: d.getFullYear(), m: d.getMonth() };
+  });
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  const isDark = C.bg === "#0f0f0f";
+  const ff = "'Josefin Sans',sans-serif";
+  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
+  const firstDow = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday=0
+  const today = new Date().toISOString().split("T")[0];
+  const label = value
+    ? (() => { const d = new Date(value+"T12:00:00"); return `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`; })()
+    : "Sélectionner";
+
+  const prevM = () => setView(v => v.m === 0 ? {y:v.y-1,m:11} : {y:v.y,m:v.m-1});
+  const nextM = () => setView(v => v.m === 11 ? {y:v.y+1,m:0} : {y:v.y,m:v.m+1});
+
+  const popBg = isDark ? "rgba(16,16,16,0.98)" : "rgba(250,249,247,0.99)";
+  const btnBase = { background:"none", border:"none", cursor:"pointer", fontFamily:ff, color:C.gray1, borderRadius:6, transition:"all 0.15s" };
+  const navBtn = { ...btnBase, fontSize:16, padding:"4px 10px", color:C.white };
+
+  return (
+    <div ref={ref} style={{position:"relative",flex:1}}>
+      <button onClick={() => setOpen(o=>!o)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,background:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",border:`1px solid ${open?C.white:C.border}`,borderRadius:8,padding:"10px 12px",cursor:"pointer",color:C.white,fontFamily:ff,fontSize:12,letterSpacing:"0.05em",transition:"border 0.2s"}}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:C.gray1,flexShrink:0}}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span style={{flex:1,textAlign:"left"}}>{label}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{color:C.gray2,transform:open?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.2s"}}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:popBg,border:`1px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.1)"}`,borderRadius:14,padding:16,boxShadow:isDark?"0 24px 60px rgba(0,0,0,0.7),0 4px 16px rgba(0,0,0,0.4)":"0 12px 40px rgba(0,0,0,0.18)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",minWidth:260}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <button onClick={prevM} style={navBtn}>‹</button>
+            <span style={{fontSize:11,fontFamily:ff,color:C.white,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase"}}>{MONTHS_FR[view.m]} {view.y}</span>
+            <button onClick={nextM} style={navBtn}>›</button>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
+            {["L","M","M","J","V","S","D"].map((d,i)=>(
+              <div key={i} style={{textAlign:"center",fontSize:9,color:C.dim,fontFamily:ff,fontWeight:600,letterSpacing:"0.1em",paddingBottom:6}}>{d}</div>
+            ))}
+            {Array.from({length:firstDow}).map((_,i)=><div key={"e"+i}/>)}
+            {Array.from({length:daysInMonth}).map((_,i)=>{
+              const day = i+1;
+              const dateStr = `${view.y}-${String(view.m+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+              const isSelected = dateStr === value;
+              const isToday = dateStr === today;
+              return (
+                <button key={day} onClick={()=>{ onChange(dateStr); setOpen(false); }} style={{...btnBase,padding:"6px 2px",textAlign:"center",fontSize:11,fontWeight:isSelected?600:300,background:isSelected?(isDark?"rgba(255,255,255,0.92)":"rgba(0,0,0,0.88)"):isToday?(isDark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)"):"none",color:isSelected?(isDark?"#111":"#fff"):isToday?C.white:C.gray1,borderRadius:6,border:isToday&&!isSelected?`1px solid ${isDark?"rgba(255,255,255,0.2)":"rgba(0,0,0,0.2)"}`:isSelected?`1px solid ${isDark?"rgba(255,255,255,0.9)":"rgba(0,0,0,0.85)"}`:"1px solid transparent"}}>
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TimePicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const hourRef = useRef(null);
+  const minRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  useEffect(() => {
+    if (open && value) {
+      const [hh, mm] = value.split(":").map(Number);
+      if (hourRef.current) hourRef.current.scrollTop = hh * 36;
+      if (minRef.current) minRef.current.scrollTop = Math.round(mm/5) * 36;
+    }
+  }, [open]);
+
+  const isDark = C.bg === "#0f0f0f";
+  const ff = "'Josefin Sans',sans-serif";
+  const [curH, curM] = value ? value.split(":").map(Number) : [new Date().getHours(), 0];
+
+  const setH = (h) => onChange(`${String(h).padStart(2,"0")}:${String(curM).padStart(2,"0")}`);
+  const setM = (m) => onChange(`${String(curH).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
+
+  const popBg = isDark ? "rgba(16,16,16,0.98)" : "rgba(250,249,247,0.99)";
+  const itemStyle = (active) => ({
+    display:"block", width:"100%", padding:"8px 0", textAlign:"center", fontSize:13, fontFamily:ff,
+    fontWeight:active?600:300, color:active?C.white:C.gray2, background:active?(isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)"):"none",
+    border:"none", borderRadius:6, cursor:"pointer", letterSpacing:"0.05em", transition:"all 0.1s", flexShrink:0
+  });
+
+  return (
+    <div ref={ref} style={{position:"relative",flex:1}}>
+      <button onClick={() => setOpen(o=>!o)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,background:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",border:`1px solid ${open?C.white:C.border}`,borderRadius:8,padding:"10px 12px",cursor:"pointer",color:value?C.white:C.gray2,fontFamily:ff,fontSize:12,letterSpacing:"0.05em",transition:"border 0.2s"}}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:C.gray1,flexShrink:0}}><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+        <span style={{flex:1,textAlign:"left"}}>{value || "Heure"}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{color:C.gray2,transform:open?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.2s"}}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:popBg,border:`1px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.1)"}`,borderRadius:14,padding:"12px 8px",boxShadow:isDark?"0 24px 60px rgba(0,0,0,0.7),0 4px 16px rgba(0,0,0,0.4)":"0 12px 40px rgba(0,0,0,0.18)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)"}}>
+          <div style={{fontSize:9,color:C.dim,fontFamily:ff,letterSpacing:"0.15em",textTransform:"uppercase",fontWeight:600,textAlign:"center",marginBottom:10}}>Heure</div>
+          <div style={{display:"flex",gap:4,alignItems:"center"}}>
+            <div ref={hourRef} style={{width:52,height:180,overflowY:"auto",scrollBehavior:"smooth",scrollbarWidth:"none"}}>
+              <style>{".tp-scroll::-webkit-scrollbar{display:none}"}</style>
+              <div className="tp-scroll" style={{paddingTop:72,paddingBottom:72}}>
+                {Array.from({length:24}).map((_,h)=>(
+                  <button key={h} onClick={()=>setH(h)} style={itemStyle(h===curH)}>{String(h).padStart(2,"0")}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{fontSize:18,color:C.gray2,fontFamily:ff,fontWeight:300,paddingBottom:2}}>:</div>
+            <div ref={minRef} style={{width:52,height:180,overflowY:"auto",scrollBehavior:"smooth",scrollbarWidth:"none"}}>
+              <div className="tp-scroll" style={{paddingTop:72,paddingBottom:72}}>
+                {[0,5,10,15,20,25,30,35,40,45,50,55].map(m=>(
+                  <button key={m} onClick={()=>setM(m)} style={itemStyle(m===Math.round(curM/5)*5||m===curM)}>{String(m).padStart(2,"0")}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button onClick={()=>setOpen(false)} style={{width:"100%",marginTop:10,padding:"8px",background:isDark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)",border:"none",borderRadius:8,cursor:"pointer",fontSize:10,fontFamily:ff,fontWeight:600,letterSpacing:"0.12em",color:C.white,textTransform:"uppercase"}}>Confirmer</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AuthScreen() {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -1129,8 +1264,8 @@ ${recentTrades}`;
       </div>
 
       <div style={{display:"flex",gap:8}}>
-        <Field label="Date"><input type="date" value={form.date} onChange={e => set("date", e.target.value)} style={iStyle} /></Field>
-        <Field label="Heure"><input type="time" value={form.time||""} onChange={e => set("time", e.target.value)} style={iStyle} /></Field>
+        <Field label="Date"><DatePicker value={form.date} onChange={v => set("date", v)} /></Field>
+        <Field label="Heure"><TimePicker value={form.time||""} onChange={v => set("time", v)} /></Field>
       </div>
       <Field label="Instrument">
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
