@@ -458,11 +458,21 @@ function AuthScreen() {
   const JF = "'Josefin Sans',sans-serif";
   const CV = "'CoolveticaHv',sans-serif";
   const MN = "'MariellaNove',sans-serif";
-  const BG = "#0b0b0b";
-  const CR = "#f5f2ea";
-  const GD = "#e8cda9";
-  const DIM = "rgba(245,242,234,0.42)";
-  const BDR = "rgba(245,242,234,0.09)";
+
+  const [isDark, setIsDark] = useState(true);
+
+  const BG  = isDark ? "#0b0b0b"                    : "#f0ede8";
+  const CR  = isDark ? "#f5f2ea"                    : "#0b0b0b";
+  const GD  = isDark ? "#e8cda9"                    : "#7a5c1e";
+  const DIM = isDark ? "rgba(245,242,234,0.45)"     : "rgba(11,11,11,0.5)";
+  const BDR = isDark ? "rgba(245,242,234,0.09)"     : "rgba(11,11,11,0.1)";
+  const CARD_BG   = isDark
+    ? "linear-gradient(160deg,rgba(38,38,38,0.98) 0%,rgba(18,18,18,0.99) 100%)"
+    : "linear-gradient(160deg,rgba(255,255,255,0.98) 0%,rgba(235,232,228,0.96) 100%)";
+  const CARD_SHD  = isDark
+    ? "0 20px 50px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.08),inset 0 1px 0 rgba(255,255,255,0.18),inset 0 -2px 0 rgba(0,0,0,0.6)"
+    : "0 12px 40px rgba(0,0,0,0.10),0 0 0 1px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.9),inset 0 -1px 0 rgba(0,0,0,0.06)";
+  const CARD_BDR  = isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)";
 
   const [authModal, setAuthModal] = useState(null);
   const [mode, setMode]           = useState("login");
@@ -499,26 +509,30 @@ function AuthScreen() {
   ];
 
   return (
-    <div style={{ background:BG, color:CR, fontFamily:JF, overflowX:"hidden" }}>
+    <div style={{ background:BG, color:CR, fontFamily:JF, overflowX:"hidden", transition:"background 0.3s,color 0.3s" }}>
       <style>{FONTS}</style>
 
       {/* ── NAV ── */}
-      <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:200, display:"flex", alignItems:"center", justifyContent:"space-between", padding:`0 ${PAD}`, height:60, background:"rgba(11,11,11,0.88)", backdropFilter:"blur(18px)", borderBottom:`1px solid ${BDR}` }}>
+      <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:200, display:"flex", alignItems:"center", justifyContent:"space-between", padding:`0 ${PAD}`, height:60, background:isDark?"rgba(11,11,11,0.9)":"rgba(240,237,232,0.92)", backdropFilter:"blur(18px)", borderBottom:`1px solid ${BDR}`, transition:"background 0.3s" }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <img src="/fyltra_logo_black.svg" style={{ width:28, height:28, borderRadius:6 }} alt="" />
+          <img src={isDark?"/fyltra_logo_black.svg":"/fyltra_logo_white.svg"} style={{ width:28, height:28, borderRadius:6 }} alt="" />
           <span style={{ fontFamily:MN, fontSize:18, color:CR }}>FYLTRA</span>
         </div>
         <div style={{ display:"flex", gap:32, position:"absolute", left:"50%", transform:"translateX(-50%)" }}>
           {["FEATURES","PRICING","ABOUT"].map(l => (
-            <span key={l} style={{ fontSize:9, fontWeight:600, letterSpacing:"0.18em", color:"rgba(245,242,234,0.38)", cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
+            <span key={l} style={{ fontSize:9, fontWeight:600, letterSpacing:"0.18em", color:DIM, cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
               onMouseEnter={e => e.currentTarget.style.color=CR}
-              onMouseLeave={e => e.currentTarget.style.color="rgba(245,242,234,0.38)"}>{l}</span>
+              onMouseLeave={e => e.currentTarget.style.color=DIM}>{l}</span>
           ))}
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          <button onClick={() => openAuth("login")} style={{ background:"none", border:"none", color:"rgba(245,242,234,0.5)", fontSize:9, fontWeight:600, letterSpacing:"0.16em", cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
+          {/* Dark/Light toggle */}
+          <button onClick={() => setIsDark(v => !v)} style={{ background:"none", border:`1px solid ${BDR}`, borderRadius:100, width:36, height:20, cursor:"pointer", position:"relative", padding:0, transition:"all 0.3s", flexShrink:0 }} title={isDark?"Mode clair":"Mode sombre"}>
+            <div style={{ position:"absolute", top:2, left: isDark?2:16, width:14, height:14, borderRadius:"50%", background:CR, transition:"left 0.25s cubic-bezier(.4,0,.2,1)" }} />
+          </button>
+          <button onClick={() => openAuth("login")} style={{ background:"none", border:"none", color:DIM, fontSize:9, fontWeight:600, letterSpacing:"0.16em", cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
             onMouseEnter={e => e.currentTarget.style.color=CR}
-            onMouseLeave={e => e.currentTarget.style.color="rgba(245,242,234,0.5)"}>LOG IN</button>
+            onMouseLeave={e => e.currentTarget.style.color=DIM}>LOG IN</button>
           <button onClick={() => openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:100, padding:"9px 20px", fontSize:9, fontWeight:700, letterSpacing:"0.14em", cursor:"pointer", fontFamily:JF, transition:"opacity 0.2s" }}
             onMouseEnter={e => e.currentTarget.style.opacity="0.82"}
             onMouseLeave={e => e.currentTarget.style.opacity="1"}>START</button>
@@ -530,9 +544,9 @@ function AuthScreen() {
       ═══════════════════════════════════════════════════════ */}
       <section style={{ position:"relative", minHeight:"100vh", overflow:"hidden" }}>
         {/* Dot pattern */}
-        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, #E8D4C1 1.5px, transparent 1.5px)", backgroundSize:"30px 30px", opacity:0.35, pointerEvents:"none" }} />
+        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, #E8D4C1 1.5px, transparent 1.5px)", backgroundSize:"30px 30px", opacity:isDark?0.35:0.5, pointerEvents:"none", transition:"opacity 0.3s" }} />
         {/* Fade edges */}
-        <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse 70% 70% at 50% 40%, transparent 30%, #0b0b0b 100%)", pointerEvents:"none" }} />
+        <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse 70% 70% at 50% 40%, transparent 30%, ${BG} 100%)`, pointerEvents:"none", transition:"background 0.3s" }} />
         <div style={{ position:"relative", zIndex:10, minHeight:"100vh", display:"flex", flexDirection:"column", justifyContent:"center", padding:`100px ${PAD} 60px` }}>
           <div style={{ fontSize:9, color:GD, letterSpacing:"0.28em", fontFamily:JF, fontWeight:600, marginBottom:36 }}>
             Trading Journal · EST. 2025
@@ -563,7 +577,7 @@ function AuthScreen() {
       ═══════════════════════════════════════════════════════ */}
       <section style={{ padding:`100px ${PAD}`, display:"flex", alignItems:"center", justifyContent:"center", gap:"clamp(40px,6vw,100px)", flexWrap:"wrap" }}>
         <Reveal delay={0}>
-          <TiltCard style={{ background:"rgba(232,205,169,0.04)", border:`1px solid rgba(232,205,169,0.14)`, borderRadius:24, padding:"48px 56px", textAlign:"center", minWidth:280 }}>
+          <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:24, padding:"48px 56px", textAlign:"center", minWidth:280, boxShadow:CARD_SHD, transition:"background 0.3s" }}>
             <div style={{ fontFamily:CV, fontSize:"clamp(72px,11vw,148px)", color:GD, lineHeight:1, letterSpacing:"-0.03em" }}>90%</div>
             <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.22em", marginTop:16, textTransform:"uppercase" }}>of traders fail</div>
           </TiltCard>
@@ -604,7 +618,7 @@ function AuthScreen() {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(260px, 1fr))", gap:18 }}>
             {features.map((f, i) => (
               <Reveal key={f.n} delay={i*0.07}>
-                <TiltCard style={{ background:"rgba(255,255,255,0.025)", border:`1px solid rgba(245,242,234,0.07)`, borderRadius:20, padding:"36px 30px", height:"100%", boxSizing:"border-box" }}>
+                <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:20, padding:"36px 30px", height:"100%", boxSizing:"border-box", boxShadow:CARD_SHD, transition:"background 0.3s,box-shadow 0.3s" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }}>
                     <span style={{ fontSize:30, color:"rgba(232,205,169,0.45)", lineHeight:1 }}>{f.icon}</span>
                     <span style={{ fontSize:9, color:"rgba(245,242,234,0.16)", fontFamily:JF, fontWeight:600, letterSpacing:"0.18em" }}>{f.n}</span>
@@ -627,7 +641,7 @@ function AuthScreen() {
           <div style={{ fontFamily:CV, fontSize:"clamp(30px,4.5vw,60px)", color:CR, letterSpacing:"-0.02em", lineHeight:1.0 }}>Equity curve as art.</div>
         </Reveal>
         <Reveal delay={0.1}>
-          <TiltCard style={{ background:"rgba(255,255,255,0.02)", border:`1px solid ${BDR}`, borderRadius:20, padding:"40px 36px" }}>
+          <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:20, padding:"40px 36px", boxShadow:CARD_SHD, transition:"background 0.3s" }}>
             <svg viewBox="0 0 800 200" style={{ width:"100%", height:"auto", display:"block" }}>
               <defs>
                 <linearGradient id="ecFill" x1="0" y1="0" x2="0" y2="1">
@@ -659,7 +673,7 @@ function AuthScreen() {
           <div style={{ fontFamily:CV, fontSize:"clamp(48px,8vw,110px)", color:CR, letterSpacing:"-0.025em", lineHeight:0.9, marginBottom:64 }}>SIMPLE.</div>
         </Reveal>
         <Reveal delay={0.1} style={{ display:"flex", justifyContent:"center" }}>
-          <TiltCard style={{ background:"rgba(232,205,169,0.05)", border:`1px solid rgba(232,205,169,0.18)`, borderRadius:28, padding:"52px 60px", maxWidth:380, width:"100%", boxSizing:"border-box" }}>
+          <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:28, padding:"52px 60px", maxWidth:380, width:"100%", boxSizing:"border-box", boxShadow:CARD_SHD, transition:"background 0.3s" }}>
             <div style={{ fontSize:9, color:GD, fontFamily:JF, fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:24 }}>Pro</div>
             <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:4, marginBottom:4 }}>
               <span style={{ fontFamily:JF, fontWeight:300, fontSize:22, color:DIM, marginTop:12 }}>€</span>
