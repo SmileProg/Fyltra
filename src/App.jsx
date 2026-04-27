@@ -474,8 +474,6 @@ function AuthScreen() {
   const [success, setSuccess]     = useState("");
   const [menuOpen, setMenuOpen]   = useState(false);
 
-  const canvasRef = useRef(null);
-
   const openAuth = (m) => { setMode(m); setAuthModal(true); setError(""); setSuccess(""); setMenuOpen(false); };
 
   const submit = async () => {
@@ -491,86 +489,6 @@ function AuthScreen() {
     }
     setLoading(false);
   };
-
-  /* ── Three.js abstract hero background ── */
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    let cleanup = () => {};
-    const init = async () => {
-      const THREE = await import('three');
-      const { EffectComposer } = await import('three/examples/jsm/postprocessing/EffectComposer.js');
-      const { RenderPass } = await import('three/examples/jsm/postprocessing/RenderPass.js');
-      const { UnrealBloomPass } = await import('three/examples/jsm/postprocessing/UnrealBloomPass.js');
-      const W = window.innerWidth, H = window.innerHeight;
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(W, H);
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 0.9;
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(65, W/H, 0.1, 100);
-      camera.position.z = 5;
-      const composer = new EffectComposer(renderer);
-      composer.addPass(new RenderPass(scene, camera));
-      const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.42, 0.9, 0.25);
-      composer.addPass(bloom);
-      const mkMat = (col, op) => new THREE.MeshBasicMaterial({ color:col, wireframe:true, transparent:true, opacity:op });
-      const meshes = [];
-      const add = (geo, mat, px, py, pz, rx, ry, bob, bobS) => {
-        const m = new THREE.Mesh(geo, mat);
-        m.position.set(px, py, pz);
-        m.userData = { rx, ry, bob, bobS, bobOff:Math.random()*Math.PI*2, baseY:py };
-        scene.add(m); meshes.push(m);
-      };
-      add(new THREE.TorusGeometry(1.4,0.26,8,36),       mkMat(0xe8cda9,0.28), -2.2,  0.4, -2.5, 0.003, 0.005, 0.10, 0.70);
-      add(new THREE.TorusGeometry(0.8,0.15,6,28),        mkMat(0xf5f2ea,0.14),  2.8, -0.6, -1.5, 0.006, 0.003, 0.08, 1.10);
-      add(new THREE.IcosahedronGeometry(0.9,1),           mkMat(0xe8cda9,0.22),  2.2,  1.0, -3.0, 0.004, 0.007, 0.12, 0.65);
-      add(new THREE.IcosahedronGeometry(0.45,0),          mkMat(0xf5f2ea,0.16), -3.2, -1.2, -1.0, 0.008, 0.004, 0.07, 1.30);
-      add(new THREE.OctahedronGeometry(0.65),             mkMat(0xe8cda9,0.20),  0.6, -1.8, -2.0, 0.005, 0.006, 0.09, 0.90);
-      add(new THREE.TorusKnotGeometry(0.5,0.12,64,8),    mkMat(0xf5f2ea,0.12), -1.5,  2.0, -4.0, 0.004, 0.003, 0.14, 0.55);
-      add(new THREE.IcosahedronGeometry(0.3,0),           mkMat(0xe8cda9,0.18),  3.5,  1.8, -2.0, 0.007, 0.009, 0.06, 1.50);
-      const N = 700, pos = new Float32Array(N*3);
-      for (let i = 0; i < N*3; i++) pos[i] = (Math.random()-0.5)*20;
-      const pg = new THREE.BufferGeometry();
-      pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      const pts = new THREE.Points(pg, new THREE.PointsMaterial({ color:0xf5f2ea, size:0.016, transparent:true, opacity:0.18 }));
-      scene.add(pts);
-      const mouse = { x:0, y:0 };
-      const onMouse = (e) => { mouse.x = (e.clientX/window.innerWidth-0.5)*2; mouse.y = (e.clientY/window.innerHeight-0.5)*2; };
-      const onResize = () => {
-        const w = window.innerWidth, h = window.innerHeight;
-        camera.aspect = w/h; camera.updateProjectionMatrix();
-        renderer.setSize(w,h); composer.setSize(w,h);
-      };
-      window.addEventListener('mousemove', onMouse);
-      window.addEventListener('resize', onResize);
-      let t = 0, animId;
-      const tick = () => {
-        animId = requestAnimationFrame(tick);
-        t += 0.008;
-        meshes.forEach(m => {
-          m.rotation.x += m.userData.rx;
-          m.rotation.y += m.userData.ry;
-          m.position.y = m.userData.baseY + Math.sin(t*m.userData.bobS+m.userData.bobOff)*m.userData.bob;
-        });
-        pts.rotation.y = t*0.025;
-        camera.position.x += (mouse.x*0.35 - camera.position.x)*0.04;
-        camera.position.y += (-mouse.y*0.18 - camera.position.y)*0.04;
-        camera.lookAt(0,0,0);
-        composer.render();
-      };
-      tick();
-      cleanup = () => {
-        cancelAnimationFrame(animId);
-        window.removeEventListener('mousemove', onMouse);
-        window.removeEventListener('resize', onResize);
-        renderer.dispose();
-      };
-    };
-    init().catch(console.error);
-    return () => cleanup();
-  }, []);
 
   const PAD = "clamp(24px,7vw,110px)";
   const features = [
@@ -608,22 +526,23 @@ function AuthScreen() {
       </nav>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 1 — HERO + THREE.JS
+          SECTION 1 — HERO
       ═══════════════════════════════════════════════════════ */}
       <section style={{ position:"relative", minHeight:"100vh", overflow:"hidden" }}>
-        {/* Dot pattern background */}
-        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, #E8D4C1 1px, transparent 1px)", backgroundSize:"28px 28px", opacity:0.18, WebkitMaskImage:"radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)", maskImage:"radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)", pointerEvents:"none" }} />
-        <canvas ref={canvasRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", pointerEvents:"none" }} />
+        {/* Dot pattern */}
+        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, #E8D4C1 1.5px, transparent 1.5px)", backgroundSize:"30px 30px", opacity:0.35, pointerEvents:"none" }} />
+        {/* Fade edges */}
+        <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse 70% 70% at 50% 40%, transparent 30%, #0b0b0b 100%)", pointerEvents:"none" }} />
         <div style={{ position:"relative", zIndex:10, minHeight:"100vh", display:"flex", flexDirection:"column", justifyContent:"center", padding:`100px ${PAD} 60px` }}>
-          <div style={{ fontSize:9, color:GD, letterSpacing:"0.28em", fontFamily:JF, fontWeight:600, marginBottom:36, opacity:0, animation:"fadeInUp 0.8s 0.1s cubic-bezier(.22,1,.36,1) forwards" }}>
+          <div style={{ fontSize:9, color:GD, letterSpacing:"0.28em", fontFamily:JF, fontWeight:600, marginBottom:36 }}>
             Trading Journal · EST. 2025
           </div>
-          <div style={{ opacity:0, animation:"fadeInUp 0.9s 0.25s cubic-bezier(.22,1,.36,1) forwards" }}>
+          <div>
             <div style={{ fontFamily:CV, fontSize:"clamp(52px,9vw,130px)", color:CR, letterSpacing:"-0.02em", lineHeight:0.90 }}>YOUR TRADING</div>
             <div style={{ fontFamily:CV, fontSize:"clamp(34px,5.5vw,80px)", color:GD, letterSpacing:"-0.02em", lineHeight:0.95, paddingLeft:"clamp(16px,3vw,48px)" }}>DESERVES</div>
             <div style={{ fontFamily:CV, fontSize:"clamp(64px,13.5vw,196px)", color:CR, letterSpacing:"-0.025em", lineHeight:0.88 }}>STRUCTURE.</div>
           </div>
-          <div style={{ marginTop:"clamp(32px,4vh,56px)", display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:24, opacity:0, animation:"fadeInUp 0.8s 0.55s cubic-bezier(.22,1,.36,1) forwards" }}>
+          <div style={{ marginTop:"clamp(32px,4vh,56px)", display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:24 }}>
             <p style={{ fontFamily:JF, fontWeight:300, fontSize:14, color:DIM, lineHeight:1.8, maxWidth:340 }}>
               The trading journal built for traders who refuse to repeat the same mistakes twice.
             </p>
