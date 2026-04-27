@@ -431,6 +431,29 @@ function Reveal({ children, delay = 0, y = 50, style = {} }) {
 }
 
 /* ─── Landing Page ───────────────────────────────────────────────── */
+function TiltCard({ children, style = {} }) {
+  const ref = useRef(null);
+  const glRef = useRef(null);
+  const onMove = (e) => {
+    const el = ref.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width/2) / (r.width/2);
+    const y = (e.clientY - r.top - r.height/2) / (r.height/2);
+    el.style.transform = `perspective(900px) rotateX(${-y*8}deg) rotateY(${x*8}deg) translateZ(16px)`;
+    if (glRef.current) glRef.current.style.background = `radial-gradient(circle at ${(x+1)/2*100}% ${(y+1)/2*100}%, rgba(232,205,169,0.12), transparent 65%)`;
+  };
+  const onLeave = () => {
+    if (ref.current) ref.current.style.transform = "perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0px)";
+    if (glRef.current) glRef.current.style.background = "none";
+  };
+  return (
+    <div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave} style={{ transformStyle:"preserve-3d", willChange:"transform", transition:"transform 0.18s cubic-bezier(.23,1,.32,1)", position:"relative", ...style }}>
+      <div ref={glRef} style={{ position:"absolute", inset:0, borderRadius:"inherit", pointerEvents:"none", zIndex:1, transition:"background 0.1s" }} />
+      <div style={{ position:"relative", zIndex:2 }}>{children}</div>
+    </div>
+  );
+}
+
 function AuthScreen() {
   const JF = "'Josefin Sans',sans-serif";
   const CV = "'CoolveticaHv',sans-serif";
@@ -451,6 +474,8 @@ function AuthScreen() {
   const [success, setSuccess]     = useState("");
   const [menuOpen, setMenuOpen]   = useState(false);
 
+  const canvasRef = useRef(null);
+
   const openAuth = (m) => { setMode(m); setAuthModal(true); setError(""); setSuccess(""); setMenuOpen(false); };
 
   const submit = async () => {
@@ -467,348 +492,312 @@ function AuthScreen() {
     setLoading(false);
   };
 
-  /* ── Nav ── */
-  const Nav = () => (
-    <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:200, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 clamp(20px,5vw,64px)", height:60, background:"rgba(11,11,11,0.88)", backdropFilter:"blur(18px)", borderBottom:`1px solid ${BDR}` }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <img src="/fyltra_logo_black.svg" style={{ width:28, height:28, borderRadius:6 }} alt="" />
-        <span style={{ fontFamily:MN, fontSize:18, color:CR, letterSpacing:"0.01em" }}>FYLTRA</span>
-      </div>
-      {/* Desktop links */}
-      <div style={{ display:"flex", gap:32, position:"absolute", left:"50%", transform:"translateX(-50%)" }}>
-        {["FEATURES","PRICING","ABOUT"].map(l => (
-          <span key={l} style={{ fontSize:9, fontWeight:600, letterSpacing:"0.18em", color:"rgba(245,242,234,0.38)", cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.color=CR}
-            onMouseLeave={e => e.currentTarget.style.color="rgba(245,242,234,0.38)"}
-          >{l}</span>
-        ))}
-      </div>
-      <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-        <button onClick={() => openAuth("login")} style={{ background:"none", border:"none", color:"rgba(245,242,234,0.5)", fontSize:9, fontWeight:600, letterSpacing:"0.16em", cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
-          onMouseEnter={e => e.currentTarget.style.color=CR}
-          onMouseLeave={e => e.currentTarget.style.color="rgba(245,242,234,0.5)"}
-        >LOG IN</button>
-        <button onClick={() => openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:100, padding:"9px 20px", fontSize:9, fontWeight:700, letterSpacing:"0.14em", cursor:"pointer", fontFamily:JF, transition:"opacity 0.2s" }}
-          onMouseEnter={e => e.currentTarget.style.opacity="0.82"}
-          onMouseLeave={e => e.currentTarget.style.opacity="1"}
-        >START</button>
-      </div>
-    </nav>
-  );
+  /* ── Three.js abstract hero background ── */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let cleanup = () => {};
+    const init = async () => {
+      const THREE = await import('three');
+      const { EffectComposer } = await import('three/examples/jsm/postprocessing/EffectComposer.js');
+      const { RenderPass } = await import('three/examples/jsm/postprocessing/RenderPass.js');
+      const { UnrealBloomPass } = await import('three/examples/jsm/postprocessing/UnrealBloomPass.js');
+      const W = window.innerWidth, H = window.innerHeight;
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(W, H);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 0.9;
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(65, W/H, 0.1, 100);
+      camera.position.z = 5;
+      const composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+      const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.42, 0.9, 0.25);
+      composer.addPass(bloom);
+      const mkMat = (col, op) => new THREE.MeshBasicMaterial({ color:col, wireframe:true, transparent:true, opacity:op });
+      const meshes = [];
+      const add = (geo, mat, px, py, pz, rx, ry, bob, bobS) => {
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(px, py, pz);
+        m.userData = { rx, ry, bob, bobS, bobOff:Math.random()*Math.PI*2, baseY:py };
+        scene.add(m); meshes.push(m);
+      };
+      add(new THREE.TorusGeometry(1.4,0.26,8,36),       mkMat(0xe8cda9,0.28), -2.2,  0.4, -2.5, 0.003, 0.005, 0.10, 0.70);
+      add(new THREE.TorusGeometry(0.8,0.15,6,28),        mkMat(0xf5f2ea,0.14),  2.8, -0.6, -1.5, 0.006, 0.003, 0.08, 1.10);
+      add(new THREE.IcosahedronGeometry(0.9,1),           mkMat(0xe8cda9,0.22),  2.2,  1.0, -3.0, 0.004, 0.007, 0.12, 0.65);
+      add(new THREE.IcosahedronGeometry(0.45,0),          mkMat(0xf5f2ea,0.16), -3.2, -1.2, -1.0, 0.008, 0.004, 0.07, 1.30);
+      add(new THREE.OctahedronGeometry(0.65),             mkMat(0xe8cda9,0.20),  0.6, -1.8, -2.0, 0.005, 0.006, 0.09, 0.90);
+      add(new THREE.TorusKnotGeometry(0.5,0.12,64,8),    mkMat(0xf5f2ea,0.12), -1.5,  2.0, -4.0, 0.004, 0.003, 0.14, 0.55);
+      add(new THREE.IcosahedronGeometry(0.3,0),           mkMat(0xe8cda9,0.18),  3.5,  1.8, -2.0, 0.007, 0.009, 0.06, 1.50);
+      const N = 700, pos = new Float32Array(N*3);
+      for (let i = 0; i < N*3; i++) pos[i] = (Math.random()-0.5)*20;
+      const pg = new THREE.BufferGeometry();
+      pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const pts = new THREE.Points(pg, new THREE.PointsMaterial({ color:0xf5f2ea, size:0.016, transparent:true, opacity:0.18 }));
+      scene.add(pts);
+      const mouse = { x:0, y:0 };
+      const onMouse = (e) => { mouse.x = (e.clientX/window.innerWidth-0.5)*2; mouse.y = (e.clientY/window.innerHeight-0.5)*2; };
+      const onResize = () => {
+        const w = window.innerWidth, h = window.innerHeight;
+        camera.aspect = w/h; camera.updateProjectionMatrix();
+        renderer.setSize(w,h); composer.setSize(w,h);
+      };
+      window.addEventListener('mousemove', onMouse);
+      window.addEventListener('resize', onResize);
+      let t = 0, animId;
+      const tick = () => {
+        animId = requestAnimationFrame(tick);
+        t += 0.008;
+        meshes.forEach(m => {
+          m.rotation.x += m.userData.rx;
+          m.rotation.y += m.userData.ry;
+          m.position.y = m.userData.baseY + Math.sin(t*m.userData.bobS+m.userData.bobOff)*m.userData.bob;
+        });
+        pts.rotation.y = t*0.025;
+        camera.position.x += (mouse.x*0.35 - camera.position.x)*0.04;
+        camera.position.y += (-mouse.y*0.18 - camera.position.y)*0.04;
+        camera.lookAt(0,0,0);
+        composer.render();
+      };
+      tick();
+      cleanup = () => {
+        cancelAnimationFrame(animId);
+        window.removeEventListener('mousemove', onMouse);
+        window.removeEventListener('resize', onResize);
+        renderer.dispose();
+      };
+    };
+    init().catch(console.error);
+    return () => cleanup();
+  }, []);
 
-  /* ── Divider line ── */
-  const Line = ({ my = 0 }) => (
-    <div style={{ height:1, background:`linear-gradient(to right, transparent, ${BDR} 20%, ${BDR} 80%, transparent)`, margin:`${my}px 0` }} />
-  );
-
-  /* ── Section label ── */
-  const Label = ({ n, text }) => (
-    <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:32 }}>
-      <span style={{ fontSize:9, color:"rgba(245,242,234,0.25)", fontFamily:JF, fontWeight:600, letterSpacing:"0.2em" }}>N°{n}</span>
-      <div style={{ flex:1, height:1, background:BDR }} />
-      <span style={{ fontSize:9, color:"rgba(245,242,234,0.25)", fontFamily:JF, fontWeight:600, letterSpacing:"0.2em" }}>{text}</span>
-    </div>
-  );
-
-  const PAD = "clamp(24px,8vw,120px)";
+  const PAD = "clamp(24px,7vw,110px)";
+  const features = [
+    { n:"01", title:"Pattern Detection", sub:"We find your edge before you lose it. Every pattern, quantified.", icon:"◎" },
+    { n:"02", title:"Emotional Tracking", sub:"Because greed is always lying. Know your state, control your bias.", icon:"◈" },
+    { n:"03", title:"AI Coaching",        sub:"Your data, turned into rules. Personalized, brutal, accurate.", icon:"◆" },
+    { n:"04", title:"Multi-Account",      sub:"One journal, every strategy. Prop firms, live accounts, backtests.", icon:"◉" },
+  ];
 
   return (
     <div style={{ background:BG, color:CR, fontFamily:JF, overflowX:"hidden" }}>
       <style>{FONTS}</style>
-      <Nav />
+
+      {/* ── NAV ── */}
+      <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:200, display:"flex", alignItems:"center", justifyContent:"space-between", padding:`0 ${PAD}`, height:60, background:"rgba(11,11,11,0.88)", backdropFilter:"blur(18px)", borderBottom:`1px solid ${BDR}` }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <img src="/fyltra_logo_black.svg" style={{ width:28, height:28, borderRadius:6 }} alt="" />
+          <span style={{ fontFamily:MN, fontSize:18, color:CR }}>FYLTRA</span>
+        </div>
+        <div style={{ display:"flex", gap:32, position:"absolute", left:"50%", transform:"translateX(-50%)" }}>
+          {["FEATURES","PRICING","ABOUT"].map(l => (
+            <span key={l} style={{ fontSize:9, fontWeight:600, letterSpacing:"0.18em", color:"rgba(245,242,234,0.38)", cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.color=CR}
+              onMouseLeave={e => e.currentTarget.style.color="rgba(245,242,234,0.38)"}>{l}</span>
+          ))}
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+          <button onClick={() => openAuth("login")} style={{ background:"none", border:"none", color:"rgba(245,242,234,0.5)", fontSize:9, fontWeight:600, letterSpacing:"0.16em", cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.color=CR}
+            onMouseLeave={e => e.currentTarget.style.color="rgba(245,242,234,0.5)"}>LOG IN</button>
+          <button onClick={() => openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:100, padding:"9px 20px", fontSize:9, fontWeight:700, letterSpacing:"0.14em", cursor:"pointer", fontFamily:JF, transition:"opacity 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.opacity="0.82"}
+            onMouseLeave={e => e.currentTarget.style.opacity="1"}>START</button>
+        </div>
+      </nav>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 1 — HERO
+          SECTION 1 — HERO + THREE.JS
       ═══════════════════════════════════════════════════════ */}
-      <section style={{ minHeight:"100vh", display:"flex", flexDirection:"column", justifyContent:"center", padding:`100px ${PAD} 60px`, position:"relative", overflow:"hidden" }}>
-
-        {/* Grain overlay */}
-        <div style={{ position:"absolute", inset:0, backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")", opacity:0.028, pointerEvents:"none", zIndex:0 }} />
-
-        {/* Eyebrow */}
-        <div style={{ fontSize:9, color:GD, letterSpacing:"0.28em", textTransform:"uppercase", fontFamily:JF, fontWeight:600, marginBottom:40, opacity:0, animation:"fadeInUp 0.8s 0.1s cubic-bezier(.22,1,.36,1) forwards" }}>
-          Trading Journal · EST. 2025
-        </div>
-
-        {/* Headline */}
-        <div style={{ position:"relative", zIndex:1 }}>
-          <div style={{ overflow:"hidden", marginBottom:0 }}>
-            <div style={{ fontFamily:CV, fontSize:"clamp(52px,9vw,130px)", color:CR, letterSpacing:"-0.02em", lineHeight:0.92, opacity:0, animation:"fadeInUp 0.9s 0.2s cubic-bezier(.22,1,.36,1) forwards" }}>
-              YOUR TRADING
-            </div>
+      <section style={{ position:"relative", minHeight:"100vh", overflow:"hidden" }}>
+        <canvas ref={canvasRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", pointerEvents:"none" }} />
+        <div style={{ position:"relative", zIndex:10, minHeight:"100vh", display:"flex", flexDirection:"column", justifyContent:"center", padding:`100px ${PAD} 60px` }}>
+          <div style={{ fontSize:9, color:GD, letterSpacing:"0.28em", fontFamily:JF, fontWeight:600, marginBottom:36, opacity:0, animation:"fadeInUp 0.8s 0.1s cubic-bezier(.22,1,.36,1) forwards" }}>
+            Trading Journal · EST. 2025
           </div>
-          <div style={{ overflow:"hidden" }}>
-            <div style={{ fontFamily:CV, fontSize:"clamp(34px,5.5vw,80px)", color:GD, letterSpacing:"-0.02em", lineHeight:0.95, paddingLeft:"clamp(20px,4vw,60px)", opacity:0, animation:"fadeInUp 0.9s 0.35s cubic-bezier(.22,1,.36,1) forwards" }}>
-              DESERVES
-            </div>
+          <div style={{ opacity:0, animation:"fadeInUp 0.9s 0.25s cubic-bezier(.22,1,.36,1) forwards" }}>
+            <div style={{ fontFamily:CV, fontSize:"clamp(52px,9vw,130px)", color:CR, letterSpacing:"-0.02em", lineHeight:0.90 }}>YOUR TRADING</div>
+            <div style={{ fontFamily:CV, fontSize:"clamp(34px,5.5vw,80px)", color:GD, letterSpacing:"-0.02em", lineHeight:0.95, paddingLeft:"clamp(16px,3vw,48px)" }}>DESERVES</div>
+            <div style={{ fontFamily:CV, fontSize:"clamp(64px,13.5vw,196px)", color:CR, letterSpacing:"-0.025em", lineHeight:0.88 }}>STRUCTURE.</div>
           </div>
-          <div style={{ overflow:"hidden" }}>
-            <div style={{ fontFamily:CV, fontSize:"clamp(64px,13.5vw,196px)", color:CR, letterSpacing:"-0.025em", lineHeight:0.88, opacity:0, animation:"fadeInUp 0.9s 0.5s cubic-bezier(.22,1,.36,1) forwards" }}>
-              STRUCTURE.
-            </div>
-          </div>
-        </div>
-
-        {/* Divider + bottom content */}
-        <div style={{ marginTop:"clamp(36px,5vh,64px)", opacity:0, animation:"fadeInUp 0.8s 0.75s cubic-bezier(.22,1,.36,1) forwards" }}>
-          <Line />
-          <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:24, marginTop:28 }}>
-            <p style={{ fontFamily:JF, fontWeight:300, fontSize:14, color:DIM, lineHeight:1.75, maxWidth:360 }}>
-              Fyltra is the trading journal built for traders who refuse to repeat the same mistakes twice.
+          <div style={{ marginTop:"clamp(32px,4vh,56px)", display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:24, opacity:0, animation:"fadeInUp 0.8s 0.55s cubic-bezier(.22,1,.36,1) forwards" }}>
+            <p style={{ fontFamily:JF, fontWeight:300, fontSize:14, color:DIM, lineHeight:1.8, maxWidth:340 }}>
+              The trading journal built for traders who refuse to repeat the same mistakes twice.
             </p>
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:10 }}>
-              <button onClick={() => openAuth("signup")} style={{ display:"inline-flex", alignItems:"center", gap:10, background:CR, color:BG, border:"none", borderRadius:100, padding:"14px 28px", fontSize:10, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", fontFamily:JF, transition:"opacity 0.2s" }}
+            <div style={{ display:"flex", gap:12 }}>
+              <button onClick={() => openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:100, padding:"14px 28px", fontSize:10, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", fontFamily:JF, transition:"opacity 0.2s" }}
                 onMouseEnter={e => e.currentTarget.style.opacity="0.82"}
-                onMouseLeave={e => e.currentTarget.style.opacity="1"}
-              >
-                START JOURNALING
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </button>
-              <span style={{ fontSize:9, color:"rgba(245,242,234,0.22)", fontFamily:JF, letterSpacing:"0.06em" }}>No credit card required.</span>
+                onMouseLeave={e => e.currentTarget.style.opacity="1"}>Start Free →</button>
+              <button onClick={() => openAuth("login")} style={{ background:"rgba(245,242,234,0.06)", color:CR, border:`1px solid ${BDR}`, borderRadius:100, padding:"14px 24px", fontSize:10, fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", fontFamily:JF, transition:"background 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.background="rgba(245,242,234,0.1)"}
+                onMouseLeave={e => e.currentTarget.style.background="rgba(245,242,234,0.06)"}>Log in</button>
             </div>
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div style={{ position:"absolute", bottom:32, left:"50%", transform:"translateX(-50%)", textAlign:"center", opacity:0, animation:"fadeInUp 0.8s 1.1s cubic-bezier(.22,1,.36,1) forwards" }}>
-          <div style={{ width:1, height:36, background:`linear-gradient(to bottom, transparent, ${BDR})`, margin:"0 auto 8px" }} />
-          <div style={{ fontSize:8, color:"rgba(245,242,234,0.18)", letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, textTransform:"uppercase" }}>Scroll</div>
-        </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 2 — THE REALITY
+          SECTION 2 — PROOF (90%)
       ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`clamp(80px,12vh,140px) ${PAD}`, borderTop:`1px solid ${BDR}` }}>
-        <Reveal>
-          <Label n="01" text="THE REALITY" />
+      <section style={{ padding:`100px ${PAD}`, display:"flex", alignItems:"center", justifyContent:"center", gap:"clamp(40px,6vw,100px)", flexWrap:"wrap" }}>
+        <Reveal delay={0}>
+          <TiltCard style={{ background:"rgba(232,205,169,0.04)", border:`1px solid rgba(232,205,169,0.14)`, borderRadius:24, padding:"48px 56px", textAlign:"center", minWidth:280 }}>
+            <div style={{ fontFamily:CV, fontSize:"clamp(72px,11vw,148px)", color:GD, lineHeight:1, letterSpacing:"-0.03em" }}>90%</div>
+            <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.22em", marginTop:16, textTransform:"uppercase" }}>of traders fail</div>
+          </TiltCard>
         </Reveal>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"clamp(32px,6vw,80px)", alignItems:"end" }}>
-          <Reveal delay={0.1}>
-            <div style={{ fontFamily:CV, fontSize:"clamp(100px,18vw,260px)", color:CR, letterSpacing:"-0.03em", lineHeight:0.85 }}>
-              90<span style={{ color:GD }}>%</span>
+        <Reveal delay={0.15} style={{ maxWidth:400 }}>
+          <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:20, textTransform:"uppercase" }}>The Problem</div>
+          <div style={{ fontFamily:CV, fontSize:"clamp(28px,4vw,52px)", color:CR, lineHeight:1.05, letterSpacing:"-0.02em", marginBottom:20 }}>Because of chaos.</div>
+          <p style={{ fontFamily:JF, fontWeight:300, fontSize:14, color:DIM, lineHeight:1.85 }}>
+            Most traders lose not because they lack skill, but because they lack structure.
+            They repeat the same mistakes — different days, same patterns, same blind spots.
+          </p>
+          <div style={{ marginTop:32, display:"flex", gap:32 }}>
+            <div>
+              <div style={{ fontFamily:CV, fontSize:36, color:CR, letterSpacing:"-0.02em", lineHeight:1 }}>3.2x</div>
+              <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.14em", marginTop:6, textTransform:"uppercase" }}>Better WR with structure</div>
             </div>
-          </Reveal>
-          <Reveal delay={0.25} y={30}>
-            <p style={{ fontSize:14, color:DIM, lineHeight:1.85, fontWeight:300, marginBottom:24 }}>
-              of retail traders lose money consistently.
-            </p>
-            <Line my={24} />
-            <p style={{ fontSize:"clamp(20px,2.8vw,38px)", fontFamily:CV, color:CR, lineHeight:1.1, letterSpacing:"-0.01em" }}>
-              Not because of strategy.<br />
-              <span style={{ color:GD }}>Because of chaos.</span>
-            </p>
-            <p style={{ fontSize:13, color:DIM, lineHeight:1.8, fontWeight:300, marginTop:24, maxWidth:340 }}>
-              No structure. No patterns. No rules. Just emotions, repeated mistakes, and no way to see them.
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 3 — FEATURES
-      ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`clamp(80px,12vh,140px) ${PAD}`, borderTop:`1px solid ${BDR}` }}>
-        <Reveal>
-          <Label n="02" text="WHAT WE DO" />
-        </Reveal>
-        <Reveal delay={0.1} y={30}>
-          <div style={{ fontFamily:CV, fontSize:"clamp(36px,6vw,86px)", color:CR, letterSpacing:"-0.02em", lineHeight:0.9, marginBottom:"clamp(48px,8vh,96px)" }}>
-            ANALYZE.<br />UNDERSTAND.<br /><span style={{ color:GD }}>IMPROVE.</span>
+            <div>
+              <div style={{ fontFamily:CV, fontSize:36, color:CR, letterSpacing:"-0.02em", lineHeight:1 }}>12h</div>
+              <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.14em", marginTop:6, textTransform:"uppercase" }}>Saved per month</div>
+            </div>
           </div>
         </Reveal>
-        {[
-          { n:"01", title:"PATTERN DETECTION", body:"Sessions, emotions, instruments, timing. Every variable quantified. Your real edge — revealed in numbers." },
-          { n:"02", title:"EMOTIONAL TRACKING", body:"Know when your mindset kills your performance. Know when to trade. Know when to stop." },
-          { n:"03", title:"AI COACHING", body:"3 concrete rules, directly from your data. Not generic advice — your trades, your patterns, your rules." },
-          { n:"04", title:"MULTI-ACCOUNT", body:"Manage multiple prop firm challenges simultaneously. Full visibility. Zero confusion." },
-        ].map((f, i) => {
-          const [hRef, hVis] = [useRef(null), useState(false)];
-          return (
-            <Reveal key={i} delay={i * 0.08}>
-              <div style={{ borderTop:`1px solid ${BDR}`, padding:"clamp(22px,3.5vh,36px) 0", display:"grid", gridTemplateColumns:"clamp(60px,8vw,100px) 1fr 1fr auto", gap:"clamp(16px,3vw,40px)", alignItems:"center", cursor:"default", transition:"background 0.3s" }}
-                onMouseEnter={e => e.currentTarget.style.background="rgba(245,242,234,0.016)"}
-                onMouseLeave={e => e.currentTarget.style.background="transparent"}
-              >
-                <div style={{ fontFamily:JF, fontSize:9, color:"rgba(245,242,234,0.22)", letterSpacing:"0.2em", fontWeight:600 }}>{f.n}</div>
-                <div style={{ fontFamily:CV, fontSize:"clamp(18px,2.5vw,34px)", color:CR, letterSpacing:"-0.01em" }}>{f.title}</div>
-                <div style={{ fontFamily:JF, fontSize:12, color:DIM, fontWeight:300, lineHeight:1.7, maxWidth:320 }}>{f.body}</div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(245,242,234,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </div>
-            </Reveal>
-          );
-        })}
-        <div style={{ borderTop:`1px solid ${BDR}` }} />
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 4 — EQUITY CURVE AS ART
+          SECTION 3 — FEATURES (3D TILT CARDS)
       ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`clamp(80px,12vh,140px) ${PAD}`, borderTop:`1px solid ${BDR}` }}>
-        <Reveal>
-          <Label n="03" text="YOUR EDGE" />
+      <section style={{ padding:`80px ${PAD} 100px`, position:"relative" }}>
+        {/* Perspective grid */}
+        <div style={{ position:"absolute", inset:0, overflow:"hidden", pointerEvents:"none" }}>
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, height:"65%", backgroundImage:"linear-gradient(rgba(232,205,169,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(232,205,169,0.06) 1px, transparent 1px)", backgroundSize:"56px 56px", transform:"perspective(380px) rotateX(58deg)", transformOrigin:"bottom", WebkitMaskImage:"linear-gradient(to top, black 20%, transparent)", maskImage:"linear-gradient(to top, black 20%, transparent)" }} />
+        </div>
+        <div style={{ position:"relative", zIndex:1 }}>
+          <Reveal delay={0} style={{ marginBottom:56 }}>
+            <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>What Fyltra does</div>
+            <div style={{ fontFamily:CV, fontSize:"clamp(32px,5vw,68px)", color:CR, letterSpacing:"-0.02em", lineHeight:1.0 }}>Your edge, quantified.</div>
+          </Reveal>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(260px, 1fr))", gap:18 }}>
+            {features.map((f, i) => (
+              <Reveal key={f.n} delay={i*0.07}>
+                <TiltCard style={{ background:"rgba(255,255,255,0.025)", border:`1px solid rgba(245,242,234,0.07)`, borderRadius:20, padding:"36px 30px", height:"100%", boxSizing:"border-box" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }}>
+                    <span style={{ fontSize:30, color:"rgba(232,205,169,0.45)", lineHeight:1 }}>{f.icon}</span>
+                    <span style={{ fontSize:9, color:"rgba(245,242,234,0.16)", fontFamily:JF, fontWeight:600, letterSpacing:"0.18em" }}>{f.n}</span>
+                  </div>
+                  <div style={{ fontFamily:JF, fontWeight:700, fontSize:11, color:CR, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:12 }}>{f.title}</div>
+                  <p style={{ fontFamily:JF, fontWeight:300, fontSize:13, color:DIM, lineHeight:1.75 }}>{f.sub}</p>
+                </TiltCard>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 4 — EQUITY CURVE
+      ═══════════════════════════════════════════════════════ */}
+      <section style={{ padding:`80px ${PAD}` }}>
+        <Reveal delay={0} style={{ marginBottom:40 }}>
+          <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>Your performance</div>
+          <div style={{ fontFamily:CV, fontSize:"clamp(30px,4.5vw,60px)", color:CR, letterSpacing:"-0.02em", lineHeight:1.0 }}>Equity curve as art.</div>
         </Reveal>
-        <Reveal delay={0.1} y={40}>
-          <div style={{ position:"relative", marginBottom:"clamp(40px,6vh,72px)" }}>
-            <svg viewBox="0 0 1000 220" style={{ width:"100%", height:"clamp(100px,20vh,220px)", display:"block" }} preserveAspectRatio="none">
+        <Reveal delay={0.1}>
+          <TiltCard style={{ background:"rgba(255,255,255,0.02)", border:`1px solid ${BDR}`, borderRadius:20, padding:"40px 36px" }}>
+            <svg viewBox="0 0 800 200" style={{ width:"100%", height:"auto", display:"block" }}>
               <defs>
-                <linearGradient id="ecg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={GD} stopOpacity="0.18"/>
-                  <stop offset="100%" stopColor={GD} stopOpacity="0"/>
+                <linearGradient id="ecFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#e8cda9" stopOpacity="0.18" />
+                  <stop offset="100%" stopColor="#e8cda9" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <path d="M0 200 L60 195 L120 188 L180 176 L220 180 L260 168 L320 155 L380 140 L420 148 L460 132 L520 110 L580 88 L620 96 L660 78 L720 58 L780 44 L840 38 L900 24 L950 18 L1000 10" fill="none" stroke={GD} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M0 200 L60 195 L120 188 L180 176 L220 180 L260 168 L320 155 L380 140 L420 148 L460 132 L520 110 L580 88 L620 96 L660 78 L720 58 L780 44 L840 38 L900 24 L950 18 L1000 10 L1000 220 L0 220Z" fill="url(#ecg)"/>
-              {[[0,200],[260,168],[580,88],[1000,10]].map(([x,y],i) => (
-                <circle key={i} cx={x} cy={y} r="3" fill={GD} opacity="0.6"/>
-              ))}
+              <path d="M0,160 C40,155 60,145 100,130 C140,115 150,125 200,110 C250,95 260,105 300,85 C340,65 360,80 400,60 C440,40 450,55 500,35 C550,15 560,30 600,18 C640,6 660,20 700,12 C740,4 760,8 800,5 L800,200 L0,200 Z" fill="url(#ecFill)" />
+              <path d="M0,160 C40,155 60,145 100,130 C140,115 150,125 200,110 C250,95 260,105 300,85 C340,65 360,80 400,60 C440,40 450,55 500,35 C550,15 560,30 600,18 C640,6 660,20 700,12 C740,4 760,8 800,5" fill="none" stroke="#e8cda9" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <div style={{ position:"absolute", top:0, left:0, fontSize:9, color:"rgba(245,242,234,0.2)", fontFamily:JF, letterSpacing:"0.14em", fontWeight:600 }}>EQUITY CURVE</div>
-          </div>
-        </Reveal>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"clamp(32px,6vw,80px)", alignItems:"center" }}>
-          <Reveal delay={0.1} y={30}>
-            <div style={{ fontFamily:CV, fontSize:"clamp(32px,5vw,72px)", color:CR, letterSpacing:"-0.02em", lineHeight:0.95 }}>
-              TRACK EVERY<br />TRADE.<br /><span style={{ color:GD }}>SEE EVERY<br />PATTERN.</span>
-            </div>
-          </Reveal>
-          <Reveal delay={0.22} y={30}>
-            <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
-              {[
-                ["Sessions", "London, New York, Asia — see where you actually perform."],
-                ["Emotions", "Confident, Anxious, Frustrated — know which state costs you."],
-                ["R-Multiple", "Distribution histograms, drawdown, Monte Carlo simulation."],
-              ].map(([t, d], i) => (
-                <div key={i}>
-                  <div style={{ fontSize:10, color:GD, fontFamily:JF, fontWeight:600, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:6 }}>{t}</div>
-                  <div style={{ fontSize:12, color:DIM, fontFamily:JF, fontWeight:300, lineHeight:1.7 }}>{d}</div>
-                  {i < 2 && <div style={{ height:1, background:BDR, marginTop:24 }} />}
+            <div style={{ display:"flex", justifyContent:"space-between", marginTop:28, flexWrap:"wrap", gap:20 }}>
+              {[["Win Rate","68%"],["Avg RR","2.3:1"],["Max DD","-4.2%"],["Profit Factor","2.8"]].map(([l,v]) => (
+                <div key={l}>
+                  <div style={{ fontFamily:CV, fontSize:28, color:GD, letterSpacing:"-0.02em", lineHeight:1 }}>{v}</div>
+                  <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.14em", marginTop:6, textTransform:"uppercase" }}>{l}</div>
                 </div>
               ))}
             </div>
-          </Reveal>
-        </div>
+          </TiltCard>
+        </Reveal>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — PRICING
       ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`clamp(80px,12vh,140px) ${PAD}`, borderTop:`1px solid ${BDR}` }}>
-        <Reveal>
-          <Label n="04" text="SIMPLE PRICING" />
+      <section style={{ padding:`80px ${PAD} 120px`, textAlign:"center" }}>
+        <Reveal delay={0}>
+          <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>Pricing</div>
+          <div style={{ fontFamily:CV, fontSize:"clamp(48px,8vw,110px)", color:CR, letterSpacing:"-0.025em", lineHeight:0.9, marginBottom:64 }}>SIMPLE.</div>
         </Reveal>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"clamp(40px,8vw,100px)", alignItems:"start" }}>
-          <Reveal delay={0.1} y={40}>
-            <div>
-              <div style={{ fontFamily:CV, fontSize:"clamp(60px,11vw,160px)", color:CR, letterSpacing:"-0.03em", lineHeight:0.85, marginBottom:32 }}>
-                SIMPLE.
-              </div>
-              <p style={{ fontSize:14, color:DIM, fontWeight:300, lineHeight:1.8, maxWidth:340 }}>
-                One plan. Everything included. No tiers, no feature gating, no surprises.
-              </p>
-              <Line my={32} />
-              {/* Calendar mini visual */}
-              <div style={{ marginTop:8 }}>
-                <div style={{ fontSize:9, color:"rgba(245,242,234,0.22)", fontFamily:JF, letterSpacing:"0.18em", marginBottom:16, fontWeight:600 }}>TRACK EVERY DAY</div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:4, maxWidth:240 }}>
-                  {"MTWTFSS".split("").map((d,i) => (
-                    <div key={i} style={{ textAlign:"center", fontSize:8, color:"rgba(245,242,234,0.2)", fontFamily:JF, fontWeight:600, marginBottom:4 }}>{d}</div>
-                  ))}
-                  {Array.from({length:30},(_,i)=>{
-                    const r = [1,2,4,5,7,8,9,11,12,14,15,17,18,19,21,22,24,25,28,29].includes(i+1) ? "w"
-                            : [3,6,10,13,16,20,23,27].includes(i+1) ? "l" : null;
-                    return (
-                      <div key={i} style={{
-                        aspectRatio:"1", borderRadius:4, display:"flex", alignItems:"center", justifyContent:"center",
-                        background: r==="w" ? "rgba(100,175,100,0.18)" : r==="l" ? "rgba(190,75,75,0.15)" : "transparent",
-                        border: i===25 ? `1px solid ${BDR}` : "none",
-                      }}>
-                        <span style={{ fontSize:8, color: r ? "rgba(245,242,234,0.65)" : "rgba(245,242,234,0.2)", fontFamily:JF }}>{i+1}</span>
-                      </div>
-                    );
-                  })}
+        <Reveal delay={0.1} style={{ display:"flex", justifyContent:"center" }}>
+          <TiltCard style={{ background:"rgba(232,205,169,0.05)", border:`1px solid rgba(232,205,169,0.18)`, borderRadius:28, padding:"52px 60px", maxWidth:380, width:"100%", boxSizing:"border-box" }}>
+            <div style={{ fontSize:9, color:GD, fontFamily:JF, fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:24 }}>Pro</div>
+            <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:4, marginBottom:4 }}>
+              <span style={{ fontFamily:JF, fontWeight:300, fontSize:22, color:DIM, marginTop:12 }}>€</span>
+              <span style={{ fontFamily:CV, fontSize:88, color:CR, letterSpacing:"-0.03em", lineHeight:1 }}>24</span>
+            </div>
+            <div style={{ fontSize:10, color:DIM, fontFamily:JF, fontWeight:300, letterSpacing:"0.1em", marginBottom:40 }}>per month</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:12, marginBottom:40, textAlign:"left" }}>
+              {["Unlimited trades","AI coaching","All analytics","All accounts","Priority support"].map(item => (
+                <div key={item} style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <span style={{ color:GD, fontSize:10 }}>◆</span>
+                  <span style={{ fontFamily:JF, fontWeight:300, fontSize:13, color:DIM }}>{item}</span>
                 </div>
-              </div>
-            </div>
-          </Reveal>
-          <Reveal delay={0.22} y={40}>
-            <div style={{ border:`1px solid ${BDR}`, borderRadius:20, padding:"clamp(28px,4vw,48px)", position:"sticky", top:90 }}>
-              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:8 }}>
-                <span style={{ fontFamily:CV, fontSize:"clamp(52px,8vw,100px)", color:CR, letterSpacing:"-0.04em", lineHeight:1 }}>24€</span>
-                <span style={{ fontSize:13, color:DIM, fontFamily:JF, fontWeight:300 }}>/month</span>
-              </div>
-              <div style={{ fontSize:11, color:GD, fontFamily:JF, fontWeight:600, letterSpacing:"0.12em", marginBottom:32 }}>CANCEL ANYTIME</div>
-              <Line my={0} />
-              <div style={{ display:"flex", flexDirection:"column", gap:14, margin:"28px 0 32px" }}>
-                {["Unlimited trades","Advanced analytics suite","AI Coach — 3 rules per session","Multi-account (prop firms)","MT5 automatic import","Dark & Light mode","Priority support"].map((f,i) => (
-                  <div key={i} style={{ display:"flex", gap:12, alignItems:"center" }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={GD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span style={{ fontSize:12, color:DIM, fontFamily:JF, fontWeight:300 }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <button onClick={() => openAuth("signup")} style={{ width:"100%", padding:"15px", borderRadius:10, border:"none", background:CR, color:BG, fontFamily:JF, fontWeight:700, fontSize:10, letterSpacing:"0.14em", textTransform:"uppercase", cursor:"pointer", transition:"opacity 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.opacity="0.82"}
-                onMouseLeave={e => e.currentTarget.style.opacity="1"}
-              >START JOURNALING</button>
-              <div style={{ textAlign:"center", marginTop:16, fontSize:10, color:"rgba(245,242,234,0.2)", fontFamily:JF }}>No credit card required.</div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          FOOTER
-      ═══════════════════════════════════════════════════════ */}
-      <footer style={{ padding:`32px ${PAD}`, borderTop:`1px solid ${BDR}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <img src="/fyltra_logo_black.svg" style={{ width:20, height:20, borderRadius:4, opacity:0.5 }} alt="" />
-          <span style={{ fontSize:9, color:"rgba(245,242,234,0.18)", fontFamily:JF, letterSpacing:"0.1em" }}>© 2026 Fyltra. All rights reserved.</span>
-        </div>
-        <div style={{ display:"flex", gap:24, alignItems:"center" }}>
-          {["PRIVACY","TERMS","CONTACT"].map(l => (
-            <span key={l} style={{ fontSize:9, fontFamily:JF, fontWeight:600, letterSpacing:"0.14em", color:"rgba(245,242,234,0.18)", cursor:"pointer" }}>{l}</span>
-          ))}
-        </div>
-      </footer>
-
-      {/* ═══════════════════════════════════════════════════════
-          AUTH MODAL
-      ═══════════════════════════════════════════════════════ */}
-      {authModal && (
-        <div
-          style={{ position:"fixed", inset:0, zIndex:1000, background:"rgba(0,0,0,0.82)", backdropFilter:"blur(16px)", display:"flex", alignItems:"center", justifyContent:"center", padding:24, animation:"fadeIn 0.2s ease" }}
-          onClick={e => { if (e.target === e.currentTarget) { setAuthModal(null); setError(""); setSuccess(""); } }}
-        >
-          <div style={{ background:"#161616", border:`1px solid ${BDR}`, borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:380, animation:"scaleIn 0.25s cubic-bezier(.22,1,.36,1)", boxShadow:"0 40px 100px rgba(0,0,0,0.9)" }}>
-            <div style={{ display:"flex", gap:3, marginBottom:24, background:"rgba(0,0,0,0.35)", borderRadius:10, padding:3, border:`1px solid ${BDR}` }}>
-              {[{id:"login",label:"Se connecter"},{id:"signup",label:"Créer un compte"}].map(m => (
-                <button key={m.id} onClick={() => { setMode(m.id); setError(""); setSuccess(""); }} style={{
-                  flex:1, padding:"9px", borderRadius:7, border:"none", cursor:"pointer",
-                  background: mode===m.id ? "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)" : "transparent",
-                  color: mode===m.id ? "#111" : "rgba(255,255,255,0.35)",
-                  fontSize:10, fontFamily:JF, fontWeight:mode===m.id ? 700 : 400,
-                  letterSpacing:"0.12em", textTransform:"uppercase", transition:"all 0.22s",
-                  boxShadow: mode===m.id ? "0 4px 14px rgba(0,0,0,0.5)" : "none",
-                }}>{m.label}</button>
               ))}
             </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-              <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key==="Enter" && submit()}
-                style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:`1px solid ${BDR}`, borderRadius:10, padding:"14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", letterSpacing:"0.03em" }} />
-              <div style={{ position:"relative" }}>
-                <input type={showPwd?"text":"password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key==="Enter" && submit()}
-                  style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:`1px solid ${BDR}`, borderRadius:10, padding:"14px 46px 14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", letterSpacing:"0.03em" }} />
-                <button onClick={() => setShowPwd(v => !v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.28)", lineHeight:1, padding:0 }}>
-                  {showPwd
-                    ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
-                </button>
-              </div>
+            <button onClick={() => openAuth("signup")} style={{ width:"100%", padding:"15px", borderRadius:12, border:"none", background:CR, color:BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", cursor:"pointer", transition:"opacity 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.opacity="0.88"}
+              onMouseLeave={e => e.currentTarget.style.opacity="1"}>Start Now</button>
+          </TiltCard>
+        </Reveal>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer style={{ padding:`28px ${PAD}`, borderTop:`1px solid ${BDR}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16 }}>
+        <span style={{ fontFamily:MN, fontSize:16, color:CR, opacity:0.55 }}>FYLTRA</span>
+        <span style={{ fontSize:9, color:"rgba(245,242,234,0.18)", fontFamily:JF, fontWeight:600, letterSpacing:"0.12em" }}>© 2025 — Trading Journal</span>
+      </footer>
+
+      {/* ═══ AUTH MODAL ═══ */}
+      {authModal && (
+        <div onClick={() => setAuthModal(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.82)", backdropFilter:"blur(12px)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"rgba(18,18,18,0.97)", border:`1px solid ${BDR}`, borderRadius:20, padding:"40px 36px", maxWidth:380, width:"100%", boxShadow:"0 40px 80px rgba(0,0,0,0.6)", boxSizing:"border-box" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:32 }}>
+              <span style={{ fontFamily:MN, fontSize:18, color:CR }}>FYLTRA</span>
+              <button onClick={() => setAuthModal(null)} style={{ background:"none", border:"none", color:DIM, cursor:"pointer", fontSize:22, lineHeight:1, padding:0 }}>×</button>
             </div>
-            {error && <div style={{ marginTop:12, fontSize:11, color:"#e05a5a", textAlign:"center", fontFamily:JF }}>{error}</div>}
-            {success && <div style={{ marginTop:12, fontSize:11, color:"#4caf6e", textAlign:"center", fontFamily:JF }}>{success}</div>}
-            <button onClick={submit} disabled={loading} style={{ width:"100%", marginTop:18, padding:"14px", borderRadius:10, border:"none", background:loading?"rgba(255,255,255,0.06)":CR, color:loading?"rgba(255,255,255,0.3)":BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", cursor:loading?"not-allowed":"pointer", transition:"all 0.2s" }}>
+            <div style={{ display:"flex", gap:0, marginBottom:28, background:"rgba(255,255,255,0.05)", borderRadius:10, padding:4 }}>
+              {[["login","Se connecter"],["signup","Créer un compte"]].map(([m,l]) => (
+                <button key={m} onClick={() => { setMode(m); setError(""); setSuccess(""); }}
+                  style={{ flex:1, padding:"9px", borderRadius:8, border:"none", background:mode===m?CR:"transparent", color:mode===m?BG:DIM, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.2s" }}>{l}
+                </button>
+              ))}
+            </div>
+            <div style={{ marginBottom:14 }}>
+              <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
+                style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:`1px solid ${BDR}`, borderRadius:10, padding:"14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box", letterSpacing:"0.03em" }} />
+            </div>
+            <div style={{ marginBottom:14, position:"relative" }}>
+              <input type={showPwd?"text":"password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key==="Enter" && submit()}
+                style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:`1px solid ${BDR}`, borderRadius:10, padding:"14px 46px 14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box", letterSpacing:"0.03em" }} />
+              <button onClick={() => setShowPwd(v => !v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", lineHeight:1, padding:0, fontSize:13 }}>
+                {showPwd
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+              </button>
+            </div>
+            {error   && <div style={{ marginBottom:12, fontSize:11, color:"#e05a5a", fontFamily:JF }}>{error}</div>}
+            {success && <div style={{ marginBottom:12, fontSize:11, color:"#4caf6e", fontFamily:JF }}>{success}</div>}
+            <button onClick={submit} disabled={loading}
+              style={{ width:"100%", padding:"14px", borderRadius:10, border:"none", background:loading?"rgba(255,255,255,0.06)":CR, color:loading?"rgba(255,255,255,0.3)":BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", cursor:loading?"not-allowed":"pointer", transition:"all 0.2s" }}>
               {loading ? "···" : mode==="login" ? "Se connecter" : "Créer le compte"}
             </button>
           </div>
