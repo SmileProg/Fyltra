@@ -611,6 +611,8 @@ function AuthScreen() {
           SECTION 1 — HERO + THREE.JS
       ═══════════════════════════════════════════════════════ */}
       <section style={{ position:"relative", minHeight:"100vh", overflow:"hidden" }}>
+        {/* Dot pattern background */}
+        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, #E8D4C1 1px, transparent 1px)", backgroundSize:"28px 28px", opacity:0.18, WebkitMaskImage:"radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)", maskImage:"radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)", pointerEvents:"none" }} />
         <canvas ref={canvasRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", pointerEvents:"none" }} />
         <div style={{ position:"relative", zIndex:10, minHeight:"100vh", display:"flex", flexDirection:"column", justifyContent:"center", padding:`100px ${PAD} 60px` }}>
           <div style={{ fontSize:9, color:GD, letterSpacing:"0.28em", fontFamily:JF, fontWeight:600, marginBottom:36, opacity:0, animation:"fadeInUp 0.8s 0.1s cubic-bezier(.22,1,.36,1) forwards" }}>
