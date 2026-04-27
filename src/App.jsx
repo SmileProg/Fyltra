@@ -484,6 +484,68 @@ function AuthScreen() {
   const [success, setSuccess]     = useState("");
   const [menuOpen, setMenuOpen]   = useState(false);
 
+  const dotsRef = useRef(null);
+  const isDarkRef = useRef(isDark);
+  useEffect(() => { isDarkRef.current = isDark; }, [isDark]);
+
+  useEffect(() => {
+    const canvas = dotsRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const SPACING = 30, R = 1.5, REP = 90, STR = 50;
+    let W, H, dots, animId;
+    let mx = -999, my = -999;
+
+    const init = () => {
+      W = canvas.offsetWidth; H = canvas.offsetHeight;
+      canvas.width = W; canvas.height = H;
+      dots = [];
+      for (let y = 0; y <= H; y += SPACING)
+        for (let x = 0; x <= W; x += SPACING)
+          dots.push({ bx:x, by:y, x, y });
+    };
+
+    const draw = () => {
+      animId = requestAnimationFrame(draw);
+      ctx.clearRect(0, 0, W, H);
+      const dark = isDarkRef.current;
+      ctx.fillStyle = dark ? '#E8D4C1' : '#111';
+      dots.forEach(d => {
+        const dx = d.bx - mx, dy = d.by - my;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        let tx = d.bx, ty = d.by;
+        if (dist < REP) {
+          const f = (1 - dist/REP) * STR;
+          const a = Math.atan2(dy, dx);
+          tx = d.bx + Math.cos(a)*f;
+          ty = d.by + Math.sin(a)*f;
+        }
+        d.x += (tx - d.x) * 0.14;
+        d.y += (ty - d.y) * 0.14;
+        ctx.globalAlpha = dark ? 0.28 : 0.22;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, R, 0, Math.PI*2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    };
+
+    const onMove = (e) => { const r = canvas.getBoundingClientRect(); mx = e.clientX-r.left; my = e.clientY-r.top; };
+    const onLeave = () => { mx = -999; my = -999; };
+    const onResize = () => init();
+
+    init(); draw();
+    canvas.addEventListener('mousemove', onMove);
+    canvas.addEventListener('mouseleave', onLeave);
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(animId);
+      canvas.removeEventListener('mousemove', onMove);
+      canvas.removeEventListener('mouseleave', onLeave);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+
   const openAuth = (m) => { setMode(m); setAuthModal(true); setError(""); setSuccess(""); setMenuOpen(false); };
 
   const submit = async () => {
@@ -551,8 +613,8 @@ function AuthScreen() {
           SECTION 1 — HERO
       ═══════════════════════════════════════════════════════ */}
       <section style={{ position:"relative", minHeight:"100vh", overflow:"hidden" }}>
-        {/* Dot pattern hero */}
-        <div style={{ position:"absolute", inset:0, backgroundImage:`radial-gradient(circle, ${isDark?"#E8D4C1":"#111"} 1.5px, transparent 1.5px)`, backgroundSize:"clamp(20px,3vw,32px) clamp(20px,3vw,32px)", opacity:isDark?0.3:0.25, WebkitMaskImage:"radial-gradient(ellipse 80% 90% at 50% 30%, black 20%, transparent 80%)", maskImage:"radial-gradient(ellipse 80% 90% at 50% 30%, black 20%, transparent 80%)", pointerEvents:"none", transition:"opacity 0.3s" }} />
+        {/* Dot pattern — réactif à la souris */}
+        <canvas ref={dotsRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", WebkitMaskImage:"radial-gradient(ellipse 85% 90% at 50% 30%, black 20%, transparent 80%)", maskImage:"radial-gradient(ellipse 85% 90% at 50% 30%, black 20%, transparent 80%)" }} />
         <div style={{ position:"relative", zIndex:10, minHeight:"100vh", display:"flex", flexDirection:"column", justifyContent:"center", padding:`100px ${PAD} 60px` }}>
           <div style={{ fontSize:9, color:GD, letterSpacing:"0.28em", fontFamily:JF, fontWeight:600, marginBottom:36 }}>
             Trading Journal · EST. 2025
