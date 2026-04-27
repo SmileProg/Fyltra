@@ -34,6 +34,7 @@ let C = LIGHT_THEME;
 /* ─── Fonts / Global CSS ─────────────────────────────────────────── */
 const FONTS = `
   @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Barlow:wght@500;600;700&display=swap');
+  @font-face { font-family: 'MariellaNove'; src: url('/mariella-noeve.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg, #f8f7f5);overflow-x:hidden;transition:background 0.3s;}
   input[type=date]::-webkit-calendar-picker-indicator,input[type=time]::-webkit-calendar-picker-indicator{filter:invert(0.4);opacity:0.5;}
@@ -195,9 +196,9 @@ function Sidebar({ view, setView, darkMode, onSignOut }) {
       {/* Logo */}
       <div style={{ padding:"0 20px 24px", borderBottom:`1px solid ${C.border}` }}>
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
-          <img src={darkMode?"/fyltra_logo_white.svg":"/fyltra_logo_black.svg"} style={{width:42,height:42,flexShrink:0,borderRadius:8}} alt="Fyltra"/>
+          <img src={darkMode?"/fyltra_logo_black.svg":"/fyltra_logo_white.svg"} style={{width:42,height:42,flexShrink:0,borderRadius:8}} alt="Fyltra"/>
           <div>
-            <div style={{ fontFamily:"'Barlow',sans-serif", fontWeight:600, fontSize:18, letterSpacing:"0.2em", color:C.white, lineHeight:1, textTransform:"uppercase" }}>FYLTRA</div>
+            <div style={{ fontFamily:"'MariellaNove',sans-serif", fontSize:20, color:C.white, lineHeight:1 }}>FYLTRA</div>
             <div style={{ fontSize:8, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300 }}>Carnet de santé trading</div>
           </div>
         </div>
@@ -355,14 +356,10 @@ function PnlChart({ filtered, capital, pnlSum, height, cur }) {
 }
 
 /* ─── AUTH SCREEN ────────────────────────────────────────────────── */
-const AUTH_ANIM = `
-  @keyframes authOrb1 { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(60px,-40px) scale(1.12);} 66%{transform:translate(-30px,50px) scale(0.92);} }
-  @keyframes authOrb2 { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(-50px,60px) scale(0.9);} 66%{transform:translate(70px,-30px) scale(1.1);} }
-  @keyframes authOrb3 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(40px,40px) scale(1.08);} }
-  @keyframes authFadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:translateY(0);} }
-  @keyframes authLogoIn { from{opacity:0;transform:translateY(-16px) scale(0.92);} to{opacity:1;transform:translateY(0) scale(1);} }
-  @keyframes authParticle { 0%{transform:translateY(0) translateX(0);opacity:0;} 10%{opacity:1;} 90%{opacity:0.6;} 100%{transform:translateY(-100vh) translateX(var(--dx));opacity:0;} }
-  @keyframes authSweep { 0%{transform:translateX(-100%);opacity:0;} 20%{opacity:1;} 80%{opacity:1;} 100%{transform:translateX(100vw);opacity:0;} }
+const LANDING_ANIM = `
+  @keyframes heroIn { from{opacity:0;transform:translateY(28px);} to{opacity:1;transform:translateY(0);} }
+  @keyframes pillIn { from{opacity:0;transform:translateY(16px) scale(0.97);} to{opacity:1;transform:translateY(0) scale(1);} }
+  @keyframes panelExpand { from{opacity:0;transform:translateY(-10px) scale(0.98);} to{opacity:1;transform:translateY(0) scale(1);} }
 `;
 
 function DatePicker({ value, onChange }) {
@@ -500,7 +497,10 @@ function TimePicker({ value, onChange }) {
   );
 }
 
+/* ─── Landing Page ───────────────────────────────────────────────── */
 function AuthScreen() {
+  const ff = "'Josefin Sans',sans-serif";
+  const [authModal, setAuthModal] = useState(null);
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -508,6 +508,8 @@ function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const openAuth = (m) => { setMode(m); setAuthModal(true); setError(""); setSuccess(""); };
 
   const submit = async () => {
     if (!email || !password) { setError("Remplis tous les champs."); return; }
@@ -523,131 +525,393 @@ function AuthScreen() {
     setLoading(false);
   };
 
-  const inputStyle = {
-    width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)",
-    borderRadius:10, padding:"14px 16px", color:"#f0ede8", fontSize:14,
-    fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, outline:"none",
-    letterSpacing:"0.05em", boxShadow:"inset 0 2px 6px rgba(0,0,0,0.2)",
-    backdropFilter:"blur(4px)", transition:"border-color 0.2s",
+  const bg = "#0d0d0d";
+  const text = "#f0ede8";
+  const dim = "rgba(240,237,232,0.45)";
+  const accent = "#d4c4a0";
+
+  /* ── mini equity-curve svg ── */
+  const MiniChart = () => (
+    <svg viewBox="0 0 200 50" style={{ width:"100%", height:50 }} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="mcg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.1)"/>
+          <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
+        </linearGradient>
+      </defs>
+      <path d="M0 48 L20 44 L45 40 L70 36 L90 28 L110 22 L130 18 L150 12 L170 8 L200 4" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5"/>
+      <path d="M0 48 L20 44 L45 40 L70 36 L90 28 L110 22 L130 18 L150 12 L170 8 L200 4 L200 50 L0 50Z" fill="url(#mcg)"/>
+    </svg>
+  );
+
+  /* ── App mockup ── */
+  const AppMockup = () => (
+    <div style={{ display:"flex", background:"#111", borderRadius:16, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)", boxShadow:"0 40px 100px rgba(0,0,0,0.7)" }}>
+      {/* Sidebar */}
+      <div style={{ width:148, background:"#0c0c0c", borderRight:"1px solid rgba(255,255,255,0.06)", padding:"18px 0", flexShrink:0 }}>
+        <div style={{ padding:"0 18px", marginBottom:22 }}>
+          <img src="/fyltra_logo_black.svg" style={{ width:22, height:22, borderRadius:4 }} alt="" />
+        </div>
+        {[
+          ["◉","Dashboard",true],
+          ["◱","Trades",false],
+          ["▦","Calendar",false],
+          ["∿","Analytics",false],
+          ["⊡","Reports",false],
+          ["◌","Sessions",false],
+          ["♡","Emotions",false],
+          ["⚙","Settings",false],
+        ].map(([icon,label,active],i) => (
+          <div key={i} style={{
+            padding:"8px 18px", fontSize:11, fontFamily:ff,
+            fontWeight: active ? 600 : 400,
+            color: active ? text : "rgba(240,237,232,0.32)",
+            background: active ? "rgba(255,255,255,0.055)" : "transparent",
+            display:"flex", alignItems:"center", gap:9, cursor:"default",
+          }}>
+            <span style={{ fontSize:12, opacity: active ? 0.7 : 0.4 }}>{icon}</span>
+            {label}
+          </div>
+        ))}
+      </div>
+      {/* Main */}
+      <div style={{ flex:1, padding:18, minWidth:0 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+          <div style={{ fontSize:11, fontFamily:ff, fontWeight:600, letterSpacing:"0.14em", color:"rgba(240,237,232,0.5)" }}>OVERVIEW</div>
+          <div style={{ fontSize:9, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:"rgba(240,237,232,0.35)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:6, padding:"5px 10px", cursor:"default" }}>+ NEW TRADE</div>
+        </div>
+        {/* Row 1 */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 0.72fr 0.72fr", gap:10, marginBottom:10 }}>
+          {/* Equity Curve */}
+          <div style={{ background:"#181818", borderRadius:10, padding:"12px 14px", border:"1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ fontSize:9, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:"rgba(240,237,232,0.32)", marginBottom:4 }}>EQUITY CURVE</div>
+            <div style={{ fontSize:22, fontFamily:ff, fontWeight:700, letterSpacing:"-0.04em", color:text, marginBottom:2 }}>+356,72 €</div>
+            <div style={{ fontSize:9, fontFamily:ff, color:"rgba(240,237,232,0.3)", marginBottom:8 }}>Total P&L</div>
+            <MiniChart />
+          </div>
+          {/* Win Rate */}
+          <div style={{ background:"#181818", borderRadius:10, padding:"12px 14px", border:"1px solid rgba(255,255,255,0.06)", display:"flex", flexDirection:"column", alignItems:"center" }}>
+            <div style={{ fontSize:9, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:"rgba(240,237,232,0.32)", marginBottom:8, alignSelf:"flex-start" }}>WIN RATE</div>
+            <svg viewBox="0 0 80 80" style={{ width:66, height:66 }}>
+              <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="7"/>
+              <circle cx="40" cy="40" r="30" fill="none" stroke={text} strokeWidth="7"
+                strokeDasharray="120.4 188.5" strokeDashoffset="47.1" strokeLinecap="round" transform="rotate(-90 40 40)"/>
+              <text x="40" y="40" textAnchor="middle" dy="0.35em" fill={text} fontSize="13" fontFamily={ff} fontWeight="700">64%</text>
+            </svg>
+            <div style={{ fontSize:9, fontFamily:ff, color:"rgba(240,237,232,0.32)", marginTop:6 }}>32W / 18L</div>
+          </div>
+          {/* Profit Factor */}
+          <div style={{ background:"#181818", borderRadius:10, padding:"12px 14px", border:"1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ fontSize:9, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:"rgba(240,237,232,0.32)", marginBottom:4 }}>PROFIT FACTOR</div>
+            <div style={{ fontSize:22, fontFamily:ff, fontWeight:700, letterSpacing:"-0.04em", color:text, marginBottom:8 }}>2.21</div>
+            <svg viewBox="0 0 120 38" style={{ width:"100%", height:34 }} preserveAspectRatio="none">
+              <path d="M0 30 L15 28 L25 32 L35 26 L45 29 L55 20 L65 22 L75 16 L85 20 L95 13 L105 15 L120 10" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="1.2"/>
+            </svg>
+          </div>
+        </div>
+        {/* Row 2 */}
+        <div style={{ display:"grid", gridTemplateColumns:"0.72fr 1fr 1fr", gap:10 }}>
+          {/* Today */}
+          <div style={{ background:"#181818", borderRadius:10, padding:"12px 14px", border:"1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ fontSize:9, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:"rgba(240,237,232,0.32)", marginBottom:10 }}>TODAY</div>
+            {[["Trades","4"],["Result","+150,00 €"],["Win rate","75%"]].map(([l,v],i) => (
+              <div key={i} style={{ display:"flex", justifyContent:"space-between", marginBottom:7, fontSize:11, fontFamily:ff }}>
+                <span style={{ color:"rgba(240,237,232,0.45)", fontWeight:300 }}>{l}</span>
+                <span style={{ color:text, fontWeight:600 }}>{v}</span>
+              </div>
+            ))}
+          </div>
+          {/* Sessions */}
+          <div style={{ background:"#181818", borderRadius:10, padding:"12px 14px", border:"1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ fontSize:9, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:"rgba(240,237,232,0.32)", marginBottom:10 }}>SESSIONS</div>
+            {[["New York","+150,00 €","50%",0.5],["London","0,00 €","0%",0],["Asia","0,00 €","0%",0]].map(([s,p,w,r],i) => (
+              <div key={i} style={{ marginBottom:8 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, fontFamily:ff, marginBottom:3 }}>
+                  <span style={{ color:"rgba(240,237,232,0.65)" }}>{s}</span>
+                  <span style={{ color:"rgba(240,237,232,0.4)", fontWeight:300 }}>{p}</span>
+                  <span style={{ color:"rgba(240,237,232,0.4)", fontWeight:300 }}>{w}</span>
+                </div>
+                <div style={{ height:2, background:"rgba(255,255,255,0.06)", borderRadius:1 }}>
+                  <div style={{ width:`${r*100}%`, height:"100%", background:"rgba(255,255,255,0.28)", borderRadius:1 }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Emotions */}
+          <div style={{ background:"#181818", borderRadius:10, padding:"12px 14px", border:"1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ fontSize:9, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:"rgba(240,237,232,0.32)", marginBottom:10 }}>EMOTIONS</div>
+            {[["Neutre","50%",0.5,"rgba(100,175,100,0.7)"],["Confiant","25%",0.25,"rgba(100,175,100,0.5)"],["Anxieux","25%",0.25,"rgba(200,90,90,0.55)"]].map(([e,p,r,c],i) => (
+              <div key={i} style={{ marginBottom:8 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, fontFamily:ff, marginBottom:3 }}>
+                  <span style={{ color:"rgba(240,237,232,0.65)" }}>{e}</span>
+                  <span style={{ color:"rgba(240,237,232,0.4)", fontWeight:300 }}>{p}</span>
+                </div>
+                <div style={{ height:2.5, background:"rgba(255,255,255,0.06)", borderRadius:2 }}>
+                  <div style={{ width:`${r*100}%`, height:"100%", background:c, borderRadius:2 }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ── Calendar mockup ── */
+  const CalendarMockup = () => {
+    const days = ["M","T","W","T","F","S","S"];
+    const firstDow = 2; // April 2026 starts Wednesday
+    const trades = {1:"w",2:"w",3:"l",7:"w",8:"w",9:"w",10:"l",13:"w",14:"w",15:"w",16:"l",17:"w",20:"w",21:"w",22:"w",23:"l",24:"w",25:"w",28:"w",29:"w",30:"l"};
+    const cells = [];
+    for (let i=0; i<firstDow; i++) cells.push(null);
+    for (let d=1; d<=30; d++) cells.push(d);
+    return (
+      <div style={{ background:"#181818", border:"1px solid rgba(255,255,255,0.08)", borderRadius:16, padding:"22px", width:294 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+          <span style={{ fontSize:13, fontFamily:ff, color:"rgba(255,255,255,0.4)", cursor:"pointer" }}>‹</span>
+          <span style={{ fontSize:11, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:text }}>APRIL 2026</span>
+          <span style={{ fontSize:13, fontFamily:ff, color:"rgba(255,255,255,0.4)", cursor:"pointer" }}>›</span>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3, marginBottom:6 }}>
+          {days.map((d,i) => <div key={i} style={{ textAlign:"center", fontSize:9, fontFamily:ff, color:"rgba(255,255,255,0.25)", fontWeight:600 }}>{d}</div>)}
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3 }}>
+          {cells.map((d,i) => {
+            if (!d) return <div key={i}/>;
+            const r = trades[d];
+            const isToday = d === 26;
+            return (
+              <div key={i} style={{
+                aspectRatio:"1", display:"flex", alignItems:"center", justifyContent:"center", borderRadius:6,
+                background: r==="w" ? "rgba(90,165,90,0.18)" : r==="l" ? "rgba(190,75,75,0.15)" : "transparent",
+                border: isToday ? "1px solid rgba(255,255,255,0.22)" : "none",
+              }}>
+                <span style={{ fontSize:10, fontFamily:ff, fontWeight: isToday ? 700 : 400, color: r ? "rgba(240,237,232,0.7)" : "rgba(240,237,232,0.25)" }}>{d}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#080808", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Josefin Sans',sans-serif", padding:24, position:"relative", overflow:"hidden" }}>
-      <style>{FONTS + AUTH_ANIM}</style>
+    <div style={{ background:bg, color:text, fontFamily:ff, minHeight:"100vh" }}>
+      <style>{FONTS + LANDING_ANIM}</style>
 
-      {/* ── Orbes ── */}
-      <div style={{ position:"absolute", inset:0, pointerEvents:"none" }}>
-        <div style={{ position:"absolute", top:"15%", left:"20%", width:500, height:500, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.055) 0%, transparent 70%)", animation:"authOrb1 18s ease-in-out infinite", filter:"blur(40px)" }}/>
-        <div style={{ position:"absolute", bottom:"10%", right:"15%", width:420, height:420, borderRadius:"50%", background:"radial-gradient(circle, rgba(200,185,150,0.045) 0%, transparent 70%)", animation:"authOrb2 22s ease-in-out infinite", filter:"blur(50px)" }}/>
-        <div style={{ position:"absolute", top:"50%", left:"50%", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", animation:"authOrb3 14s ease-in-out infinite", filter:"blur(60px)", transform:"translate(-50%,-50%)" }}/>
-      </div>
-
-      {/* ── Particules ── */}
-      <div style={{ position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden" }}>
-        {[
-          { left:"8%",  delay:"0s",   dur:"7s",  size:2,   dx:"20px",  opacity:0.5 },
-          { left:"18%", delay:"1.2s", dur:"9s",  size:1.5, dx:"-15px", opacity:0.35 },
-          { left:"28%", delay:"0.4s", dur:"6s",  size:2.5, dx:"10px",  opacity:0.55 },
-          { left:"38%", delay:"2.1s", dur:"8s",  size:1,   dx:"25px",  opacity:0.3 },
-          { left:"48%", delay:"0.8s", dur:"11s", size:2,   dx:"-20px", opacity:0.45 },
-          { left:"57%", delay:"3.2s", dur:"7.5s",size:1.5, dx:"15px",  opacity:0.4 },
-          { left:"66%", delay:"1.6s", dur:"9.5s",size:2,   dx:"-10px", opacity:0.5 },
-          { left:"75%", delay:"0.2s", dur:"6.5s",size:1,   dx:"30px",  opacity:0.35 },
-          { left:"84%", delay:"2.8s", dur:"8.5s",size:2.5, dx:"-25px", opacity:0.45 },
-          { left:"92%", delay:"1s",   dur:"10s", size:1.5, dx:"20px",  opacity:0.3 },
-          { left:"12%", delay:"4s",   dur:"8s",  size:1,   dx:"-18px", opacity:0.4 },
-          { left:"62%", delay:"5s",   dur:"7s",  size:2,   dx:"12px",  opacity:0.5 },
-        ].map((p, i) => (
-          <div key={i} style={{
-            position:"absolute", bottom:"-10px", left:p.left,
-            width:p.size, height:p.size, borderRadius:"50%",
-            background:"rgba(255,255,255,0.9)",
-            boxShadow:`0 0 ${p.size*3}px rgba(255,255,255,0.6)`,
-            animation:`authParticle ${p.dur} ${p.delay} ease-in infinite`,
-            "--dx": p.dx,
-            opacity: p.opacity,
-          }}/>
-        ))}
-      </div>
-
-      {/* ── Ligne balayante ── */}
-      <div style={{ position:"absolute", top:0, left:0, right:0, bottom:0, pointerEvents:"none", overflow:"hidden" }}>
-        <div style={{ position:"absolute", top:"42%", left:0, width:200, height:1, background:"linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent)", animation:"authSweep 6s 1s ease-in-out infinite" }}/>
-        <div style={{ position:"absolute", top:"58%", left:0, width:150, height:1, background:"linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)", animation:"authSweep 8s 3.5s ease-in-out infinite" }}/>
-      </div>
-
-      {/* ── Ligne de séparation haute ── */}
-      <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:1, height:120, background:"linear-gradient(to bottom, transparent, rgba(255,255,255,0.12), transparent)", pointerEvents:"none" }}/>
-
-      {/* ── Contenu ── */}
-      <div style={{ width:"100%", maxWidth:360, position:"relative", zIndex:1 }}>
-
-        {/* Logo */}
-        <div style={{ textAlign:"center", marginBottom:44, animation:"authLogoIn 0.9s cubic-bezier(.22,1,.36,1) both" }}>
-          <div style={{ position:"relative", display:"inline-block", marginBottom:18 }}>
-            <div style={{ position:"absolute", inset:-20, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)", filter:"blur(12px)" }}/>
-            <img src="/fyltra_logo_white.svg" style={{ width:48, height:48, position:"relative", filter:"drop-shadow(0 0 20px rgba(255,255,255,0.25))" }} alt="Fyltra" />
-          </div>
-          <img src="/fyltra_wordmark_white.svg" style={{ height:18, display:"block", margin:"0 auto", opacity:0.9 }} alt="FYLTRA" />
-          <div style={{ marginTop:10, fontSize:9, color:"rgba(255,255,255,0.28)", letterSpacing:"0.3em", textTransform:"uppercase" }}>Trading Journal</div>
+      {/* ─── NAV ─── */}
+      <nav style={{
+        position:"fixed", top:0, left:0, right:0, zIndex:100,
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding:"0 clamp(24px,5vw,64px)", height:64,
+        background:"rgba(13,13,13,0.9)", backdropFilter:"blur(20px)",
+        borderBottom:"1px solid rgba(255,255,255,0.05)",
+      }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <img src="/fyltra_logo_black.svg" style={{ width:32, height:32, borderRadius:6 }} alt="Fyltra" />
+          <span style={{ fontFamily:"'MariellaNove',sans-serif", fontSize:20, color:"rgba(240,237,232,0.9)", letterSpacing:"0.01em" }}>FYLTRA</span>
         </div>
+        <div style={{ display:"flex", gap:36, position:"absolute", left:"50%", transform:"translateX(-50%)" }}>
+          {["PRODUCT","FEATURES","PRICING","ABOUT"].map(l => (
+            <span key={l} style={{ fontSize:10, fontWeight:600, letterSpacing:"0.12em", color:"rgba(240,237,232,0.45)", cursor:"pointer", transition:"color 0.2s", whiteSpace:"nowrap" }}
+              onMouseEnter={e => e.currentTarget.style.color=text}
+              onMouseLeave={e => e.currentTarget.style.color="rgba(240,237,232,0.45)"}
+            >{l}</span>
+          ))}
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+          <button onClick={() => openAuth("login")} style={{ background:"none", border:"none", color:"rgba(240,237,232,0.55)", fontSize:10, fontWeight:600, letterSpacing:"0.12em", cursor:"pointer", fontFamily:ff, transition:"color 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.color=text}
+            onMouseLeave={e => e.currentTarget.style.color="rgba(240,237,232,0.55)"}
+          >LOG IN</button>
+          <button onClick={() => openAuth("signup")} style={{ background:text, color:"#0d0d0d", border:"none", borderRadius:100, padding:"10px 22px", fontSize:10, fontWeight:700, letterSpacing:"0.1em", cursor:"pointer", fontFamily:ff, transition:"opacity 0.2s", whiteSpace:"nowrap" }}
+            onMouseEnter={e => e.currentTarget.style.opacity="0.85"}
+            onMouseLeave={e => e.currentTarget.style.opacity="1"}
+          >START JOURNALING</button>
+        </div>
+      </nav>
 
-        {/* Card */}
-        <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:20, padding:"28px 24px", backdropFilter:"blur(20px)", boxShadow:"0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.08)", animation:"authFadeUp 0.8s 0.15s cubic-bezier(.22,1,.36,1) both" }}>
-
-          {/* Mode switch */}
-          <div style={{ display:"flex", gap:3, marginBottom:24, background:"rgba(0,0,0,0.3)", borderRadius:10, padding:3, border:"1px solid rgba(255,255,255,0.06)" }}>
-            {["login","signup"].map(m => (
-              <button key={m} onClick={() => { setMode(m); setError(""); setSuccess(""); }} style={{
-                flex:1, padding:"9px", borderRadius:7, border:"none", cursor:"pointer",
-                background: mode === m ? "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)" : "transparent",
-                color: mode === m ? "#111" : "rgba(255,255,255,0.38)",
-                fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight: mode === m ? 600 : 400,
-                letterSpacing:"0.12em", textTransform:"uppercase", transition:"all 0.22s",
-                boxShadow: mode === m ? "0 4px 14px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.9)" : "none",
-              }}>
-                {m === "login" ? "Connexion" : "Créer un compte"}
-              </button>
-            ))}
-          </div>
-
-          {/* Fields */}
-          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle} />
-            <div style={{ position:"relative" }}>
-              <input type={showPwd ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && submit()} style={{ ...inputStyle, paddingRight:46 }} />
-              <button onClick={() => setShowPwd(v => !v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", lineHeight:1, padding:0 }}>
-                {showPwd ? (
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                ) : (
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {error && <div style={{ marginTop:12, fontSize:11, color:"#e05a5a", fontFamily:"'Josefin Sans',sans-serif", textAlign:"center" }}>{error}</div>}
-          {success && <div style={{ marginTop:12, fontSize:11, color:"#4caf6e", fontFamily:"'Josefin Sans',sans-serif", textAlign:"center" }}>{success}</div>}
-
-          <button onClick={submit} disabled={loading} style={{
-            width:"100%", marginTop:18, padding:"14px", borderRadius:10, border:"none",
-            background: loading ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(220,220,220,0.9) 100%)",
-            color: loading ? "rgba(255,255,255,0.3)" : "#0a0a0a",
-            fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
-            letterSpacing:"0.22em", textTransform:"uppercase", cursor: loading ? "not-allowed" : "pointer",
-            transition:"all 0.22s", boxShadow: loading ? "none" : "0 8px 32px rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.8)",
-          }}>
-            {loading ? "···" : mode === "login" ? "Se connecter" : "Créer le compte"}
+      {/* ─── HERO ─── */}
+      <section style={{ minHeight:"100vh", display:"flex", alignItems:"center", padding:"100px clamp(24px,10vw,120px) 80px", position:"relative", overflow:"hidden" }}>
+        <div style={{ maxWidth:540, position:"relative", zIndex:2, animation:"heroIn 0.9s cubic-bezier(.22,1,.36,1) both" }}>
+          <div style={{ fontSize:10, color:"rgba(240,237,232,0.3)", letterSpacing:"0.28em", textTransform:"uppercase", marginBottom:26, fontWeight:600 }}>Trading Journal</div>
+          <h1 style={{ fontFamily:ff, fontWeight:700, fontSize:"clamp(38px,5vw,66px)", letterSpacing:"-0.04em", lineHeight:1.06, color:text, marginBottom:26 }}>
+            Your trading<br/>deserves{" "}<em style={{ fontStyle:"italic", color:accent }}>structure.</em>
+          </h1>
+          <p style={{ fontFamily:ff, fontWeight:300, fontSize:15, color:"rgba(240,237,232,0.5)", lineHeight:1.72, marginBottom:38, maxWidth:380 }}>
+            Fyltra is the trading journal designed to help you analyze, improve and stay consistent.
+          </p>
+          <button onClick={() => openAuth("signup")} style={{ display:"inline-flex", alignItems:"center", gap:10, background:text, color:"#0d0d0d", border:"none", borderRadius:100, padding:"15px 30px", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", fontFamily:ff, transition:"opacity 0.2s", marginBottom:14 }}
+            onMouseEnter={e => e.currentTarget.style.opacity="0.86"}
+            onMouseLeave={e => e.currentTarget.style.opacity="1"}
+          >
+            START JOURNALING
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </button>
+          <div style={{ fontSize:10, color:"rgba(240,237,232,0.25)", fontFamily:ff, fontWeight:300, letterSpacing:"0.04em" }}>No credit card required.</div>
         </div>
+        {/* Sphere */}
+        <div style={{ position:"absolute", right:"clamp(2vw,8vw,12vw)", top:"50%", transform:"translateY(-50%)", animation:"heroIn 0.9s 0.12s cubic-bezier(.22,1,.36,1) both", zIndex:1, pointerEvents:"none" }}>
+          <div style={{
+            width:"clamp(260px,30vw,480px)", height:"clamp(260px,30vw,480px)", borderRadius:"50%",
+            background:"radial-gradient(circle at 37% 32%, #2c2c2c 0%, #181818 30%, #0c0c0c 60%, #070707 100%)",
+            boxShadow:"0 0 140px rgba(0,0,0,0.95), inset -50px -50px 120px rgba(0,0,0,0.98), inset 24px 20px 70px rgba(80,80,65,0.12), 0 0 0 1px rgba(255,255,255,0.03)",
+            display:"flex", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden",
+          }}>
+            <div style={{ position:"absolute", top:"14%", left:"20%", width:"28%", height:"16%", background:"radial-gradient(ellipse, rgba(140,130,100,0.1) 0%, transparent 70%)", borderRadius:"50%", filter:"blur(10px)" }}/>
+            <img src="/fyltra_logo_black.svg" style={{ width:"16%", opacity:0.15, borderRadius:"50%" }} alt="" />
+          </div>
+        </div>
+      </section>
 
-        {/* Footer */}
-        <div style={{ textAlign:"center", marginTop:24, fontSize:9, color:"rgba(255,255,255,0.18)", letterSpacing:"0.15em", animation:"authFadeUp 0.8s 0.35s cubic-bezier(.22,1,.36,1) both" }}>
-          FYLTRA · TRADING JOURNAL
+      {/* ─── TRUST BAR ─── */}
+      <section style={{ padding:"36px clamp(24px,10vw,120px)", borderTop:"1px solid rgba(255,255,255,0.06)", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ textAlign:"center", fontSize:9, fontWeight:600, letterSpacing:"0.28em", color:"rgba(240,237,232,0.22)", marginBottom:28, textTransform:"uppercase" }}>Trusted by serious traders</div>
+        <div style={{ display:"flex", justifyContent:"center", gap:"clamp(24px,5vw,64px)", flexWrap:"wrap" }}>
+          {[
+            { icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>, title:"Automatic import", sub:"MT5 integration" },
+            { icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, title:"Performance focused", sub:"Data that matters" },
+            { icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4l3 3"/></svg>, title:"Psychology tracking", sub:"Emotions. Biases. Patterns." },
+            { icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>, title:"Privacy first", sub:"Your data is yours" },
+          ].map((item,i) => (
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:12 }}>
+              <div style={{ width:36, height:36, borderRadius:8, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", display:"flex", alignItems:"center", justifyContent:"center", color:"rgba(240,237,232,0.45)", flexShrink:0 }}>{item.icon}</div>
+              <div>
+                <div style={{ fontSize:12, fontFamily:ff, fontWeight:600, color:text, marginBottom:2 }}>{item.title}</div>
+                <div style={{ fontSize:10, fontFamily:ff, fontWeight:300, color:"rgba(240,237,232,0.32)" }}>{item.sub}</div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* ─── APP MOCKUP ─── */}
+      <section style={{ padding:"80px clamp(24px,10vw,120px)" }}>
+        <AppMockup />
+      </section>
+
+      {/* ─── FEATURES ─── */}
+      <section style={{ padding:"80px clamp(24px,10vw,120px)", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ textAlign:"center", marginBottom:56 }}>
+          <div style={{ fontSize:9, fontWeight:600, letterSpacing:"0.28em", color:"rgba(240,237,232,0.22)", marginBottom:16, textTransform:"uppercase" }}>Built for consistent traders</div>
+          <h2 style={{ fontFamily:ff, fontWeight:700, fontSize:"clamp(26px,4vw,46px)", letterSpacing:"-0.035em", color:text }}>Analyze. Understand. Improve.</h2>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:32 }}>
+          {[
+            { icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>, title:"Automatic import", desc:"Connect your MT5 account and import your trades automatically." },
+            { icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, title:"Deep analytics", desc:"Powerful metrics to identify your edge and eliminate your weaknesses." },
+            { icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4l3 3"/></svg>, title:"Psychology tracking", desc:"Track your emotions and discover the patterns behind your performance." },
+            { icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:"Focus & grow", desc:"Clear insights. Smarter decisions. Consistent execution." },
+          ].map((f,i) => (
+            <div key={i}>
+              <div style={{ width:42, height:42, borderRadius:10, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", display:"flex", alignItems:"center", justifyContent:"center", color:"rgba(240,237,232,0.55)", marginBottom:20 }}>{f.icon}</div>
+              <div style={{ fontFamily:ff, fontWeight:600, fontSize:15, letterSpacing:"-0.02em", color:text, marginBottom:10 }}>{f.title}</div>
+              <div style={{ fontFamily:ff, fontWeight:300, fontSize:13, color:"rgba(240,237,232,0.42)", lineHeight:1.68 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── PRICING ─── */}
+      <section style={{ padding:"80px clamp(24px,10vw,120px)", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:56, alignItems:"center" }}>
+          <div>
+            <h3 style={{ fontFamily:ff, fontWeight:700, fontSize:"clamp(26px,3.5vw,42px)", letterSpacing:"-0.04em", color:text, lineHeight:1.18, marginBottom:22 }}>
+              Track every day.<br/>See what works.<br/>Repeat it.
+            </h3>
+            <div style={{ width:44, height:2, background:accent, borderRadius:2, marginBottom:36 }}/>
+            <CalendarMockup />
+          </div>
+          <div style={{ background:"#161616", border:"1px solid rgba(255,255,255,0.08)", borderRadius:20, padding:"36px 32px" }}>
+            <div style={{ fontSize:9, fontWeight:600, letterSpacing:"0.24em", color:"rgba(240,237,232,0.28)", textTransform:"uppercase", marginBottom:18 }}>Simple pricing</div>
+            <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:30 }}>
+              <span style={{ fontFamily:ff, fontWeight:700, fontSize:58, letterSpacing:"-0.05em", color:text }}>24€</span>
+              <span style={{ fontFamily:ff, fontWeight:300, fontSize:16, color:"rgba(240,237,232,0.32)" }}>/month</span>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:13, marginBottom:32 }}>
+              {["Unlimited trades","MT5 Automatic import","Advanced analytics","Emotions & sessions","Cancel anytime"].map((f,i) => (
+                <div key={i} style={{ display:"flex", gap:10, alignItems:"center" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span style={{ fontFamily:ff, fontWeight:300, fontSize:13, color:"rgba(240,237,232,0.62)" }}>{f}</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => openAuth("signup")} style={{ width:"100%", padding:"15px", borderRadius:10, border:"none", background:text, color:"#0d0d0d", fontFamily:ff, fontWeight:700, fontSize:10, letterSpacing:"0.14em", textTransform:"uppercase", cursor:"pointer", transition:"opacity 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.opacity="0.86"}
+              onMouseLeave={e => e.currentTarget.style.opacity="1"}
+            >START JOURNALING</button>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FOOTER ─── */}
+      <footer style={{ padding:"28px clamp(24px,10vw,120px)", borderTop:"1px solid rgba(255,255,255,0.06)", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <img src="/fyltra_logo_black.svg" style={{ width:20, height:20, borderRadius:4, opacity:0.6 }} alt="" />
+          <span style={{ fontSize:9, color:"rgba(240,237,232,0.18)", fontFamily:ff, letterSpacing:"0.08em" }}>© 2026 Fyltra. All rights reserved.</span>
+        </div>
+        <div style={{ display:"flex", gap:22, alignItems:"center" }}>
+          {["PRIVACY POLICY","TERMS OF SERVICE","CONTACT"].map(l => (
+            <span key={l} style={{ fontSize:9, fontFamily:ff, fontWeight:600, letterSpacing:"0.1em", color:"rgba(240,237,232,0.18)", cursor:"pointer" }}>{l}</span>
+          ))}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(240,237,232,0.2)" style={{ cursor:"pointer" }}><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(240,237,232,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ cursor:"pointer" }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+      </footer>
+
+      {/* ─── AUTH MODAL ─── */}
+      {authModal && (
+        <div
+          style={{ position:"fixed", inset:0, zIndex:1000, background:"rgba(0,0,0,0.78)", backdropFilter:"blur(14px)", display:"flex", alignItems:"center", justifyContent:"center", padding:24, animation:"fadeIn 0.2s ease" }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setAuthModal(null); setError(""); setSuccess(""); } }}
+        >
+          <div style={{ background:"#181818", border:"1px solid rgba(255,255,255,0.1)", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:380, animation:"scaleIn 0.25s cubic-bezier(.22,1,.36,1)", boxShadow:"0 40px 100px rgba(0,0,0,0.9)" }}>
+            <div style={{ display:"flex", gap:3, marginBottom:24, background:"rgba(0,0,0,0.35)", borderRadius:10, padding:3, border:"1px solid rgba(255,255,255,0.06)" }}>
+              {[{id:"login",label:"Se connecter"},{id:"signup",label:"Créer un compte"}].map(m => (
+                <button key={m.id} onClick={() => { setMode(m.id); setError(""); setSuccess(""); }} style={{
+                  flex:1, padding:"9px", borderRadius:7, border:"none", cursor:"pointer",
+                  background: mode === m.id ? "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)" : "transparent",
+                  color: mode === m.id ? "#111" : "rgba(255,255,255,0.35)",
+                  fontSize:10, fontFamily:ff, fontWeight: mode === m.id ? 700 : 400,
+                  letterSpacing:"0.12em", textTransform:"uppercase", transition:"all 0.22s",
+                  boxShadow: mode === m.id ? "0 4px 14px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.9)" : "none",
+                }}>{m.label}</button>
+              ))}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"14px 16px", color:text, fontSize:14, fontFamily:ff, fontWeight:300, outline:"none", letterSpacing:"0.03em" }}
+              />
+              <div style={{ position:"relative" }}>
+                <input type={showPwd ? "text" : "password"} placeholder="Mot de passe" value={password}
+                  onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()}
+                  style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"14px 46px 14px 16px", color:text, fontSize:14, fontFamily:ff, fontWeight:300, outline:"none", letterSpacing:"0.03em" }}
+                />
+                <button onClick={() => setShowPwd(v => !v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.28)", lineHeight:1, padding:0 }}>
+                  {showPwd
+                    ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  }
+                </button>
+              </div>
+            </div>
+            {error && <div style={{ marginTop:12, fontSize:11, color:"#e05a5a", textAlign:"center", fontFamily:ff }}>{error}</div>}
+            {success && <div style={{ marginTop:12, fontSize:11, color:"#4caf6e", textAlign:"center", fontFamily:ff }}>{success}</div>}
+            <button onClick={submit} disabled={loading} style={{
+              width:"100%", marginTop:18, padding:"14px", borderRadius:10, border:"none",
+              background: loading ? "rgba(255,255,255,0.06)" : text,
+              color: loading ? "rgba(255,255,255,0.3)" : "#0a0a0a",
+              fontSize:10, fontFamily:ff, fontWeight:700,
+              letterSpacing:"0.22em", textTransform:"uppercase",
+              cursor: loading ? "not-allowed" : "pointer", transition:"all 0.2s",
+              boxShadow: loading ? "none" : "0 6px 28px rgba(255,255,255,0.08)",
+            }}>
+              {loading ? "···" : mode === "login" ? "Se connecter" : "Créer le compte"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3175,7 +3439,7 @@ ${recentTrades}`;
 
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px"}}>
         <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Version</div>
-        <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>FYLTRA v1.0 · Trading Journal</div>
+        <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}><span style={{fontFamily:"'MariellaNove',sans-serif",fontSize:16}}>FYLTRA</span> v1.0 · Trading Journal</div>
         <div style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:4,letterSpacing:"0.06em"}}>Créé par Smile</div>
       </div>
     </div>
@@ -3209,9 +3473,9 @@ ${recentTrades}`;
         <div style={{ minHeight:"100vh", paddingBottom:100 }}>
           <div style={{ padding:"16px 20px", background:`linear-gradient(180deg,${C.bg2},${C.bg})`, borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50, backdropFilter:"blur(16px)", flexWrap:"wrap" }}>
             <div style={{ display:"flex", alignItems:"center", gap:9 }}>
-              <img src={darkMode?"/fyltra_logo_white.svg":"/fyltra_logo_black.svg"} style={{width:38,height:38,flexShrink:0,borderRadius:8}} alt="Fyltra"/>
+              <img src={darkMode?"/fyltra_logo_black.svg":"/fyltra_logo_white.svg"} style={{width:38,height:38,flexShrink:0,borderRadius:8}} alt="Fyltra"/>
               <div>
-                <img src={darkMode?"/fyltra_wordmark_white.svg":"/fyltra_wordmark_black.svg"} style={{height:16,display:"block"}} alt="FYLTRA"/>
+                <span style={{ fontFamily:"'MariellaNove',sans-serif", fontSize:18, color:C.white, display:"block", lineHeight:1, marginBottom:2 }}>FYLTRA</span>
                 <div style={{ fontSize:7, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300 }}>Carnet de santé trading</div>
               </div>
             </div>
