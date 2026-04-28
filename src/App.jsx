@@ -571,23 +571,7 @@ function TiltCard({ children, style = {} }) {
 
 function AuthScreen() {
   const JF = "'Josefin Sans',sans-serif";
-  const CV = "'CoolveticaHv',sans-serif";
   const MN = "'MariellaNove',sans-serif";
-
-  const [isDark, setIsDark] = useState(true);
-
-  const BG  = isDark ? "#0b0b0b"                    : "#f0ede8";
-  const CR  = isDark ? "#f5f2ea"                    : "#0b0b0b";
-  const GD  = isDark ? "#e8cda9"                    : "#7a5c1e";
-  const DIM = isDark ? "rgba(245,242,234,0.45)"     : "rgba(11,11,11,0.5)";
-  const BDR = isDark ? "rgba(245,242,234,0.09)"     : "rgba(11,11,11,0.1)";
-  const CARD_BG   = isDark
-    ? "linear-gradient(160deg,rgba(38,38,38,0.98) 0%,rgba(18,18,18,0.99) 100%)"
-    : "linear-gradient(160deg,rgba(255,255,255,0.98) 0%,rgba(235,232,228,0.96) 100%)";
-  const CARD_SHD  = isDark
-    ? "0 20px 50px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.08),inset 0 1px 0 rgba(255,255,255,0.18),inset 0 -2px 0 rgba(0,0,0,0.6)"
-    : "0 12px 40px rgba(0,0,0,0.10),0 0 0 1px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.9),inset 0 -1px 0 rgba(0,0,0,0.06)";
-  const CARD_BDR  = isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)";
 
   const [authModal, setAuthModal] = useState(null);
   const [mode, setMode]           = useState("login");
@@ -597,72 +581,8 @@ function AuthScreen() {
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState("");
   const [success, setSuccess]     = useState("");
-  const [menuOpen, setMenuOpen]   = useState(false);
 
-  const dotsRef = useRef(null);
-  const isDarkRef = useRef(isDark);
-  useEffect(() => { isDarkRef.current = isDark; }, [isDark]);
-
-  useEffect(() => {
-    const canvas = dotsRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const SPACING = 30, R = 1.5, REP = 90, STR = 50;
-    let W, H, dots, animId;
-    let mx = -999, my = -999;
-
-    const init = () => {
-      W = canvas.offsetWidth; H = canvas.offsetHeight;
-      canvas.width = W; canvas.height = H;
-      dots = [];
-      for (let y = 0; y <= H; y += SPACING)
-        for (let x = 0; x <= W; x += SPACING)
-          dots.push({ bx:x, by:y, x, y });
-    };
-
-    const draw = () => {
-      animId = requestAnimationFrame(draw);
-      ctx.clearRect(0, 0, W, H);
-      const dark = isDarkRef.current;
-      ctx.fillStyle = dark ? '#E8D4C1' : '#111';
-      dots.forEach(d => {
-        const dx = d.bx - mx, dy = d.by - my;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        let tx = d.bx, ty = d.by;
-        if (dist < REP) {
-          const f = (1 - dist/REP) * STR;
-          const a = Math.atan2(dy, dx);
-          tx = d.bx + Math.cos(a)*f;
-          ty = d.by + Math.sin(a)*f;
-        }
-        d.x += (tx - d.x) * 0.14;
-        d.y += (ty - d.y) * 0.14;
-        ctx.globalAlpha = dark ? 0.28 : 0.22;
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, R, 0, Math.PI*2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-    };
-
-    const section = canvas.parentElement;
-    const onMove = (e) => { const r = canvas.getBoundingClientRect(); mx = e.clientX-r.left; my = e.clientY-r.top; };
-    const onLeave = () => { mx = -999; my = -999; };
-    const onResize = () => init();
-
-    init(); draw();
-    section.addEventListener('mousemove', onMove);
-    section.addEventListener('mouseleave', onLeave);
-    window.addEventListener('resize', onResize);
-    return () => {
-      cancelAnimationFrame(animId);
-      section.removeEventListener('mousemove', onMove);
-      section.removeEventListener('mouseleave', onLeave);
-      window.removeEventListener('resize', onResize);
-    };
-  }, []);
-
-  const openAuth = (m) => { setMode(m); setAuthModal(true); setError(""); setSuccess(""); setMenuOpen(false); };
+  const openAuth = (m) => { setMode(m); setAuthModal(true); setError(""); setSuccess(""); };
 
   const submit = async () => {
     if (!email || !password) { setError("Remplis tous les champs."); return; }
@@ -678,237 +598,247 @@ function AuthScreen() {
     setLoading(false);
   };
 
-  const PAD = "clamp(24px,7vw,110px)";
+  const BG   = "#060609";
+  const CR   = "#f5f2ea";
+  const GD   = "#e8cda9";
+  const DIM  = "rgba(245,242,234,0.45)";
+  const DIM2 = "rgba(245,242,234,0.18)";
+  const BDR  = "rgba(245,242,234,0.08)";
+  const PAD  = "clamp(24px,6vw,96px)";
+  const CARD_BG  = "rgba(255,255,255,0.025)";
+  const CARD_BDR = `1px solid ${BDR}`;
+  const CARD_SHD = "0 0 0 1px rgba(255,255,255,0.05), 0 8px 40px rgba(0,0,0,0.5)";
+
   const features = [
-    { n:"01", title:"Pattern Detection", sub:"We find your edge before you lose it. Every pattern, quantified.", icon:"◎" },
-    { n:"02", title:"Emotional Tracking", sub:"Because greed is always lying. Know your state, control your bias.", icon:"◈" },
-    { n:"03", title:"AI Coaching",        sub:"Your data, turned into rules. Personalized, brutal, accurate.", icon:"◆" },
-    { n:"04", title:"Multi-Account",      sub:"One journal, every strategy. Prop firms, live accounts, backtests.", icon:"◉" },
+    { n:"01", title:"Journal structuré", sub:"Enregistre chaque trade — émotion, session, instrument, résultat. Sans friction, sans oubli.", icon:"◎" },
+    { n:"02", title:"Pattern Detection", sub:"Détecte automatiquement tes forces et faiblesses par jour, session, émotion. Avec les chiffres exacts.", icon:"◈" },
+    { n:"03", title:"Coaching IA", sub:"Ton coach analyse tes données et génère 3 règles concrètes pour demain. Tes patterns, pas des généralités.", icon:"◆" },
+    { n:"04", title:"Prop Firms", sub:"Suivi multi-compte avec daily loss, consistance et inactivité. Une jauge par règle, en temps réel.", icon:"◉" },
   ];
 
   return (
-    <div style={{ background:BG, color:CR, fontFamily:JF, overflowX:"hidden", transition:"background 0.3s,color 0.3s" }}>
+    <div style={{ background:BG, color:CR, fontFamily:JF, overflowX:"hidden" }}>
       <style>{FONTS}</style>
+      <style>{`
+        @keyframes lnFadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+        .ln1{animation:lnFadeUp 0.7s 0.05s both ease-out;}
+        .ln2{animation:lnFadeUp 0.7s 0.18s both ease-out;}
+        .ln3{animation:lnFadeUp 0.7s 0.32s both ease-out;}
+        .ln4{animation:lnFadeUp 0.7s 0.46s both ease-out;}
+        @keyframes lnGlow{0%,100%{opacity:0.4;}50%{opacity:0.65;}}
+        .lnglow{animation:lnGlow 5s ease-in-out infinite;}
+      `}</style>
 
       {/* ── NAV ── */}
-      <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:200, display:"flex", alignItems:"center", justifyContent:"space-between", padding:`0 ${PAD}`, height:60, background:isDark?"rgba(11,11,11,0.9)":"rgba(240,237,232,0.92)", backdropFilter:"blur(18px)", borderBottom:`1px solid ${BDR}`, transition:"background 0.3s" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <img src={isDark?"/fyltra-white.svg":"/fyltra-black.svg"} style={{ width:38, height:38, borderRadius:8 }} alt="" />
-          <span style={{ fontFamily:MN, fontSize:20, color:CR }}>FYLTRA</span>
+      <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:200, display:"flex", alignItems:"center", justifyContent:"space-between", padding:`0 ${PAD}`, height:56, background:"rgba(6,6,9,0.88)", backdropFilter:"blur(20px)", borderBottom:`1px solid ${BDR}` }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <img src="/fyltra-white.svg" style={{ width:26, height:26 }} alt="" />
+          <span style={{ fontFamily:MN, fontSize:17, color:CR }}>FYLTRA</span>
         </div>
-        <div style={{ display:"flex", gap:32, position:"absolute", left:"50%", transform:"translateX(-50%)" }}>
-          {["FEATURES","PRICING","ABOUT"].map(l => (
-            <span key={l} style={{ fontSize:9, fontWeight:600, letterSpacing:"0.18em", color:DIM, cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.color=CR}
-              onMouseLeave={e => e.currentTarget.style.color=DIM}>{l}</span>
+        <div style={{ display:"flex", gap:28, position:"absolute", left:"50%", transform:"translateX(-50%)" }}>
+          {["Features","Pricing","About"].map(l => (
+            <span key={l} style={{ fontSize:12, color:DIM, cursor:"pointer", letterSpacing:"0.02em", transition:"color 0.15s" }}
+              onMouseEnter={e=>e.currentTarget.style.color=CR}
+              onMouseLeave={e=>e.currentTarget.style.color=DIM}>{l}</span>
           ))}
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          {/* Dark/Light toggle */}
-          <button onClick={() => setIsDark(v => !v)} title={isDark?"Mode clair":"Mode sombre"} style={{ background:isDark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)", border:`1px solid ${BDR}`, borderRadius:10, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:DIM, flexShrink:0, transition:"all 0.2s" }}>
-            {isDark ? (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
-              </svg>
-            ) : (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-            )}
-          </button>
-          <button onClick={() => openAuth("login")} style={{ background:"none", border:"none", color:DIM, fontSize:9, fontWeight:600, letterSpacing:"0.16em", cursor:"pointer", fontFamily:JF, transition:"color 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.color=CR}
-            onMouseLeave={e => e.currentTarget.style.color=DIM}>LOG IN</button>
-          <button onClick={() => openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:100, padding:"9px 20px", fontSize:9, fontWeight:700, letterSpacing:"0.14em", cursor:"pointer", fontFamily:JF, transition:"opacity 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.opacity="0.82"}
-            onMouseLeave={e => e.currentTarget.style.opacity="1"}>START</button>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <button onClick={()=>openAuth("login")} style={{ background:"none", border:"none", color:DIM, fontSize:12, cursor:"pointer", padding:"8px 12px", borderRadius:7, transition:"all 0.15s", letterSpacing:"0.02em" }}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.06)";e.currentTarget.style.color=CR;}}
+            onMouseLeave={e=>{e.currentTarget.style.background="none";e.currentTarget.style.color=DIM;}}>Se connecter</button>
+          <button onClick={()=>openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:7, padding:"8px 18px", fontSize:12, fontWeight:700, letterSpacing:"0.04em", cursor:"pointer", transition:"opacity 0.15s" }}
+            onMouseEnter={e=>e.currentTarget.style.opacity="0.86"}
+            onMouseLeave={e=>e.currentTarget.style.opacity="1"}>Commencer</button>
         </div>
       </nav>
 
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 1 — HERO
-      ═══════════════════════════════════════════════════════ */}
-      <section style={{ position:"relative", minHeight:"100vh", overflow:"hidden" }}>
-        {/* Dot pattern — réactif à la souris */}
-        <canvas ref={dotsRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", WebkitMaskImage:"radial-gradient(ellipse 85% 90% at 50% 30%, black 20%, transparent 80%)", maskImage:"radial-gradient(ellipse 85% 90% at 50% 30%, black 20%, transparent 80%)" }} />
-        <div style={{ position:"relative", zIndex:10, minHeight:"100vh", display:"flex", flexDirection:"column", justifyContent:"center", padding:`100px ${PAD} 60px` }}>
-          <div>
-            <div style={{ fontFamily:CV, fontSize:"clamp(56px,10vw,152px)", color:CR, letterSpacing:"-0.01em", lineHeight:0.98, opacity:0.9 }}>YOUR TRADING</div>
-            <div style={{ fontFamily:CV, fontSize:"clamp(38px,6.5vw,96px)", color:GD, letterSpacing:"0.01em", lineHeight:1.02, paddingLeft:"clamp(20px,3.5vw,60px)", fontStyle:"italic" }}>DESERVES</div>
-            <div style={{ fontFamily:CV, fontSize:"clamp(78px,17vw,248px)", letterSpacing:"-0.03em", lineHeight:0.9, background:`linear-gradient(125deg, ${CR} 35%, ${GD} 100%)`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>STRUCTURE.</div>
-          </div>
-          <div style={{ marginTop:"clamp(32px,4vh,52px)", display:"flex", alignItems:"flex-end", justifyContent:"flex-end", flexWrap:"wrap", gap:24 }}>
-            <div style={{ display:"flex", gap:12 }}>
-              <button onClick={() => openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:100, padding:"14px 28px", fontSize:10, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", fontFamily:JF, transition:"opacity 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.opacity="0.82"}
-                onMouseLeave={e => e.currentTarget.style.opacity="1"}>Start Free →</button>
-              <button onClick={() => openAuth("login")} style={{ background:"rgba(245,242,234,0.06)", color:CR, border:`1px solid ${BDR}`, borderRadius:100, padding:"14px 24px", fontSize:10, fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", fontFamily:JF, transition:"background 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.background="rgba(245,242,234,0.1)"}
-                onMouseLeave={e => e.currentTarget.style.background="rgba(245,242,234,0.06)"}>Log in</button>
-            </div>
-          </div>
+      {/* ── HERO ── */}
+      <section style={{ position:"relative", minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", padding:`140px ${PAD} 60px`, overflow:"hidden" }}>
+        {/* Glow */}
+        <div className="lnglow" style={{ position:"absolute", top:"15%", left:"50%", transform:"translateX(-50%)", width:"min(700px,90vw)", height:500, background:"radial-gradient(ellipse, rgba(232,205,169,0.11) 0%, transparent 70%)", pointerEvents:"none", filter:"blur(50px)" }} />
+        {/* Grid */}
+        <div style={{ position:"absolute", inset:0, backgroundImage:`linear-gradient(${BDR} 1px, transparent 1px), linear-gradient(90deg, ${BDR} 1px, transparent 1px)`, backgroundSize:"60px 60px", WebkitMaskImage:"radial-gradient(ellipse 80% 55% at 50% 35%, black, transparent)", maskImage:"radial-gradient(ellipse 80% 55% at 50% 35%, black, transparent)", pointerEvents:"none" }} />
+
+        {/* Badge */}
+        <div className="ln1" style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(232,205,169,0.07)", border:"1px solid rgba(232,205,169,0.2)", borderRadius:100, padding:"5px 14px", marginBottom:28 }}>
+          <span style={{ width:5, height:5, borderRadius:"50%", background:GD, flexShrink:0 }} />
+          <span style={{ fontSize:11, color:GD, letterSpacing:"0.1em", fontWeight:600 }}>Trading Journal</span>
         </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          SECTIONS 2-5 + FOOTER — ambient particles wrapper
-      ═══════════════════════════════════════════════════════ */}
-      <div style={{ position:"relative" }}>
-        <AmbientParticles isDark={isDark} />
+        {/* Headline */}
+        <h1 className="ln2" style={{ fontWeight:700, fontSize:"clamp(38px,5.5vw,76px)", letterSpacing:"-0.035em", lineHeight:1.07, color:CR, marginBottom:20, maxWidth:700 }}>
+          Ton trading mérite<br />de la{" "}
+          <span style={{ background:`linear-gradient(130deg, ${CR} 20%, ${GD} 100%)`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>structure.</span>
+        </h1>
 
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 2 — PROOF (90%)
-      ═══════════════════════════════════════════════════════ */}
-      <section style={{ position:"relative", zIndex:1, padding:`100px ${PAD}`, display:"flex", alignItems:"center", justifyContent:"center", gap:"clamp(40px,6vw,100px)", flexWrap:"wrap" }}>
-        <Reveal delay={0}>
-          <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:24, padding:"48px 56px", textAlign:"center", minWidth:280, boxShadow:CARD_SHD, transition:"background 0.3s" }}>
-            <div style={{ fontFamily:CV, fontSize:"clamp(72px,11vw,148px)", color:GD, lineHeight:1, letterSpacing:"-0.03em" }}>90%</div>
-            <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.22em", marginTop:16, textTransform:"uppercase" }}>of traders fail</div>
-          </TiltCard>
-        </Reveal>
-        <Reveal delay={0.15} style={{ maxWidth:400 }}>
-          <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:20, textTransform:"uppercase" }}>The Problem</div>
-          <div style={{ fontFamily:CV, fontSize:"clamp(28px,4vw,52px)", color:CR, lineHeight:1.05, letterSpacing:"-0.02em", marginBottom:20 }}>Because of chaos.</div>
-          <p style={{ fontFamily:JF, fontWeight:300, fontSize:14, color:DIM, lineHeight:1.85 }}>
-            Most traders lose not because they lack skill, but because they lack structure.
-            They repeat the same mistakes — different days, same patterns, same blind spots.
-          </p>
-          <div style={{ marginTop:32, display:"flex", gap:32 }}>
-            <div>
-              <div style={{ fontFamily:CV, fontSize:36, color:CR, letterSpacing:"-0.02em", lineHeight:1 }}>3.2x</div>
-              <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.14em", marginTop:6, textTransform:"uppercase" }}>Better WR with structure</div>
-            </div>
-            <div>
-              <div style={{ fontFamily:CV, fontSize:36, color:CR, letterSpacing:"-0.02em", lineHeight:1 }}>12h</div>
-              <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.14em", marginTop:6, textTransform:"uppercase" }}>Saved per month</div>
-            </div>
-          </div>
-        </Reveal>
-      </section>
+        {/* Subtitle */}
+        <p className="ln3" style={{ fontSize:16, color:DIM, lineHeight:1.75, marginBottom:36, maxWidth:460, fontWeight:300 }}>
+          Fyltra est le journal de trading qui transforme tes données brutes en règles concrètes. Analyse, améliore, répète.
+        </p>
 
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 3 — FEATURES (3D TILT CARDS)
-      ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`80px ${PAD} 100px`, position:"relative", zIndex:1 }}>
-        {/* Perspective grid */}
-        <div style={{ position:"absolute", inset:0, overflow:"hidden", pointerEvents:"none" }}>
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, height:"65%", backgroundImage:"linear-gradient(rgba(var(--gold-rgb),0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--gold-rgb),0.06) 1px, transparent 1px)", backgroundSize:"56px 56px", transform:"perspective(380px) rotateX(58deg)", transformOrigin:"bottom", WebkitMaskImage:"linear-gradient(to top, black 20%, transparent)", maskImage:"linear-gradient(to top, black 20%, transparent)" }} />
+        {/* CTAs */}
+        <div className="ln4" style={{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"center", marginBottom:72 }}>
+          <button onClick={()=>openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:8, padding:"13px 28px", fontSize:13, fontWeight:700, letterSpacing:"0.03em", cursor:"pointer", transition:"opacity 0.15s", display:"flex", alignItems:"center", gap:8 }}
+            onMouseEnter={e=>e.currentTarget.style.opacity="0.86"}
+            onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+            Commencer gratuitement
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <button onClick={()=>openAuth("login")} style={{ background:"rgba(255,255,255,0.04)", color:CR, border:CARD_BDR, borderRadius:8, padding:"13px 24px", fontSize:13, fontWeight:400, cursor:"pointer", transition:"background 0.15s" }}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.08)"}
+            onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.04)"}>Se connecter</button>
         </div>
-        <div style={{ position:"relative", zIndex:1 }}>
-          <Reveal delay={0} style={{ marginBottom:56 }}>
-            <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>What Fyltra does</div>
-            <div style={{ fontFamily:CV, fontSize:"clamp(32px,5vw,68px)", color:CR, letterSpacing:"-0.02em", lineHeight:1.0 }}>Your edge, quantified.</div>
-          </Reveal>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(260px, 1fr))", gap:18 }}>
-            {features.map((f, i) => (
-              <Reveal key={f.n} delay={i*0.07}>
-                <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:20, padding:"36px 30px", height:"100%", boxSizing:"border-box", boxShadow:CARD_SHD, transition:"background 0.3s,box-shadow 0.3s" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }}>
-                    <span style={{ fontSize:30, color:"rgba(var(--gold-rgb),0.45)", lineHeight:1 }}>{f.icon}</span>
-                    <span style={{ fontSize:9, color:"rgba(245,242,234,0.16)", fontFamily:JF, fontWeight:600, letterSpacing:"0.18em" }}>{f.n}</span>
+
+        {/* Product Mockup */}
+        <div className="ln4" style={{ width:"100%", maxWidth:880, position:"relative" }}>
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, height:"45%", background:`linear-gradient(to bottom, transparent, ${BG})`, zIndex:2, pointerEvents:"none" }} />
+          <div style={{ background:"rgba(10,10,16,0.97)", border:CARD_BDR, borderRadius:14, overflow:"hidden", boxShadow:"0 0 0 1px rgba(255,255,255,0.06), 0 40px 80px rgba(0,0,0,0.8)" }}>
+            {/* Chrome */}
+            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"11px 14px", borderBottom:`1px solid ${BDR}`, background:"rgba(255,255,255,0.02)" }}>
+              {[0.12,0.08,0.05].map((o,i)=><div key={i} style={{ width:9, height:9, borderRadius:"50%", background:`rgba(255,255,255,${o})` }}/>)}
+              <div style={{ flex:1, textAlign:"center" }}>
+                <span style={{ fontSize:10, color:DIM2, letterSpacing:"0.08em" }}>app.fyltra.io — Journal</span>
+              </div>
+            </div>
+            {/* Interior */}
+            <div style={{ display:"flex", height:320 }}>
+              {/* Sidebar */}
+              <div style={{ width:164, borderRight:`1px solid ${BDR}`, padding:"14px 10px", flexShrink:0, background:"rgba(255,255,255,0.01)" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:18, padding:"3px 8px" }}>
+                  <img src="/fyltra-white.svg" style={{ width:16, height:16, opacity:0.8 }} alt="" />
+                  <span style={{ fontFamily:MN, fontSize:11, color:CR }}>FYLTRA</span>
+                </div>
+                {["Journal","Comptes","Analytics","IA","Réglages"].map((item, i) => (
+                  <div key={item} style={{ padding:"6px 8px", borderRadius:5, marginBottom:2, background: i===0 ? "rgba(232,205,169,0.1)" : "transparent", display:"flex", alignItems:"center", gap:7 }}>
+                    <div style={{ width:4, height:4, borderRadius:1, background: i===0 ? GD : "rgba(255,255,255,0.18)", flexShrink:0 }} />
+                    <span style={{ fontSize:11, color: i===0 ? CR : DIM2, letterSpacing:"0.03em" }}>{item}</span>
                   </div>
-                  <div style={{ fontFamily:JF, fontWeight:700, fontSize:11, color:CR, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:12 }}>{f.title}</div>
-                  <p style={{ fontFamily:JF, fontWeight:300, fontSize:13, color:DIM, lineHeight:1.75 }}>{f.sub}</p>
-                </TiltCard>
-              </Reveal>
-            ))}
+                ))}
+              </div>
+              {/* Content */}
+              <div style={{ flex:1, padding:"18px 18px", overflow:"hidden" }}>
+                <div style={{ marginBottom:14 }}>
+                  <div style={{ fontSize:9, color:DIM2, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:7 }}>Equity Curve · Avril 2025</div>
+                  <svg viewBox="0 0 560 70" style={{ width:"100%", height:52, display:"block" }}>
+                    <defs>
+                      <linearGradient id="mf" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#e8cda9" stopOpacity="0.2"/>
+                        <stop offset="100%" stopColor="#e8cda9" stopOpacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,65 C25,63 40,56 80,46 C120,36 130,48 170,38 C210,28 225,40 260,24 C295,8 315,20 350,12 C385,4 400,16 440,8 C475,1 490,10 560,5 L560,70 L0,70 Z" fill="url(#mf)"/>
+                    <path d="M0,65 C25,63 40,56 80,46 C120,36 130,48 170,38 C210,28 225,40 260,24 C295,8 315,20 350,12 C385,4 400,16 440,8 C475,1 490,10 560,5" fill="none" stroke="#e8cda9" strokeWidth="1.5"/>
+                  </svg>
+                </div>
+                {/* Trade rows */}
+                {[
+                  { date:"Lun 28", instr:"MNQ", res:"WIN", pnl:"+420€", em:"Confiant" },
+                  { date:"Lun 28", instr:"NQ",  res:"WIN", pnl:"+360€", em:"Neutre"  },
+                  { date:"Mar 29", instr:"MNQ", res:"LOSS",pnl:"-200€", em:"Anxieux" },
+                  { date:"Mar 29", instr:"GC",  res:"WIN", pnl:"+640€", em:"Confiant"},
+                  { date:"Mer 30", instr:"MNQ", res:"WIN", pnl:"+280€", em:"Neutre"  },
+                ].map((t,i)=>(
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"5px 0", borderBottom:`1px solid rgba(255,255,255,0.04)` }}>
+                    <span style={{ fontSize:9, color:DIM2, width:38, flexShrink:0 }}>{t.date}</span>
+                    <span style={{ fontSize:10, color:"rgba(255,255,255,0.5)", width:30, flexShrink:0, letterSpacing:"0.06em" }}>{t.instr}</span>
+                    <span style={{ fontSize:9, color:t.res==="WIN"?"#4caf6e":"#e05a5a", background:t.res==="WIN"?"rgba(76,175,110,0.1)":"rgba(224,90,90,0.1)", padding:"2px 6px", borderRadius:3, flexShrink:0 }}>{t.res}</span>
+                    <span style={{ fontSize:10, color:t.res==="WIN"?"#4caf6e":"#e05a5a", marginLeft:"auto", fontWeight:600, flexShrink:0 }}>{t.pnl}</span>
+                    <span style={{ fontSize:9, color:DIM2, width:50, textAlign:"right", flexShrink:0 }}>{t.em}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 4 — EQUITY CURVE
-      ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`80px ${PAD}`, position:"relative", zIndex:1 }}>
-        <Reveal delay={0} style={{ marginBottom:40 }}>
-          <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>Your performance</div>
-          <div style={{ fontFamily:CV, fontSize:"clamp(30px,4.5vw,60px)", color:CR, letterSpacing:"-0.02em", lineHeight:1.0 }}>Equity curve as art.</div>
+      {/* ── FEATURES ── */}
+      <section style={{ padding:`120px ${PAD}`, position:"relative" }}>
+        <Reveal style={{ marginBottom:64, textAlign:"center" }}>
+          <div style={{ fontSize:11, color:GD, letterSpacing:"0.2em", fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>Ce que fait Fyltra</div>
+          <div style={{ fontWeight:700, fontSize:"clamp(30px,4vw,54px)", letterSpacing:"-0.03em", color:CR, lineHeight:1.1 }}>
+            Tout ce dont tu as besoin<br />pour progresser.
+          </div>
         </Reveal>
-        <Reveal delay={0.1}>
-          <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:20, padding:"40px 36px", boxShadow:CARD_SHD, transition:"background 0.3s" }}>
-            <svg viewBox="0 0 800 200" style={{ width:"100%", height:"auto", display:"block" }}>
-              <defs>
-                <linearGradient id="ecFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#e8cda9" stopOpacity="0.18" />
-                  <stop offset="100%" stopColor="#e8cda9" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,160 C40,155 60,145 100,130 C140,115 150,125 200,110 C250,95 260,105 300,85 C340,65 360,80 400,60 C440,40 450,55 500,35 C550,15 560,30 600,18 C640,6 660,20 700,12 C740,4 760,8 800,5 L800,200 L0,200 Z" fill="url(#ecFill)" />
-              <path d="M0,160 C40,155 60,145 100,130 C140,115 150,125 200,110 C250,95 260,105 300,85 C340,65 360,80 400,60 C440,40 450,55 500,35 C550,15 560,30 600,18 C640,6 660,20 700,12 C740,4 760,8 800,5" fill="none" stroke="#e8cda9" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <div style={{ display:"flex", justifyContent:"space-between", marginTop:28, flexWrap:"wrap", gap:20 }}>
-              {[["Win Rate","68%"],["Avg RR","2.3:1"],["Max DD","-4.2%"],["Profit Factor","2.8"]].map(([l,v]) => (
-                <div key={l}>
-                  <div style={{ fontFamily:CV, fontSize:28, color:GD, letterSpacing:"-0.02em", lineHeight:1 }}>{v}</div>
-                  <div style={{ fontSize:9, color:DIM, fontFamily:JF, fontWeight:600, letterSpacing:"0.14em", marginTop:6, textTransform:"uppercase" }}>{l}</div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))", gap:14 }}>
+          {features.map((f,i)=>(
+            <Reveal key={f.n} delay={i*0.07}>
+              <div style={{ background:CARD_BG, border:CARD_BDR, borderRadius:14, padding:"30px 26px", height:"100%", boxSizing:"border-box", boxShadow:CARD_SHD, transition:"background 0.2s,border-color 0.2s", cursor:"default" }}
+                onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.045)";e.currentTarget.style.borderColor="rgba(232,205,169,0.18)";}}
+                onMouseLeave={e=>{e.currentTarget.style.background=CARD_BG;e.currentTarget.style.borderColor=BDR;}}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
+                  <span style={{ fontSize:20, color:"rgba(232,205,169,0.5)", lineHeight:1 }}>{f.icon}</span>
+                  <span style={{ fontSize:9, color:DIM2, letterSpacing:"0.16em", fontWeight:600 }}>{f.n}</span>
                 </div>
-              ))}
-            </div>
-          </TiltCard>
-        </Reveal>
+                <div style={{ fontSize:13, fontWeight:700, color:CR, letterSpacing:"0.04em", marginBottom:10 }}>{f.title}</div>
+                <p style={{ fontSize:13, color:DIM, lineHeight:1.7, fontWeight:300 }}>{f.sub}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 5 — PRICING
-      ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`80px ${PAD} 120px`, textAlign:"center", position:"relative", zIndex:1 }}>
-        <Reveal delay={0}>
-          <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>Pricing</div>
-          <div style={{ fontFamily:CV, fontSize:"clamp(48px,8vw,110px)", color:CR, letterSpacing:"-0.025em", lineHeight:0.9, marginBottom:64 }}>SIMPLE.</div>
-        </Reveal>
-        <Reveal delay={0.1} style={{ display:"flex", justifyContent:"center" }}>
-          <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:28, padding:"52px 60px", maxWidth:380, width:"100%", boxSizing:"border-box", boxShadow:CARD_SHD, transition:"background 0.3s" }}>
-            <div style={{ fontSize:9, color:GD, fontFamily:JF, fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:24 }}>Pro</div>
-            <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:4, marginBottom:4 }}>
-              <span style={{ fontFamily:JF, fontWeight:300, fontSize:22, color:DIM, marginTop:12 }}>€</span>
-              <span style={{ fontFamily:CV, fontSize:88, color:CR, letterSpacing:"-0.03em", lineHeight:1 }}>24</span>
-            </div>
-            <div style={{ fontSize:10, color:DIM, fontFamily:JF, fontWeight:300, letterSpacing:"0.1em", marginBottom:40 }}>per month</div>
-            <div style={{ display:"flex", flexDirection:"column", gap:12, marginBottom:40, textAlign:"left" }}>
-              {["Unlimited trades","AI coaching","All analytics","All accounts","Priority support"].map(item => (
-                <div key={item} style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <span style={{ color:GD, fontSize:10 }}>◆</span>
-                  <span style={{ fontFamily:JF, fontWeight:300, fontSize:13, color:DIM }}>{item}</span>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => openAuth("signup")} style={{ width:"100%", padding:"15px", borderRadius:12, border:"none", background:CR, color:BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", cursor:"pointer", transition:"opacity 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.opacity="0.88"}
-              onMouseLeave={e => e.currentTarget.style.opacity="1"}>Start Now</button>
-          </TiltCard>
+      {/* ── STATS ── */}
+      <section style={{ padding:`60px ${PAD}`, borderTop:`1px solid ${BDR}`, borderBottom:`1px solid ${BDR}` }}>
+        <div style={{ display:"flex", justifyContent:"space-around", flexWrap:"wrap", gap:40, textAlign:"center" }}>
+          {[["90%","des traders perdent faute de structure"],["3.2x","meilleur win rate avec un journal"],["12h","économisées par mois en analyse"]].map(([v,l])=>(
+            <Reveal key={l}>
+              <div>
+                <div style={{ fontWeight:700, fontSize:"clamp(36px,4.5vw,68px)", letterSpacing:"-0.04em", background:`linear-gradient(135deg, ${CR} 30%, ${GD} 100%)`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", lineHeight:1 }}>{v}</div>
+                <div style={{ fontSize:11, color:DIM2, letterSpacing:"0.08em", marginTop:10, textTransform:"uppercase", fontWeight:600, maxWidth:160, margin:"10px auto 0" }}>{l}</div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA BOTTOM ── */}
+      <section style={{ padding:`120px ${PAD}`, textAlign:"center", position:"relative", overflow:"hidden" }}>
+        <div className="lnglow" style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:"min(600px,80vw)", height:400, background:"radial-gradient(ellipse, rgba(232,205,169,0.09) 0%, transparent 70%)", pointerEvents:"none", filter:"blur(40px)" }} />
+        <Reveal>
+          <div style={{ fontSize:11, color:GD, letterSpacing:"0.2em", fontWeight:600, marginBottom:20, textTransform:"uppercase" }}>Prêt à progresser ?</div>
+          <div style={{ fontWeight:700, fontSize:"clamp(32px,4.5vw,62px)", letterSpacing:"-0.03em", color:CR, lineHeight:1.1, marginBottom:18 }}>
+            Commence à journaliser<br />dès aujourd'hui.
+          </div>
+          <p style={{ fontSize:15, color:DIM, marginBottom:36, fontWeight:300 }}>Sans carte bancaire. Gratuit pour commencer.</p>
+          <button onClick={()=>openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:8, padding:"14px 36px", fontSize:14, fontWeight:700, letterSpacing:"0.03em", cursor:"pointer", transition:"opacity 0.15s" }}
+            onMouseEnter={e=>e.currentTarget.style.opacity="0.86"}
+            onMouseLeave={e=>e.currentTarget.style.opacity="1"}>Commencer gratuitement →</button>
         </Reveal>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ padding:`28px ${PAD}`, borderTop:`1px solid ${BDR}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16, position:"relative", zIndex:1 }}>
-        <span style={{ fontFamily:MN, fontSize:16, color:CR, opacity:0.55 }}>FYLTRA</span>
-        <span style={{ fontSize:9, color:"rgba(245,242,234,0.18)", fontFamily:JF, fontWeight:600, letterSpacing:"0.12em" }}>© 2025 — Trading Journal</span>
+      <footer style={{ padding:`22px ${PAD}`, borderTop:`1px solid ${BDR}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+          <img src="/fyltra-white.svg" style={{ width:18, height:18, opacity:0.5 }} alt="" />
+          <span style={{ fontFamily:MN, fontSize:14, color:CR, opacity:0.4 }}>FYLTRA</span>
+        </div>
+        <span style={{ fontSize:10, color:DIM2, letterSpacing:"0.08em" }}>© 2025 Fyltra · Trading Journal</span>
       </footer>
-      </div>{/* end ambient wrapper */}
 
-      {/* ═══ AUTH MODAL ═══ */}
+      {/* ── AUTH MODAL ── */}
       {authModal && (
-        <div onClick={() => setAuthModal(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.82)", backdropFilter:"blur(12px)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background:"rgba(18,18,18,0.97)", border:`1px solid ${BDR}`, borderRadius:20, padding:"40px 36px", maxWidth:380, width:"100%", boxShadow:"0 40px 80px rgba(0,0,0,0.6)", boxSizing:"border-box" }}>
+        <div onClick={()=>setAuthModal(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.82)", backdropFilter:"blur(16px)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:"rgba(10,10,16,0.98)", border:CARD_BDR, borderRadius:20, padding:"40px 36px", maxWidth:380, width:"100%", boxShadow:"0 40px 80px rgba(0,0,0,0.85)", boxSizing:"border-box" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:32 }}>
               <span style={{ fontFamily:MN, fontSize:18, color:CR }}>FYLTRA</span>
-              <button onClick={() => setAuthModal(null)} style={{ background:"none", border:"none", color:DIM, cursor:"pointer", fontSize:22, lineHeight:1, padding:0 }}>×</button>
+              <button onClick={()=>setAuthModal(null)} style={{ background:"none", border:"none", color:DIM, cursor:"pointer", fontSize:22, lineHeight:1, padding:0 }}>×</button>
             </div>
-            <div style={{ display:"flex", gap:0, marginBottom:28, background:"rgba(255,255,255,0.05)", borderRadius:10, padding:4 }}>
-              {[["login","Se connecter"],["signup","Créer un compte"]].map(([m,l]) => (
-                <button key={m} onClick={() => { setMode(m); setError(""); setSuccess(""); }}
-                  style={{ flex:1, padding:"9px", borderRadius:8, border:"none", background:mode===m?CR:"transparent", color:mode===m?BG:DIM, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.2s" }}>{l}
+            <div style={{ display:"flex", marginBottom:28, background:"rgba(255,255,255,0.04)", borderRadius:10, padding:4 }}>
+              {[["login","Se connecter"],["signup","Créer un compte"]].map(([m,l])=>(
+                <button key={m} onClick={()=>{setMode(m);setError("");setSuccess("");}}
+                  style={{ flex:1, padding:"9px", borderRadius:7, border:"none", background:mode===m?CR:"transparent", color:mode===m?BG:DIM, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.2s" }}>{l}
                 </button>
               ))}
             </div>
-            <div style={{ marginBottom:14 }}>
-              <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-                style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:`1px solid ${BDR}`, borderRadius:10, padding:"14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box", letterSpacing:"0.03em" }} />
+            <div style={{ marginBottom:12 }}>
+              <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}
+                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:CARD_BDR, borderRadius:10, padding:"14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
             </div>
             <div style={{ marginBottom:14, position:"relative" }}>
-              <input type={showPwd?"text":"password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key==="Enter" && submit()}
-                style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:`1px solid ${BDR}`, borderRadius:10, padding:"14px 46px 14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box", letterSpacing:"0.03em" }} />
-              <button onClick={() => setShowPwd(v => !v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", lineHeight:1, padding:0, fontSize:13 }}>
+              <input type={showPwd?"text":"password"} placeholder="Mot de passe" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}
+                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:CARD_BDR, borderRadius:10, padding:"14px 46px 14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
+              <button onClick={()=>setShowPwd(v=>!v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", lineHeight:1, padding:0 }}>
                 {showPwd
                   ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                   : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
@@ -917,8 +847,8 @@ function AuthScreen() {
             {error   && <div style={{ marginBottom:12, fontSize:11, color:"#e05a5a", fontFamily:JF }}>{error}</div>}
             {success && <div style={{ marginBottom:12, fontSize:11, color:"#4caf6e", fontFamily:JF }}>{success}</div>}
             <button onClick={submit} disabled={loading}
-              style={{ width:"100%", padding:"14px", borderRadius:10, border:"none", background:loading?"rgba(255,255,255,0.06)":CR, color:loading?"rgba(255,255,255,0.3)":BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", cursor:loading?"not-allowed":"pointer", transition:"all 0.2s" }}>
-              {loading ? "···" : mode==="login" ? "Se connecter" : "Créer le compte"}
+              style={{ width:"100%", padding:"14px", borderRadius:10, border:"none", background:loading?"rgba(255,255,255,0.05)":CR, color:loading?"rgba(255,255,255,0.3)":BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", cursor:loading?"not-allowed":"pointer", transition:"all 0.2s" }}>
+              {loading?"···":mode==="login"?"Se connecter":"Créer le compte"}
             </button>
           </div>
         </div>
