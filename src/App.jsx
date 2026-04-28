@@ -91,7 +91,7 @@ function Divider() {
   return <div style={{ height:1, background:`linear-gradient(to right,transparent,${C.border},transparent)`, margin:"18px 0" }} />;
 }
 
-function Chip({ label, active, onClick, dot }) {
+function Chip({ label, active, onClick, dot, onDelete }) {
   const isDark = C.bg === "#0f0f0f";
   return (
     <button onClick={onClick} style={{
@@ -116,6 +116,7 @@ function Chip({ label, active, onClick, dot }) {
     }}>
       {dot && <span style={{ width:6, height:6, borderRadius:"50%", background:dot, flexShrink:0 }}/>}
       {label}
+      {onDelete && <span onClick={e=>{e.stopPropagation();onDelete();}} style={{marginLeft:2,opacity:0.45,fontSize:13,lineHeight:1,fontWeight:300,cursor:"pointer"}}>×</span>}
     </button>
   );
 }
@@ -148,23 +149,20 @@ function DatePicker({ value, onChange }) {
 
 function TimePicker({ value, onChange }) {
   const isDark = C.bg === "#0f0f0f";
+  const parts = (value || "00:00").split(":");
+  const h = parts[0] || "00";
+  const m = parts[1] || "00";
+  const sel = { background:isDark?"rgba(255,255,255,0.06)":C.bg3, border:`1px solid ${C.border}`, borderRadius:10, padding:"10px 10px", color:C.white, fontSize:14, fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, outline:"none", cursor:"pointer", colorScheme:isDark?"dark":"light", flex:1, textAlign:"center", appearance:"none", WebkitAppearance:"none" };
   return (
-    <input
-      type="time"
-      value={value || ""}
-      onChange={e => onChange(e.target.value)}
-      style={{
-        width:"100%", boxSizing:"border-box",
-        background: isDark ? "rgba(255,255,255,0.06)" : C.bg3,
-        border: `1px solid ${C.border}`,
-        borderRadius:10, padding:"10px 14px",
-        color: C.white, fontSize:14,
-        fontFamily:"'Josefin Sans',sans-serif",
-        fontWeight:300, letterSpacing:"0.04em",
-        outline:"none", cursor:"pointer",
-        colorScheme: isDark ? "dark" : "light",
-      }}
-    />
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <select value={h} onChange={e=>onChange(`${e.target.value}:${m}`)} style={sel}>
+        {Array.from({length:24},(_,i)=>String(i).padStart(2,"0")).map(v=><option key={v} value={v}>{v}h</option>)}
+      </select>
+      <span style={{color:C.gray1,fontSize:18,fontWeight:300,flexShrink:0}}>:</span>
+      <select value={m} onChange={e=>onChange(`${h}:${e.target.value}`)} style={sel}>
+        {Array.from({length:12},(_,i)=>String(i*5).padStart(2,"0")).map(v=><option key={v} value={v}>{v}</option>)}
+      </select>
+    </div>
   );
 }
 
@@ -1540,10 +1538,10 @@ ${recentTrades}`;
           <button key={m.k} onClick={()=>setTradeMode(m.k)} style={{flex:1,padding:"10px 12px",borderRadius:11,border:"none",background:tradeMode===m.k?"radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)":"transparent",color:tradeMode===m.k?"#111":"rgba(255,255,255,0.55)",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:tradeMode===m.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.22s cubic-bezier(.4,0,.2,1)",position:"relative",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:tradeMode===m.k?"0 6px 20px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.12)":"none",transform:"translateY(0)"}}>
             {m.label}
             {m.k==="scalping" && tradeMode==="scalping" && (
-              <span style={{background:"linear-gradient(135deg,rgba(var(--gold-rgb),0.2),rgba(var(--gold-rgb),0.06))",border:"1px solid rgba(var(--gold-rgb),0.3)",color:"rgba(var(--gold-rgb),0.9)",fontSize:7,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.2em",padding:"2px 7px",borderRadius:4,textTransform:"uppercase",whiteSpace:"nowrap"}}>Saisie rapide</span>
+              <span style={{background:"rgba(255,255,255,0.88)",border:"1px solid rgba(255,255,255,0.6)",color:"#111",fontSize:7,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.2em",padding:"2px 7px",borderRadius:4,textTransform:"uppercase",whiteSpace:"nowrap"}}>Saisie rapide</span>
             )}
             {m.k==="scalping" && tradeMode!=="scalping" && (
-              <span style={{background:"rgba(var(--gold-rgb),0.12)",border:"1px solid rgba(var(--gold-rgb),0.35)",color:"rgba(var(--gold-rgb),0.8)",fontSize:7,fontFamily:"'Josefin Sans',sans-serif",fontWeight:400,letterSpacing:"0.18em",padding:"2px 8px",borderRadius:4,textTransform:"uppercase",whiteSpace:"nowrap"}}>Saisie rapide</span>
+              <span style={{background:"rgba(255,255,255,0.18)",border:"1px solid rgba(255,255,255,0.35)",color:"rgba(255,255,255,0.75)",fontSize:7,fontFamily:"'Josefin Sans',sans-serif",fontWeight:400,letterSpacing:"0.18em",padding:"2px 8px",borderRadius:4,textTransform:"uppercase",whiteSpace:"nowrap"}}>Saisie rapide</span>
             )}
           </button>
         ))}
@@ -1555,7 +1553,9 @@ ${recentTrades}`;
       </div>
       <Field label="Instrument">
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-          {instruments.map(o => <Chip key={o} label={o} active={form.instrument === o && !(o === "Autre" && showCustom) || (o === "Autre" && showCustom)} onClick={() => handleInstrument(o)} />)}
+          {BASE_INSTRUMENTS.map(o => <Chip key={o} label={o} active={form.instrument===o && !showCustom} onClick={()=>handleInstrument(o)}/>)}
+          {extraInstr.map(o => <Chip key={o} label={o} active={form.instrument===o && !showCustom} onClick={()=>handleInstrument(o)} onDelete={()=>setExtraInstr(p=>p.filter(i=>i!==o))}/>)}
+          <Chip label="+ Autre" active={showCustom} onClick={()=>{setShowCustom(true);set("instrument","Autre");}}/>
         </div>
         {showCustom && (
           <div style={{ marginTop:8, display:"flex", gap:8 }}>
@@ -1577,7 +1577,7 @@ ${recentTrades}`;
             {extraEmotions.map(e => {
               const lbl = typeof e === "string" ? e : e.label;
               const pol = typeof e === "string" ? null : e.polarity;
-              return <Chip key={lbl} label={lbl} active={form.emotion===lbl} onClick={()=>set("emotion",lbl)} dot={pol==="positive"?"#4caf6e":pol==="negative"?"#e05a5a":null}/>;
+              return <Chip key={lbl} label={lbl} active={form.emotion===lbl} onClick={()=>set("emotion",lbl)} dot={pol==="positive"?"#4caf6e":pol==="negative"?"#e05a5a":null} onDelete={()=>setExtraEmotions(p=>p.filter(em=>(typeof em==="string"?em:em.label)!==lbl))}/>;
             })}
             <Chip label="+ Autre" active={showCustomEmotion} onClick={()=>setShowCustomEmotion(v=>!v)}/>
           </div>
