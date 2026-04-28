@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { supabase } from "./supabase";
 
 /* ─── Constants ─────────────────────────────────────────────────── */
-const BASE_INSTRUMENTS = ["MNQ","NQ","ES","MES","CL","GC","EUR/USD"];
+const BASE_INSTRUMENTS = ["BTC","XAUUSD","EUR/USD","GC","MGC","NQ","MNQ"];
 const EMOTIONS = ["Confiant","Neutre","Anxieux","Euphorique","Frustré","Patient"];
 const SESSIONS = ["Asia","London","New York","Overlap"];
 const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
@@ -91,11 +91,12 @@ function Divider() {
   return <div style={{ height:1, background:`linear-gradient(to right,transparent,${C.border},transparent)`, margin:"18px 0" }} />;
 }
 
-function Chip({ label, active, onClick }) {
+function Chip({ label, active, onClick, dot }) {
   const isDark = C.bg === "#0f0f0f";
   return (
     <button onClick={onClick} style={{
       padding:"8px 14px", borderRadius:20, cursor:"pointer",
+      display:"inline-flex", alignItems:"center", gap:5,
       transition:"all 0.22s cubic-bezier(.4,0,.2,1)",
       border: active ? "none" : isDark ? `1px solid ${C.gray2}` : "1px solid rgba(0,0,0,0.28)",
       background: active
@@ -113,6 +114,7 @@ function Chip({ label, active, onClick }) {
         : isDark ? "none" : "inset 0 2px 4px rgba(0,0,0,0.15)",
       transform: active ? "translateY(-1px)" : "translateY(0)",
     }}>
+      {dot && <span style={{ width:6, height:6, borderRadius:"50%", background:dot, flexShrink:0 }}/>}
       {label}
     </button>
   );
@@ -1051,6 +1053,7 @@ export default function App() {
   const [extraInstr,  setExtraInstr]  = useState(() => load(KEYS.instruments, []));
   const [extraEmotions, setExtraEmotions] = useState(() => load('fyltra_emotions_v1', []));
   const [customEmotion, setCustomEmotion] = useState('');
+  const [customEmotionPolarity, setCustomEmotionPolarity] = useState('positive');
   const [beSign, setBeSign] = useState(1);
   const [tradeMode, setTradeMode] = useState(() => localStorage.getItem("fyltra_trade_mode")||"swing");
   const [tradeFixedMode, setTradeFixedMode] = useState(() => localStorage.getItem("fyltra_trade_fixed_mode")||"variable");
@@ -1570,15 +1573,28 @@ ${recentTrades}`;
       {(tradeMode==="swing" || scalpFields.emotion) && (
         <Field label="État émotionnel">
           <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-            {[...EMOTIONS, ...extraEmotions].map(e => (
-              <Chip key={e} label={e} active={form.emotion===e} onClick={()=>set("emotion",e)}/>
-            ))}
+            {EMOTIONS.map(e => <Chip key={e} label={e} active={form.emotion===e} onClick={()=>set("emotion",e)}/>)}
+            {extraEmotions.map(e => {
+              const lbl = typeof e === "string" ? e : e.label;
+              const pol = typeof e === "string" ? null : e.polarity;
+              return <Chip key={lbl} label={lbl} active={form.emotion===lbl} onClick={()=>set("emotion",lbl)} dot={pol==="positive"?"#4caf6e":pol==="negative"?"#e05a5a":null}/>;
+            })}
             <Chip label="+ Autre" active={showCustomEmotion} onClick={()=>setShowCustomEmotion(v=>!v)}/>
           </div>
           {showCustomEmotion && (
-            <div style={{display:"flex",gap:8,marginTop:8}}>
-              <input type="text" placeholder="ex: Déterminé" value={customEmotion} onChange={e=>setCustomEmotion(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&customEmotion.trim()){setExtraEmotions(p=>[...p,customEmotion.trim()]);set("emotion",customEmotion.trim());setCustomEmotion('');setShowCustomEmotion(false);}}} style={{...iStyle,flex:1,fontSize:13}} autoFocus/>
-              <button onClick={()=>{if(customEmotion.trim()){setExtraEmotions(p=>[...p,customEmotion.trim()]);set("emotion",customEmotion.trim());setCustomEmotion('');setShowCustomEmotion(false);}}} style={{background:C.accent,border:"none",borderRadius:6,padding:"0 14px",color:darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>OK</button>
+            <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{display:"flex",gap:8}}>
+                <input type="text" placeholder="ex: Déterminé" value={customEmotion} onChange={e=>setCustomEmotion(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&customEmotion.trim()){setExtraEmotions(p=>[...p,{label:customEmotion.trim(),polarity:customEmotionPolarity}]);set("emotion",customEmotion.trim());setCustomEmotion('');setShowCustomEmotion(false);}}} style={{...iStyle,flex:1,fontSize:13}} autoFocus/>
+                <button onClick={()=>{if(customEmotion.trim()){setExtraEmotions(p=>[...p,{label:customEmotion.trim(),polarity:customEmotionPolarity}]);set("emotion",customEmotion.trim());setCustomEmotion('');setShowCustomEmotion(false);}}} style={{background:C.accent,border:"none",borderRadius:6,padding:"0 14px",color:darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>OK</button>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                {[{k:"positive",l:"Positive",c:"#4caf6e"},{k:"negative",l:"Négative",c:"#e05a5a"}].map(p=>(
+                  <button key={p.k} onClick={()=>setCustomEmotionPolarity(p.k)} style={{flex:1,padding:"7px 10px",borderRadius:8,border:`1px solid ${customEmotionPolarity===p.k?p.c:C.border}`,background:customEmotionPolarity===p.k?`${p.c}18`:"transparent",color:customEmotionPolarity===p.k?p.c:C.gray1,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.18s",display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+                    <span style={{width:7,height:7,borderRadius:"50%",background:customEmotionPolarity===p.k?p.c:C.gray2,flexShrink:0}}/>
+                    {p.l}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </Field>
@@ -2129,7 +2145,7 @@ ${recentTrades}`;
                 <div style={{ marginBottom:8 }}>
                   <Label>Émotion</Label>
                   <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-                    {EMOTIONS.map(e => (
+                    {[...EMOTIONS, ...extraEmotions.map(e => typeof e === "string" ? e : e.label)].map(e => (
                       <button key={e} onClick={() => setEditingTrade(p => ({ ...p, emotion:e }))} style={{ flex:"1 1 auto", padding:"7px", borderRadius:4, border:"none", background:editingTrade.emotion === e ? "radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.9) 0%, rgba(215,215,215,0.83) 100%)" : "transparent", color:editingTrade.emotion === e ? "#111" : C.gray1, fontSize:10, fontFamily:"'Josefin Sans',sans-serif", fontWeight:editingTrade.emotion === e ? 600 : 300, cursor:"pointer", textTransform:"uppercase", boxShadow:editingTrade.emotion === e ? "0 0 12px 2px rgba(220,220,220,0.08), 0 3px 10px rgba(0,0,0,0.4)" : "none", transform:editingTrade.emotion === e ? "translateY(-1px)" : "translateY(0)", transition:"all 0.2s cubic-bezier(.4,0,.2,1)" }}>{e}</button>
                     ))}
                   </div>
@@ -2255,9 +2271,11 @@ ${recentTrades}`;
       </div>
 
       {/* Trigger button */}
-      <button onClick={analyzeAI} disabled={aiLoading} style={{width:"100%",padding:"14px",borderRadius:8,border:"none",background:aiLoading?`rgba(var(--gold-rgb),${darkMode?0.12:0.18})`:darkMode?"linear-gradient(135deg,rgba(var(--gold-rgb),0.25),rgba(var(--gold-rgb),0.1))":"linear-gradient(135deg,rgba(var(--gold-rgb),0.5),rgba(var(--gold-rgb),0.3))",color:aiLoading?"rgba(var(--gold-rgb),0.5)":"rgba(var(--gold-rgb),0.95)",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.2em",textTransform:"uppercase",cursor:aiLoading?"not-allowed":"pointer",border:`1px solid rgba(var(--gold-rgb),${darkMode?0.3:0.6})`,marginBottom:20,transition:"all 0.2s"}}>
-        {aiLoading ? "Analyse en cours…" : "Lancer l'analyse"}
-      </button>
+      <div style={{background:"linear-gradient(180deg,rgba(60,60,60,0.97) 0%,rgba(18,18,18,0.99) 55%,rgba(8,8,8,1) 100%)",borderRadius:24,padding:10,boxShadow:"0 6px 20px rgba(0,0,0,0.5),0 20px 50px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.13),inset 0 1px 0 rgba(255,255,255,0.38),inset 0 -2px 0 rgba(0,0,0,0.8)",border:"1px solid rgba(255,255,255,0.1)",marginBottom:20}}>
+        <button onClick={analyzeAI} disabled={aiLoading} style={{width:"100%",padding:"14px",borderRadius:16,border:`1px solid rgba(var(--gold-rgb),${aiLoading?0.1:0.3})`,background:aiLoading?"rgba(var(--gold-rgb),0.05)":"radial-gradient(ellipse 110% 100% at 50% 35%,rgba(var(--gold-rgb),0.3) 0%,rgba(var(--gold-rgb),0.12) 55%,rgba(var(--gold-rgb),0.05) 100%)",color:aiLoading?"rgba(var(--gold-rgb),0.35)":"rgba(var(--gold-rgb),0.95)",fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.2em",textTransform:"uppercase",cursor:aiLoading?"not-allowed":"pointer",transition:"all 0.2s",boxShadow:aiLoading?"none":"0 0 20px 4px rgba(var(--gold-rgb),0.06),0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(var(--gold-rgb),0.15)"}}>
+          {aiLoading ? "Analyse en cours…" : "Lancer l'analyse"}
+        </button>
+      </div>
 
       {/* Error */}
       {aiError && (
