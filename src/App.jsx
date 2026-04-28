@@ -196,7 +196,7 @@ function PillNav({ view, setView, darkMode }) {
         return (
           <button key={item.key} onClick={() => setView(item.key)} onMouseEnter={() => setHovered(item.key)} onMouseLeave={() => setHovered(null)} style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"8px 14px", borderRadius:44, border:"none", cursor:"pointer", background:active ? "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.93) 0%, rgba(225,225,225,0.85) 55%, rgba(200,200,200,0.75) 100%)" : isHovered ? "rgba(255,255,255,0.05)" : "transparent", boxShadow:active ? "0 0 26px 8px rgba(255,255,255,0.22), 0 0 50px 16px rgba(255,255,255,0.09), 0 6px 20px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3)" : "none", transform:"translateY(0)", transition:"all 0.25s cubic-bezier(.4,0,.2,1)", minWidth:52, position:"relative", zIndex:1 }}>
             <span style={{ fontSize:16, lineHeight:1, color:active ? "#111" : "rgba(255,255,255,0.4)", transition:"color 0.2s" }}>{item.icon}</span>
-            <span style={{ fontSize:8, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.35)", transition:"color 0.2s" }}>{item.label}</span>
+            <span style={{ fontSize:8, fontFamily:"'CoolveticaHv',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.35)", transition:"color 0.2s" }}>{item.label}</span>
           </button>
         );
       })}
@@ -232,7 +232,7 @@ function Sidebar({ view, setView, darkMode, onSignOut }) {
         position:"relative", zIndex:1,
       }}>
         <span style={{ fontSize:17, color:active ? "#111" : "rgba(255,255,255,0.4)", lineHeight:1, width:22, textAlign:"center", transition:"color 0.25s" }}>{item.icon}</span>
-        <span style={{ fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
+        <span style={{ fontSize:11, fontFamily:"'CoolveticaHv',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
       </button>
     );
   };
@@ -244,7 +244,7 @@ function Sidebar({ view, setView, darkMode, onSignOut }) {
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
           <img src={darkMode?"/fyltra-creme.svg":"/fyltra-black.svg"} style={{width:42,height:42,flexShrink:0,borderRadius:8}} alt="Fyltra"/>
           <div>
-            <div style={{ fontFamily:"'MariellaNove',sans-serif", fontSize:20, color:C.white, lineHeight:1 }}>FYLTRA</div>
+            <div style={{ fontFamily:"'CoolveticaHv',sans-serif", fontSize:20, color:C.white, lineHeight:1 }}>FYLTRA</div>
             <div style={{ fontSize:8, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300 }}>Carnet de santé trading</div>
           </div>
         </div>
@@ -399,6 +399,91 @@ function PnlChart({ filtered, capital, pnlSum, height, cur }) {
       </LineChart>
     </ResponsiveContainer>
   );
+}
+
+/* ─── Ambient floating particles (sections 2-5) ─────────────────── */
+function AmbientParticles({ isDark }) {
+  const canvasRef = useRef(null);
+  const darkRef = useRef(isDark);
+  useEffect(() => { darkRef.current = isDark; }, [isDark]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const N_GROUPS = 7, GRID = 5, SP = 30, R = 1.5;
+    let W, H, groups, animId;
+
+    const mkGroup = (w, h, fromEdge) => {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 0.12 + 0.03;
+      const span = (GRID - 1) * SP;
+      let x = Math.random() * w, y = Math.random() * h;
+      if (fromEdge) {
+        const edge = Math.floor(Math.random() * 4);
+        if (edge === 0) { x = -span - 20; y = Math.random() * h; }
+        else if (edge === 1) { x = w + 20; y = Math.random() * h; }
+        else if (edge === 2) { x = Math.random() * w; y = -span - 20; }
+        else { x = Math.random() * w; y = h + 20; }
+      }
+      return {
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 0,
+        maxAlpha: Math.random() * 0.10 + 0.03,
+        fadeIn: true,
+        fadeSpeed: Math.random() * 0.0012 + 0.0004,
+        delay: Math.random() * 600,
+      };
+    };
+
+    const init = () => {
+      W = canvas.parentElement.offsetWidth;
+      H = canvas.parentElement.offsetHeight;
+      canvas.width = W; canvas.height = H;
+      groups = Array.from({ length: N_GROUPS }, () => mkGroup(W, H, false));
+    };
+
+    const draw = () => {
+      animId = requestAnimationFrame(draw);
+      ctx.clearRect(0, 0, W, H);
+      const dark = darkRef.current;
+      ctx.fillStyle = dark ? '#E8D4C1' : '#1a1208';
+
+      groups.forEach(g => {
+        if (g.delay > 0) { g.delay--; return; }
+        if (g.fadeIn) {
+          g.alpha = Math.min(g.alpha + g.fadeSpeed, g.maxAlpha);
+          if (g.alpha >= g.maxAlpha) g.fadeIn = false;
+        } else {
+          g.alpha = Math.max(g.alpha - g.fadeSpeed * 0.5, 0);
+          if (g.alpha <= 0) { Object.assign(g, mkGroup(W, H, true)); return; }
+        }
+        g.x += g.vx; g.y += g.vy;
+        const span = (GRID - 1) * SP;
+        if (g.x > W + span + 40 || g.x < -span * 2 - 40 || g.y > H + span + 40 || g.y < -span * 2 - 40) {
+          Object.assign(g, mkGroup(W, H, true)); return;
+        }
+        ctx.globalAlpha = g.alpha;
+        for (let row = 0; row < GRID; row++) {
+          for (let col = 0; col < GRID; col++) {
+            ctx.beginPath();
+            ctx.arc(g.x + col * SP, g.y + row * SP, R, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
+      ctx.globalAlpha = 1;
+    };
+
+    init(); draw();
+    const ro = new ResizeObserver(() => init());
+    ro.observe(canvas.parentElement);
+    return () => { cancelAnimationFrame(animId); ro.disconnect(); };
+  }, []);
+
+  return <canvas ref={canvasRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", pointerEvents:"none", zIndex:0 }} />;
 }
 
 /* ─── AUTH SCREEN ────────────────────────────────────────────────── */
@@ -640,18 +725,12 @@ function AuthScreen() {
         {/* Dot pattern — réactif à la souris */}
         <canvas ref={dotsRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", WebkitMaskImage:"radial-gradient(ellipse 85% 90% at 50% 30%, black 20%, transparent 80%)", maskImage:"radial-gradient(ellipse 85% 90% at 50% 30%, black 20%, transparent 80%)" }} />
         <div style={{ position:"relative", zIndex:10, minHeight:"100vh", display:"flex", flexDirection:"column", justifyContent:"center", padding:`100px ${PAD} 60px` }}>
-          <div style={{ fontSize:9, color:GD, letterSpacing:"0.28em", fontFamily:JF, fontWeight:600, marginBottom:36 }}>
-            Trading Journal · EST. 2025
-          </div>
           <div>
-            <div style={{ fontFamily:CV, fontSize:"clamp(52px,9vw,130px)", color:CR, letterSpacing:"0.02em", lineHeight:1.0 }}>YOUR TRADING</div>
-            <div style={{ fontFamily:CV, fontSize:"clamp(34px,5.5vw,80px)", color:GD, letterSpacing:"0.02em", lineHeight:1.05, paddingLeft:"clamp(16px,3vw,48px)" }}>DESERVES</div>
-            <div style={{ fontFamily:CV, fontSize:"clamp(64px,13.5vw,196px)", color:CR, letterSpacing:"0.01em", lineHeight:0.95 }}>STRUCTURE.</div>
+            <div style={{ fontFamily:CV, fontSize:"clamp(56px,10vw,152px)", color:CR, letterSpacing:"-0.01em", lineHeight:0.98, opacity:0.9 }}>YOUR TRADING</div>
+            <div style={{ fontFamily:CV, fontSize:"clamp(38px,6.5vw,96px)", color:GD, letterSpacing:"0.01em", lineHeight:1.02, paddingLeft:"clamp(20px,3.5vw,60px)", fontStyle:"italic" }}>DESERVES</div>
+            <div style={{ fontFamily:CV, fontSize:"clamp(78px,17vw,248px)", letterSpacing:"-0.03em", lineHeight:0.9, background:`linear-gradient(125deg, ${CR} 35%, ${GD} 100%)`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>STRUCTURE.</div>
           </div>
-          <div style={{ marginTop:"clamp(32px,4vh,52px)", display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:24 }}>
-            <p style={{ fontFamily:JF, fontWeight:300, fontSize:14, color:DIM, lineHeight:1.8, maxWidth:340 }}>
-              The trading journal built for traders who refuse to repeat the same mistakes twice.
-            </p>
+          <div style={{ marginTop:"clamp(32px,4vh,52px)", display:"flex", alignItems:"flex-end", justifyContent:"flex-end", flexWrap:"wrap", gap:24 }}>
             <div style={{ display:"flex", gap:12 }}>
               <button onClick={() => openAuth("signup")} style={{ background:CR, color:BG, border:"none", borderRadius:100, padding:"14px 28px", fontSize:10, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", fontFamily:JF, transition:"opacity 0.2s" }}
                 onMouseEnter={e => e.currentTarget.style.opacity="0.82"}
@@ -665,9 +744,15 @@ function AuthScreen() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
+          SECTIONS 2-5 + FOOTER — ambient particles wrapper
+      ═══════════════════════════════════════════════════════ */}
+      <div style={{ position:"relative" }}>
+        <AmbientParticles isDark={isDark} />
+
+      {/* ═══════════════════════════════════════════════════════
           SECTION 2 — PROOF (90%)
       ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`100px ${PAD}`, display:"flex", alignItems:"center", justifyContent:"center", gap:"clamp(40px,6vw,100px)", flexWrap:"wrap" }}>
+      <section style={{ position:"relative", zIndex:1, padding:`100px ${PAD}`, display:"flex", alignItems:"center", justifyContent:"center", gap:"clamp(40px,6vw,100px)", flexWrap:"wrap" }}>
         <Reveal delay={0}>
           <TiltCard style={{ background:CARD_BG, border:CARD_BDR, borderRadius:24, padding:"48px 56px", textAlign:"center", minWidth:280, boxShadow:CARD_SHD, transition:"background 0.3s" }}>
             <div style={{ fontFamily:CV, fontSize:"clamp(72px,11vw,148px)", color:GD, lineHeight:1, letterSpacing:"-0.03em" }}>90%</div>
@@ -697,7 +782,7 @@ function AuthScreen() {
       {/* ═══════════════════════════════════════════════════════
           SECTION 3 — FEATURES (3D TILT CARDS)
       ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`80px ${PAD} 100px`, position:"relative" }}>
+      <section style={{ padding:`80px ${PAD} 100px`, position:"relative", zIndex:1 }}>
         {/* Perspective grid */}
         <div style={{ position:"absolute", inset:0, overflow:"hidden", pointerEvents:"none" }}>
           <div style={{ position:"absolute", bottom:0, left:0, right:0, height:"65%", backgroundImage:"linear-gradient(rgba(232,205,169,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(232,205,169,0.06) 1px, transparent 1px)", backgroundSize:"56px 56px", transform:"perspective(380px) rotateX(58deg)", transformOrigin:"bottom", WebkitMaskImage:"linear-gradient(to top, black 20%, transparent)", maskImage:"linear-gradient(to top, black 20%, transparent)" }} />
@@ -727,7 +812,7 @@ function AuthScreen() {
       {/* ═══════════════════════════════════════════════════════
           SECTION 4 — EQUITY CURVE
       ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`80px ${PAD}` }}>
+      <section style={{ padding:`80px ${PAD}`, position:"relative", zIndex:1 }}>
         <Reveal delay={0} style={{ marginBottom:40 }}>
           <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>Your performance</div>
           <div style={{ fontFamily:CV, fontSize:"clamp(30px,4.5vw,60px)", color:CR, letterSpacing:"-0.02em", lineHeight:1.0 }}>Equity curve as art.</div>
@@ -759,7 +844,7 @@ function AuthScreen() {
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — PRICING
       ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding:`80px ${PAD} 120px`, textAlign:"center" }}>
+      <section style={{ padding:`80px ${PAD} 120px`, textAlign:"center", position:"relative", zIndex:1 }}>
         <Reveal delay={0}>
           <div style={{ fontSize:9, color:GD, letterSpacing:"0.22em", fontFamily:JF, fontWeight:600, marginBottom:14, textTransform:"uppercase" }}>Pricing</div>
           <div style={{ fontFamily:CV, fontSize:"clamp(48px,8vw,110px)", color:CR, letterSpacing:"-0.025em", lineHeight:0.9, marginBottom:64 }}>SIMPLE.</div>
@@ -788,10 +873,11 @@ function AuthScreen() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ padding:`28px ${PAD}`, borderTop:`1px solid ${BDR}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16 }}>
+      <footer style={{ padding:`28px ${PAD}`, borderTop:`1px solid ${BDR}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16, position:"relative", zIndex:1 }}>
         <span style={{ fontFamily:MN, fontSize:16, color:CR, opacity:0.55 }}>FYLTRA</span>
         <span style={{ fontSize:9, color:"rgba(245,242,234,0.18)", fontFamily:JF, fontWeight:600, letterSpacing:"0.12em" }}>© 2025 — Trading Journal</span>
       </footer>
+      </div>{/* end ambient wrapper */}
 
       {/* ═══ AUTH MODAL ═══ */}
       {authModal && (
@@ -3357,7 +3443,7 @@ ${recentTrades}`;
 
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px"}}>
         <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Version</div>
-        <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}><span style={{fontFamily:"'MariellaNove',sans-serif",fontSize:16}}>FYLTRA</span> v1.0 · Trading Journal</div>
+        <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}><span style={{fontFamily:"'CoolveticaHv',sans-serif",fontSize:16}}>FYLTRA</span> v1.0 · Trading Journal</div>
         <div style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:4,letterSpacing:"0.06em"}}>Créé par Smile</div>
       </div>
     </div>
@@ -3393,7 +3479,7 @@ ${recentTrades}`;
             <div style={{ display:"flex", alignItems:"center", gap:9 }}>
               <img src={darkMode?"/fyltra-creme.svg":"/fyltra-black.svg"} style={{width:38,height:38,flexShrink:0,borderRadius:8}} alt="Fyltra"/>
               <div>
-                <span style={{ fontFamily:"'MariellaNove',sans-serif", fontSize:18, color:C.white, display:"block", lineHeight:1, marginBottom:2 }}>FYLTRA</span>
+                <span style={{ fontFamily:"'CoolveticaHv',sans-serif", fontSize:18, color:C.white, display:"block", lineHeight:1, marginBottom:2 }}>FYLTRA</span>
                 <div style={{ fontSize:7, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300 }}>Carnet de santé trading</div>
               </div>
             </div>
@@ -3427,7 +3513,7 @@ ${recentTrades}`;
                 {[{k:"history",l:"Statistiques",i:"≡"},{k:"strategy",l:"Plan",i:"◈"},{k:"settings",l:"Paramètres",i:"◎"}].map(item=>(
                   <button key={item.k} onClick={()=>{setView(item.k);setShowMenu(false);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent",transition:"background 0.15s"}}>
                     <span style={{fontSize:17,color:"rgba(255,255,255,0.6)",lineHeight:1,width:20,textAlign:"center"}}>{item.i}</span>
-                    <span style={{fontSize:13,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.06em",color:"rgba(255,255,255,0.7)"}}>{item.l}</span>
+                    <span style={{fontSize:13,fontFamily:"'CoolveticaHv',sans-serif",fontWeight:300,letterSpacing:"0.06em",color:"rgba(255,255,255,0.7)"}}>{item.l}</span>
                   </button>
                 ))}
                 <div style={{height:1,background:"rgba(255,255,255,0.06)",margin:"2px 8px"}}/>
