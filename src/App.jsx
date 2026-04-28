@@ -160,7 +160,7 @@ function TimePicker({ value, onChange }) {
       </select>
       <span style={{color:C.gray1,fontSize:18,fontWeight:300,flexShrink:0}}>:</span>
       <select value={m} onChange={e=>onChange(`${h}:${e.target.value}`)} style={sel}>
-        {Array.from({length:12},(_,i)=>String(i*5).padStart(2,"0")).map(v=><option key={v} value={v}>{v}</option>)}
+        {Array.from({length:60},(_,i)=>String(i).padStart(2,"0")).map(v=><option key={v} value={v}>{v}</option>)}
       </select>
     </div>
   );
