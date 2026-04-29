@@ -56,8 +56,8 @@ const FONTS = `
 
   /* ── Responsive ── */
   @media (max-width: 768px) {
-    .l-nav-links { display: none !important; }
-    .l-hero-title { font-size: clamp(52px, 16vw, 100px) !important; }
+    .l-nav-links  { display: none !important; }
+    .l-hero-title { font-size: clamp(22px, 6vw, 42px) !important; }
     .l-dash-body  { grid-template-columns: 1fr !important; }
     .l-dash-right { display: none !important; }
     .l-stat-row   { grid-template-columns: repeat(2,1fr) !important; }
@@ -67,12 +67,12 @@ const FONTS = `
     .l-price-right{ border-left: 1px solid var(--l-border) !important; border-top: none !important; border-radius: 0 0 18px 18px !important; }
     .l-stats-grid { grid-template-columns: repeat(2,1fr) !important; }
     .l-reveal-text{ font-size: clamp(20px, 5vw, 34px) !important; }
-    .l-dash-card  { height: 420px !important; }
+    .l-dash-card  { height: 460px !important; }
     .l-section    { padding: 80px 5vw !important; }
     .l-scroll-title{ padding: 0 6vw !important; }
   }
   @media (max-width: 480px) {
-    .l-hero-title { font-size: clamp(44px, 18vw, 80px) !important; }
+    .l-hero-title { font-size: clamp(20px, 6.5vw, 36px) !important; }
     .l-cta-btns   { flex-direction: column !important; }
     .l-cta-btns a, .l-cta-btns button { width: 100% !important; justify-content: center !important; }
     .l-stats-grid { grid-template-columns: 1fr 1fr !important; gap: 32px 16px !important; }
@@ -200,8 +200,8 @@ function ContainerScroll({ titleComponent, children, C }) {
   }, []);
 
   const e = progress < 0.5 ? 2*progress*progress : 1-Math.pow(-2*progress+2,2)/2;
-  const rotateX = 18*(1-e), scale = 0.8+0.2*e, cardY = 60*(1-e);
-  const titleOp = Math.max(0, 1-e*2.2), titleScl = 1-e*0.25, titleY = -e*50;
+  const rotateX = 10*(1-e), scale = 0.82+0.18*e, cardY = 50*(1-e);
+  const titleOp = Math.max(0, 1-e*2.2), titleScl = 1-e*0.2, titleY = -e*40;
 
   return (
     <div ref={containerRef} style={{ height: "230vh", position: "relative", background: C.bg }}>
@@ -214,7 +214,7 @@ function ContainerScroll({ titleComponent, children, C }) {
           {titleComponent}
         </div>
 
-        <div style={{ width:"88%", maxWidth:1120, flex:1, perspective:"1200px", display:"flex", alignItems:"flex-start", position:"relative", zIndex:5 }}>
+        <div style={{ width:"88%", maxWidth:1120, flex:1, perspective:"1600px", display:"flex", alignItems:"flex-start", position:"relative", zIndex:5 }}>
           <div style={{ width:"100%", height:"100%", transform:`rotateX(${rotateX}deg) scale(${scale}) translateY(${cardY}px)`, transformOrigin:"center top", willChange:"transform", transition:"transform 0.05s linear" }}>
             {children}
           </div>
@@ -272,7 +272,7 @@ function DashboardMockup() {
   ];
 
   return (
-    <div className="l-dash-card" style={{ width:"100%", height:540, background:BG, borderRadius:20, overflow:"hidden", display:"flex", flexDirection:"column", boxShadow:"0 40px 120px rgba(0,0,0,0.85),0 0 0 1px rgba(255,255,255,0.07)", fontFamily:"'Josefin Sans','Outfit',sans-serif" }}>
+    <div className="l-dash-card" style={{ width:"100%", height:660, background:BG, borderRadius:20, overflow:"hidden", display:"flex", flexDirection:"column", boxShadow:"0 40px 120px rgba(0,0,0,0.85),0 0 0 1px rgba(255,255,255,0.07)", fontFamily:"'Josefin Sans','Outfit',sans-serif" }}>
 
       {/* ── macOS window bar ── */}
       <div style={{ padding:"10px 16px", borderBottom:`1px solid ${BDR}`, display:"flex", alignItems:"center", justifyContent:"space-between", background:"rgba(255,255,255,0.015)", flexShrink:0 }}>
@@ -449,11 +449,37 @@ function DashboardMockup() {
 /* ─── GlassCard ──────────────────────────────────────────────────── */
 function GlassCard({ icon, title, desc, delay = 0, C }) {
   const [h, setH] = useState(false);
+  const isDark = C.bg === "#060608";
+  const shadow3d = isDark
+    ? h
+      ? "0 8px 32px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1), 0 -2px 28px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.35), 0 24px 60px rgba(0,0,0,0.35)"
+      : "0 4px 22px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.07), 0 -1px 18px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.22)"
+    : h
+      ? "0 8px 28px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9), 0 20px 40px rgba(0,0,0,0.07)"
+      : "0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8)";
+
   return (
     <R delay={delay}>
-      <div onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{ background:h?C.cardBgH:C.cardBg, border:`1px solid ${h?"rgba(232,205,169,0.35)":C.border}`, borderRadius:18, padding:"28px 24px", transition:"all .32s cubic-bezier(.16,1,.3,1)", transform:h?"translateY(-6px)":"none", boxShadow:h?"0 24px 60px rgba(0,0,0,0.15),0 0 0 1px rgba(232,205,169,0.1)":"0 4px 20px rgba(0,0,0,0.06)", cursor:"default", position:"relative", overflow:"hidden" }}>
-        {h && <div style={{ position:"absolute", top:-40, right:-40, width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(232,205,169,0.1) 0%,transparent 70%)", pointerEvents:"none" }}/>}
-        <div style={{ width:42, height:42, borderRadius:11, background:h?"rgba(232,205,169,0.15)":C.cardBg, border:`1px solid ${h?"rgba(232,205,169,0.25)":C.border}`, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:18, fontSize:20, transition:"all .3s", color:C.text }}>{icon}</div>
+      <div
+        onMouseEnter={()=>setH(true)}
+        onMouseLeave={()=>setH(false)}
+        style={{
+          background: isDark
+            ? (h ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.025)")
+            : (h ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.7)"),
+          border: `1px solid ${h ? "rgba(232,205,169,0.3)" : (isDark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.07)")}`,
+          borderRadius:18, padding:"28px 24px",
+          transition:"all .35s cubic-bezier(.16,1,.3,1)",
+          transform: h ? "translateY(-7px) perspective(600px) rotateX(1deg)" : "translateY(0) perspective(600px) rotateX(0deg)",
+          boxShadow: shadow3d,
+          cursor:"default", position:"relative", overflow:"hidden",
+        }}>
+        {h && <div style={{ position:"absolute", top:-40, right:-40, width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(232,205,169,0.08) 0%,transparent 70%)", pointerEvents:"none" }}/>}
+        <div style={{ width:42, height:42, borderRadius:11,
+          background: isDark ? (h ? "rgba(232,205,169,0.12)" : "rgba(255,255,255,0.04)") : (h ? "rgba(232,205,169,0.15)" : "rgba(0,0,0,0.04)"),
+          border:`1px solid ${h ? "rgba(232,205,169,0.22)" : C.border}`,
+          boxShadow: isDark ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "inset 0 1px 0 rgba(255,255,255,0.7)",
+          display:"flex", alignItems:"center", justifyContent:"center", marginBottom:18, fontSize:20, transition:"all .3s", color:C.text }}>{icon}</div>
         <h3 style={{ fontWeight:600, fontSize:16, marginBottom:8, color:C.text }}>{title}</h3>
         <p style={{ fontSize:13, lineHeight:1.7, color:C.textDim }}>{desc}</p>
       </div>
@@ -669,12 +695,9 @@ export default function Landing() {
       {/* ─── CONTAINER SCROLL HERO ─── */}
       <ContainerScroll C={C}
         titleComponent={
-          <div style={{ animation:"lFadeUp .9s .1s both" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:"clamp(9px,1vw,11px)", letterSpacing:"0.25em", textTransform:"uppercase", color:"#e8cda9", marginBottom:14, opacity:0.7 }}>FYLTRA · JOURNAL DE TRADING</div>
-            <h1 className="l-hero-title" style={{ fontWeight:900, fontSize:"clamp(30px,5.5vw,72px)", lineHeight:1.1, letterSpacing:"-0.03em", background:`linear-gradient(160deg,${C.text} 40%,${darkMode?"rgba(255,255,255,0.45)":"rgba(0,0,0,0.35)"} 100%)`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", maxWidth:800 }}>
-              Votre carnet de santé trading.
-            </h1>
-          </div>
+          <h1 className="l-hero-title" style={{ fontWeight:900, fontSize:"clamp(28px,5vw,68px)", lineHeight:1.12, letterSpacing:"-0.03em", background:`linear-gradient(160deg,${C.text} 40%,${darkMode?"rgba(255,255,255,0.45)":"rgba(0,0,0,0.35)"} 100%)`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", animation:"lFadeUp .9s .1s both", textAlign:"center" }}>
+            Votre carnet de santé trading.
+          </h1>
         }
       >
         <DashboardMockup C={C} />
