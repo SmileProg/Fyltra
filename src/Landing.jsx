@@ -736,22 +736,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ─── STATS ─── */}
-      <section style={{ padding:"80px 5vw", borderTop:`1px solid ${C.border}`, borderBottom:`1px solid ${C.border}`, position:"relative" }}>
-        <BGPattern variant="horizontal-lines" mask="fade-y" size={32} fill={C.patternFill} />
-        <div className="l-stats-grid" style={{ maxWidth:1100, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:"48px 24px", textAlign:"center", position:"relative", zIndex:1 }}>
-          {[{to:1247,s:"+",l:"Traders actifs"},{to:84000,s:"+",l:"Trades journalisés"},{to:23,s:"%",l:"WR moyen amélioré"},{to:98,s:"%",l:"Satisfaction"}].map((s,i)=>(
-            <R key={s.l} delay={i*.07}>
-              <div>
-                <div style={{ fontWeight:800, fontSize:"clamp(36px,4.5vw,58px)", lineHeight:1, marginBottom:8, color:C.text }}>
-                  <CountUp to={s.to} suffix={s.s}/>
-                </div>
-                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDimmer, letterSpacing:"0.18em", textTransform:"uppercase" }}>{s.l}</div>
-              </div>
-            </R>
-          ))}
-        </div>
-      </section>
 
       {/* ─── QUOTE ─── */}
       <section className="l-section" style={{ padding:"120px 5vw", textAlign:"center" }}>
@@ -859,7 +843,6 @@ function PriceLeft({ onAuth, C }) {
         onMouseLeave={e=>{ e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 0 28px rgba(232,205,169,0.2)"; }}>
         Commencer maintenant →
       </button>
-      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textDimmer, textAlign:"center", marginTop:12, letterSpacing:"0.08em" }}>Aucune carte requise</div>
     </div>
   );
 }
