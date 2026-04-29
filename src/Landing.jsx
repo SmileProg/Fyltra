@@ -434,7 +434,7 @@ function DashboardMockup() {
             <div style={{ background:`rgba(232,205,169,0.05)`, border:`1px solid rgba(232,205,169,0.14)`, borderRadius:10, padding:"10px 14px", display:"flex", alignItems:"flex-start", gap:10, flexShrink:0 }}>
               <span style={{ fontSize:12, color:ACC, lineHeight:1, marginTop:1 }}>◆</span>
               <div>
-                <div style={{ fontSize:8, color:ACC, fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:3 }}>IA Coach · LLaMA 3.3 70B</div>
+                <div style={{ fontSize:8, color:ACC, fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:3 }}>◆ IA Coach</div>
                 <div style={{ fontSize:9, color:DIM, lineHeight:1.55 }}>London + Confiant → <strong style={{color:TXT}}>78% WR</strong>. Évite le <strong style={{color:"#f87171"}}>Vendredi</strong> (P&L cumulé: -$312). Si Anxieux, passe ton tour.</div>
               </div>
             </div>
@@ -490,7 +490,7 @@ function GlassCard({ icon, title, desc, delay = 0, C }) {
 /* ─── Data ───────────────────────────────────────────────────────── */
 const FEATURES = [
   { icon:"◉", title:"Multi-comptes",   desc:"Prop firms, fonds propres — chaque compte avec ses règles, objectifs et equity curve séparés." },
-  { icon:"◆", title:"IA Coach",        desc:"Analyse de vos patterns. Erreurs récurrentes, edge confirmé, 3 règles actionnables — LLaMA 3.3 70B." },
+  { icon:"◆", title:"IA Coach",        desc:"Analyse de vos patterns. Erreurs récurrentes, edge confirmé, 3 règles actionnables pour demain." },
   { icon:"▦", title:"Stats profondes", desc:"Win rate par session, P&L par émotion, profit factor par instrument. Brut, sans filtre." },
   { icon:"◈", title:"Plan de trading", desc:"Documentez vos règles d'entrée/sortie. L'IA les intègre pour un coaching contextuel." },
   { icon:"⊞", title:"Layout custom",   desc:"Réorganisez chaque section. Votre espace, vos conditions de performance optimale." },
@@ -706,15 +706,6 @@ export default function Landing() {
       {/* ─── TEXT REVEAL ─── */}
       <TextRevealByWord C={C} text="Votre trading mérite de la structure. Chaque trade raconte une histoire. Fyltra transforme vos données en intelligence pour que vous deveniez le trader que vous méritez d'être." />
 
-      {/* ─── TICKER ─── */}
-      <div style={{ background:C.tickerBg, borderTop:`1px solid ${C.tickerBorder}`, borderBottom:`1px solid ${C.tickerBorder}`, padding:"13px 0", overflow:"hidden" }}>
-        <div style={{ display:"flex", width:"max-content", animation:"lTicker 35s linear infinite" }}>
-          {[1,2].map(n => TICKER.map(item => (
-            <span key={`${n}-${item}`} style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, fontWeight:500, color:"rgba(232,205,169,0.55)", letterSpacing:"0.2em", textTransform:"uppercase", paddingRight:64, whiteSpace:"nowrap" }}>{item}</span>
-          )))}
-        </div>
-      </div>
-
       {/* ─── FEATURES ─── */}
       <section id="features" className="l-section" style={{ padding:"120px 5vw", position:"relative" }}>
         <BGPattern variant="dots" mask="fade-edges" size={32} fill={C.patternFill} />
@@ -770,7 +761,7 @@ export default function Landing() {
               <div className="l-price-right" style={{ background:C.cardBg, border:`1px solid ${C.border}`, borderLeft:"none", borderRadius:"0 18px 18px 0", padding:"48px 40px" }}>
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textDimmer, letterSpacing:"0.28em", textTransform:"uppercase", display:"block", marginBottom:28 }}>Inclus</span>
                 <div style={{ display:"flex", flexDirection:"column" }}>
-                  {["Comptes illimités","Trades illimités","IA Coach — LLaMA 3.3 70B","Statistiques avancées","Sync multi-appareils","Layout personnalisable","Connexion MT5 / MetaAPI","Mises à jour incluses"].map((item,i,arr)=>(
+                  {["Comptes illimités","Trades illimités","IA Coach","Statistiques avancées","Sync multi-appareils","Layout personnalisable","Connexion MT5","Mises à jour incluses"].map((item,i,arr)=>(
                     <div key={item} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none" }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="11" stroke="rgba(232,205,169,0.3)" strokeWidth="1.5"/>
