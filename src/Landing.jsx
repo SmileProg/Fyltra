@@ -487,6 +487,133 @@ function GlassCard({ icon, title, desc, delay = 0, C }) {
   );
 }
 
+/* ─── ZoomParallaxFeatures ───────────────────────────────────────── */
+function ZoomParallaxFeatures({ C }) {
+  const containerRef = useRef();
+  const [prog, setProg] = useState(0);
+
+  useEffect(() => {
+    const fn = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const scrollable = containerRef.current.offsetHeight - window.innerHeight;
+      setProg(Math.max(0, Math.min(1, -rect.top / scrollable)));
+    };
+    window.addEventListener("scroll", fn, { passive: true });
+    fn();
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  const t = Math.min(1, prog / 0.72);
+  const e = t < 0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+
+  const isDark = C.bg === "#060608";
+
+  const cW  = 50 + 46 * e;
+  const cH  = 60 + 38 * e;
+  const cR  = 20 * (1 - e);
+  const sideOp = Math.max(0, 1 - e * 1.6);
+
+  const shadow3d = (hover) => isDark
+    ? hover
+      ? "0 8px 32px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.1),inset 0 1px 0 rgba(255,255,255,0.32),0 -2px 24px rgba(255,255,255,0.06)"
+      : "0 4px 22px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.07),inset 0 1px 0 rgba(255,255,255,0.22)"
+    : hover
+      ? "0 8px 28px rgba(0,0,0,0.14),0 0 0 1px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.9)"
+      : "0 4px 16px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8)";
+
+  const tiles = [
+    { icon:"◉", title:"Multi-comptes",   style:{ top:"7%",    left:"2vw"  }, dx:-1, dy:-1 },
+    { icon:"◆", title:"IA Coach",        style:{ top:"7%",    right:"2vw" }, dx:1,  dy:-1 },
+    { icon:"▦", title:"Stats profondes", style:{ top:"39%",   left:"1vw"  }, dx:-1, dy:0  },
+    { icon:"◈", title:"Plan de trading", style:{ top:"39%",   right:"1vw" }, dx:1,  dy:0  },
+    { icon:"⊞", title:"Layout custom",   style:{ bottom:"7%", left:"2vw"  }, dx:-1, dy:1  },
+    { icon:"◎", title:"Sync temps réel", style:{ bottom:"7%", right:"2vw" }, dx:1,  dy:1  },
+  ];
+
+  return (
+    <div ref={containerRef} id="features" style={{ height:"300vh", position:"relative" }}>
+      <div style={{ position:"sticky", top:0, height:"100vh", overflow:"hidden", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <BGPattern variant="dots" mask="fade-edges" size={32} fill={C.patternFill} />
+
+        {/* ── Surrounding title-only cards ── */}
+        {tiles.map(tile => {
+          const [hover, setHover] = useState(false);
+          return (
+            <div key={tile.title}
+              onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
+              style={{
+                position:"absolute", ...tile.style, width:"clamp(140px,19vw,220px)", zIndex:2,
+                transform:`translate(${tile.dx*e*50}px,${tile.dy*e*36}px) scale(${1-e*0.08})`,
+                opacity:sideOp, pointerEvents:sideOp<0.05?"none":"auto",
+                transition:"box-shadow .3s",
+              }}>
+              <div style={{
+                background: isDark
+                  ? (hover?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.03)")
+                  : (hover?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.72)"),
+                border:`1px solid ${hover?"rgba(232,205,169,0.28)":C.border}`,
+                borderRadius:16, padding:"22px 22px",
+                boxShadow: shadow3d(hover),
+                transition:"all .28s cubic-bezier(.16,1,.3,1)",
+                transform: hover?"translateY(-4px) perspective(500px) rotateX(1.5deg)":"none",
+              }}>
+                <div style={{ fontSize:22, marginBottom:10, color:C.text }}>{tile.icon}</div>
+                <div style={{ fontWeight:700, fontSize:14, letterSpacing:"-0.01em", color:C.text }}>{tile.title}</div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* ── Main center card ── */}
+        <div style={{
+          position:"absolute", top:"50%", left:"50%",
+          transform:"translate(-50%,-50%)",
+          width:`${cW}vw`, height:`${cH}vh`,
+          borderRadius:cR, overflow:"hidden", zIndex:5,
+          background: isDark ? "#0e0f12" : "#ffffff",
+          border: cR>1 ? `1px solid ${C.border}` : "none",
+          boxShadow: cR>1
+            ? (isDark
+                ? "0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.07),inset 0 1px 0 rgba(255,255,255,0.18)"
+                : "0 24px 60px rgba(0,0,0,0.12),0 0 0 1px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,0.85)")
+            : "none",
+        }}>
+          <div style={{ padding:"clamp(28px,4vw,52px)", height:"100%", overflowY:"auto" }}>
+            {/* header */}
+            <div style={{ marginBottom:28 }}>
+              <div style={{ display:"inline-block", background:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)", border:`1px solid ${C.border}`, borderRadius:100, padding:"5px 16px", marginBottom:14 }}>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDim, letterSpacing:"0.2em", textTransform:"uppercase" }}>Fonctionnalités</span>
+              </div>
+              <h2 style={{ fontWeight:800, fontSize:"clamp(20px,3vw,40px)", lineHeight:1.1, letterSpacing:"-0.025em", color:C.text }}>
+                Tout ce qu'il faut pour{" "}
+                <span style={{ background:"linear-gradient(135deg,#e8cda9,#c9aa82)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>trader avec précision.</span>
+              </h2>
+            </div>
+
+            {/* feature cards inside */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))", gap:12 }}>
+              {FEATURES.map((f,i) => (
+                <div key={f.title} style={{
+                  background: isDark?"rgba(255,255,255,0.025)":"rgba(0,0,0,0.025)",
+                  border:`1px solid ${C.border}`, borderRadius:13, padding:"18px 18px",
+                  boxShadow: isDark
+                    ? "0 4px 14px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.18)"
+                    : "0 3px 10px rgba(0,0,0,0.06),0 0 0 1px rgba(0,0,0,0.03),inset 0 1px 0 rgba(255,255,255,0.7)",
+                }}>
+                  <div style={{ fontSize:18, marginBottom:8, color:C.text }}>{f.icon}</div>
+                  <div style={{ fontWeight:600, fontSize:13, marginBottom:5, color:C.text }}>{f.title}</div>
+                  <div style={{ fontSize:12, color:C.textDim, lineHeight:1.65 }}>{f.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Data ───────────────────────────────────────────────────────── */
 const FEATURES = [
   { icon:"◉", title:"Multi-comptes",   desc:"Prop firms, fonds propres — chaque compte avec ses règles, objectifs et equity curve séparés." },
@@ -706,26 +833,8 @@ export default function Landing() {
       {/* ─── TEXT REVEAL ─── */}
       <TextRevealByWord C={C} text="Votre trading mérite de la structure. Chaque trade raconte une histoire. Fyltra transforme vos données en intelligence pour que vous deveniez le trader que vous méritez d'être." />
 
-      {/* ─── FEATURES ─── */}
-      <section id="features" className="l-section" style={{ padding:"120px 5vw", position:"relative" }}>
-        <BGPattern variant="dots" mask="fade-edges" size={32} fill={C.patternFill} />
-        <div style={{ maxWidth:1200, margin:"0 auto", position:"relative", zIndex:1 }}>
-          <R>
-            <div style={{ textAlign:"center", marginBottom:68 }}>
-              <div style={{ display:"inline-block", background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:100, padding:"5px 16px", marginBottom:18 }}>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDim, letterSpacing:"0.2em", textTransform:"uppercase" }}>Fonctionnalités</span>
-              </div>
-              <h2 style={{ fontWeight:800, fontSize:"clamp(28px,4vw,52px)", lineHeight:1.1, letterSpacing:"-0.025em", color:C.text }}>
-                Tout ce qu'il faut pour{" "}
-                <span style={{ background:"linear-gradient(135deg,#e8cda9,#e8cda9)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>trader avec précision.</span>
-              </h2>
-            </div>
-          </R>
-          <div className="l-feat-grid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(290px,1fr))", gap:14 }}>
-            {FEATURES.map((f,i) => <GlassCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} delay={i*.07} C={C}/>)}
-          </div>
-        </div>
-      </section>
+      {/* ─── FEATURES ZOOM PARALLAX ─── */}
+      <ZoomParallaxFeatures C={C} />
 
 
       {/* ─── QUOTE ─── */}
