@@ -366,10 +366,16 @@ function Calendar({ filtered, calMonth, calYear, onPrev, onNext, onDayClick, cur
   );
 }
 
+/* ─── Trade chronological comparator ────────────────────────────── */
+const cmpTrades = (a, b) =>
+  a.date.localeCompare(b.date) ||
+  (a.createdAt||"").localeCompare(b.createdAt||"") ||
+  (typeof a.id==="number"&&typeof b.id==="number" ? a.id-b.id : 0);
+
 /* ─── P&L Chart ──────────────────────────────────────────────────── */
 function PnlChart({ filtered, capital, pnlSum, height, cur }) {
   if (!filtered || filtered.length < 2) return null;
-  const sorted = [...filtered].sort((a,b) => { const dc=a.date.localeCompare(b.date); return dc!==0?dc:(a.id||0)-(b.id||0); });
+  const sorted = [...filtered].sort(cmpTrades);
   let cum = 0;
   const data = [
     { label:"0", v:0, pnl:0, instrument:"" },
@@ -1146,6 +1152,7 @@ export default function App() {
     notes:r.notes, tags:r.tags||[], rr:r.rr, tradeMode:r.trade_mode,
     size:r.size, entry:r.entry, exit:r.exit, sizeUnit:r.size_unit,
     accountIds:(r.account_ids||[]).map(Number), strategyId:r.strategy_id ? Number(r.strategy_id) : null,
+    createdAt:r.created_at||null,
   });
   const tradeToDb = t => ({
     user_id:user.id, date:t.date, instrument:t.instrument, direction:t.direction,
@@ -1420,7 +1427,7 @@ export default function App() {
     const losers = trades.filter(t => t.result === "LOSS" && parseFloat(t.rr) > 0);
     const avgLossRR = losers.length ? (losers.reduce((s,t) => s + (parseFloat(t.rr)||0), 0) / losers.length).toFixed(2) : null;
 
-    const sorted = [...trades].sort((a,b) => a.date.localeCompare(b.date));
+    const sorted = [...trades].sort(cmpTrades);
     let maxLoseStreak = 0, curLoseStreak = 0, maxWinStreak = 0, curWinStreak = 0;
     sorted.forEach(t => {
       if (t.result === "LOSS") { curLoseStreak++; maxLoseStreak = Math.max(maxLoseStreak, curLoseStreak); curWinStreak = 0; }
@@ -1805,7 +1812,7 @@ ${recentTrades}`;
       {/* ══════════════════ ANALYTICS AVANCÉS ══════════════════ */}
       {trades.length >= 3 && (() => {
         const isDark = C.bg === "#0f0f0f";
-        const sorted = [...trades].sort((a,b)=>a.date.localeCompare(b.date));
+        const sorted = [...trades].sort(cmpTrades);
         const cardS = {background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),0 0 0 1px rgba(255,255,255,0.09),inset 0 1px 0 rgba(255,255,255,0.32)"};
         const lbl = {fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600};
         const ff = "'Josefin Sans',sans-serif";
@@ -3368,7 +3375,7 @@ ${recentTrades}`;
     const todayTrades = trades.filter(t => t.date===todayStr && (!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id)));
     if(todayTrades.length===0){ setEodText("Aucun trade aujourd'hui sur ce compte."); return; }
     setEodLoading(true); setEodText("");
-    const summary = [...todayTrades].sort((a,b)=>a.date.localeCompare(b.date)).map(t=>`${t.instrument}|${t.direction}|${t.session}|${t.emotion}|RR:${t.rr||"—"}|P&L:${t.pnl}€|${t.result}${t.notes?`|"${t.notes}"`:""}`).join("\n");
+    const summary = [...todayTrades].sort(cmpTrades).map(t=>`${t.instrument}|${t.direction}|${t.session}|${t.emotion}|RR:${t.rr||"—"}|P&L:${t.pnl}€|${t.result}${t.notes?`|"${t.notes}"`:""}`).join("\n");
     const todayPnl = todayTrades.reduce((s,t)=>s+(t.pnl||0),0);
     const systemMsg = "Tu es un coach de trading direct et exigeant. Fais un debriefing de fin de journée. Analyse : 1) ✅ Ce qui s'est bien passé 2) ❌ Ce qui doit être amélioré 3) 📌 1 règle à appliquer demain. Sois court, direct, sans blabla. Réponds en français.";
     const userMsg = `Compte: ${pf.firm}${pf.name?" "+pf.name:""}\nP&L du jour: ${todayPnl>=0?"+":""}${todayPnl.toFixed(0)}${currency}\n${todayTrades.length} trades:\n${summary}`;
@@ -3907,7 +3914,7 @@ ${recentTrades}`;
                 })()}
                 {selectedDay.trades.length>=1&&(()=>{
                   let c2=0;
-                  const pd=[{label:"0",v:0},...[...selectedDay.trades].sort((a,b)=>(a.id||0)-(b.id||0)).map((t,i)=>{c2+=t.pnl||0;return{label:String(i+1),v:parseFloat(c2.toFixed(2)),pnl:t.pnl||0,instrument:t.instrument||""};})];
+                  const pd=[{label:"0",v:0},...[...selectedDay.trades].sort(cmpTrades).map((t,i)=>{c2+=t.pnl||0;return{label:String(i+1),v:parseFloat(c2.toFixed(2)),pnl:t.pnl||0,instrument:t.instrument||""};})];
                   const dayTotalPnl=pd[pd.length-1]?.v||0;
                   return(
                     <div style={{marginBottom:12,background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"10px 12px"}}>
@@ -4062,7 +4069,7 @@ ${recentTrades}`;
                       {/* Equity curve */}
                       {(()=>{
                         let dc=0;
-                        const dpd=[{label:"0",v:0},...selectedDay.trades.sort((a,b)=>(a.id||0)-(b.id||0)).map((t,i)=>{dc+=t.pnl||0;return{label:String(i+1),v:parseFloat(dc.toFixed(2)),pnl:t.pnl||0,instrument:t.instrument||""};})];
+                        const dpd=[{label:"0",v:0},...[...selectedDay.trades].sort(cmpTrades).map((t,i)=>{dc+=t.pnl||0;return{label:String(i+1),v:parseFloat(dc.toFixed(2)),pnl:t.pnl||0,instrument:t.instrument||""};})];
                         const dtPnl=dpd[dpd.length-1]?.v||0;
                         return (
                           <div style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px",marginBottom:4}}>
