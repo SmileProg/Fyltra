@@ -323,7 +323,6 @@ function DashboardMockup() {
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
               <div>
                 <img src="/fyltra-logo-black.svg" style={{ height:22, width:"auto" }} alt="Fyltra"/>
-                <div style={{ fontSize:6.5, color:DIM2, letterSpacing:"0.18em", textTransform:"uppercase", marginTop:2 }}>Carnet de santé trading</div>
               </div>
             </div>
           </div>

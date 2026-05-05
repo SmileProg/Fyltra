@@ -255,7 +255,6 @@ function Sidebar({ view, setView, darkMode, onSignOut, nickname, firstName }) {
       <div style={{ padding:"0 20px 24px", borderBottom:`1px solid ${C.border}` }}>
         <div style={{ marginBottom:12 }}>
           <img src={darkMode?"/fyltra-logo-black.svg":"/fyltra-logo-white.svg"} style={{height:76,width:"auto"}} alt="Fyltra"/>
-          <div style={{ fontSize:8, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, marginTop:3 }}>Carnet de santé trading</div>
         </div>
         {(nickname || firstName) && (
           <div style={{ background:"linear-gradient(135deg, rgba(201,170,130,0.12) 0%, rgba(201,170,130,0.06) 100%)", border:"1px solid rgba(201,170,130,0.22)", borderRadius:12, padding:"10px 13px", position:"relative", overflow:"hidden" }}>
@@ -3808,9 +3807,6 @@ ${recentTrades}`;
           <div style={{ padding:"16px 20px", background:`linear-gradient(180deg,${C.bg2},${C.bg})`, borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50, backdropFilter:"blur(16px)", flexWrap:"wrap" }}>
             <div style={{ display:"flex", alignItems:"center", gap:9 }}>
               <img src={darkMode?"/fyltra-logo-black.svg":"/fyltra-logo-white.svg"} style={{height:88,width:"auto",flexShrink:0}} alt="Fyltra"/>
-              <div>
-                <div style={{ fontSize:7, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:300 }}>Carnet de santé trading</div>
-              </div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <button onClick={()=>setDarkMode(d=>!d)} title={darkMode?"Mode clair":"Mode sombre"} style={{background:darkMode?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",border:`1px solid ${C.border}`,borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.gray1,flexShrink:0,transition:"all 0.2s"}}>
