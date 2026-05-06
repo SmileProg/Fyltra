@@ -3855,6 +3855,15 @@ ${recentTrades}`;
             </>
           ) : null}
         </div>
+
+        {/* ── Contact ── */}
+        <div style={{textAlign:"center",padding:"8px 0 4px"}}>
+          <a href="mailto:contact@fyltra.app" style={{fontSize:12,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",textDecoration:"none",letterSpacing:"0.05em",transition:"color .2s"}}
+            onMouseEnter={e=>e.currentTarget.style.color=C.white}
+            onMouseLeave={e=>e.currentTarget.style.color=C.gray1}>
+            Nous contacter · contact@fyltra.app
+          </a>
+        </div>
       </div>
     );
   })();

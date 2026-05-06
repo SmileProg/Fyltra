@@ -1308,6 +1308,9 @@ export default function Landing() {
         </div>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDimmer, letterSpacing:"0.1em" }}>© 2026 Fyltra · Trading Journal</span>
         <div style={{ display:"flex", gap:20, flexWrap:"wrap", alignItems:"center" }}>
+          <a href="mailto:contact@fyltra.app" style={{ fontFamily:"'Outfit',sans-serif", fontWeight:500, fontSize:12, color:C.textDimmer, textDecoration:"none", transition:"color .2s" }}
+            onMouseEnter={e=>e.currentTarget.style.color=C.text}
+            onMouseLeave={e=>e.currentTarget.style.color=C.textDimmer}>Contact</a>
           {[["Mentions légales","/mentions-legales"],["CGV","/cgv"],["Confidentialité","/confidentialite"]].map(([label, href]) => (
             <a key={href} href={href} style={{ fontFamily:"'Outfit',sans-serif", fontWeight:500, fontSize:12, color:C.textDimmer, textDecoration:"none", transition:"color .2s" }}
               onMouseEnter={e=>e.currentTarget.style.color=C.text}
