@@ -1179,7 +1179,7 @@ export default function App() {
   const isMobile = useIsMobile();
   const [user,        setUser]        = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [passwordRecovery, setPasswordRecovery] = useState(() => window.location.hash.includes('type=recovery'));
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [trades,      setTrades]      = useState(() => load(KEYS.trades, []));
   const [extraInstr,  setExtraInstr]  = useState(() => load(KEYS.instruments, []));
   const [extraEmotions, setExtraEmotions] = useState(() => load('fyltra_emotions_v1', []));
@@ -1317,15 +1317,31 @@ export default function App() {
 
   // ── Auth ──
   useEffect(() => {
-    supabase.auth.getSession().then(({ data:{ session } }) => {
-      setUser(session?.user ?? null);
-      if (!window.location.hash.includes('type=recovery')) setAuthLoading(false);
-    });
+    const params = new URLSearchParams(window.location.search);
+    const awaitingAuth = params.has('code') || window.location.hash.includes('access_token') || window.location.hash.includes('type=recovery');
+
+    let timeoutId;
+    if (!awaitingAuth) {
+      supabase.auth.getSession().then(({ data:{ session } }) => {
+        setUser(session?.user ?? null);
+        setAuthLoading(false);
+      });
+    } else {
+      timeoutId = setTimeout(() => setAuthLoading(false), 5000);
+    }
+
     const { data:{ subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      if (event === "PASSWORD_RECOVERY") { setPasswordRecovery(true); setAuthLoading(false); }
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecovery(true);
+        setAuthLoading(false);
+        clearTimeout(timeoutId);
+      } else if (!awaitingAuth || event !== "INITIAL_SESSION") {
+        setAuthLoading(false);
+        clearTimeout(timeoutId);
+      }
     });
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); clearTimeout(timeoutId); };
   }, []);
 
   // Flag to block save effects while initial DB load is in progress
