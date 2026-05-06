@@ -42,11 +42,12 @@ module.exports = async function handler(req, res) {
     try {
       sub = await stripe.subscriptions.retrieve(subscriptionId);
     } catch (stripeErr) {
-      // ID invalide (ex: ancien ID LemonSqueezy) → retour données DB uniquement
+      console.error("Stripe retrieve error:", stripeErr.message);
       return res.status(200).json({
         id: null, status: "active",
         productName: planLabel, variantName: priceLabel,
         renewsAt: null, cancelled: false,
+        _debug: stripeErr.message,
       });
     }
 
