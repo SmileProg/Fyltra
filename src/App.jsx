@@ -598,6 +598,8 @@ function AuthScreen() {
   const [password, setPassword]   = useState("");
   const [showPwd, setShowPwd]     = useState(false);
   const [loading, setLoading]     = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetSent, setResetSent]   = useState(false);
   const [error, setError]         = useState("");
   const [success, setSuccess]     = useState("");
   const [paywall, setPaywall]     = useState(false);
@@ -625,7 +627,15 @@ function AuthScreen() {
   };
   const offMagnet = () => { if (ctaRef.current) ctaRef.current.style.transform = "translate(0,0) scale(1)"; };
 
-  const openAuth = () => { setAuthModal(true); setError(""); setSuccess(""); setPaywall(false); };
+  const openAuth = () => { setAuthModal(true); setError(""); setSuccess(""); setPaywall(false); setForgotMode(false); setResetSent(false); };
+
+  const sendReset = async () => {
+    if (!email) { setError("Entre ton email."); return; }
+    setLoading(true); setError("");
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: "https://fyltra.app" });
+    if (resetErr) { setError(resetErr.message); } else { setResetSent(true); }
+    setLoading(false);
+  };
 
   const submit = async () => {
     if (!email || !password) { setError("Remplis tous les champs."); return; }
@@ -901,40 +911,76 @@ function AuthScreen() {
               </div>
               <button onClick={()=>setAuthModal(false)} style={{ background:"none", border:"none", color:DIM, cursor:"pointer", fontSize:22, lineHeight:1, padding:0 }}>×</button>
             </div>
-            <div style={{ marginBottom:12 }}>
-              <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}
-                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:CARD_BDR, borderRadius:10, padding:"14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
-            </div>
-            <div style={{ marginBottom:14, position:"relative" }}>
-              <input type={showPwd?"text":"password"} placeholder="Mot de passe" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}
-                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:CARD_BDR, borderRadius:10, padding:"14px 46px 14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
-              <button onClick={()=>setShowPwd(v=>!v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", lineHeight:1, padding:0 }}>
-                {showPwd
-                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
-              </button>
-            </div>
-            {error   && <div style={{ marginBottom:12, fontSize:11, color:"#e05a5a", fontFamily:JF }}>{error}</div>}
-            {paywall && (
-              <div style={{ marginBottom:12, padding:"12px 14px", borderRadius:10, background:"rgba(232,205,169,0.07)", border:"1px solid rgba(232,205,169,0.22)", fontFamily:JF }}>
-                <div style={{ fontSize:11, color:"#e8cda9", marginBottom:8, fontWeight:600, letterSpacing:"0.05em" }}>Accès réservé aux membres</div>
-                <div style={{ fontSize:11, color:"rgba(232,205,169,0.65)", marginBottom:10, lineHeight:1.55 }}>Cet email n'a pas de licence active. Choisis un plan pour créer ton compte.</div>
-                <button onClick={async () => {
-                  try {
-                    const r = await fetch("/api/create-checkout", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ plan:"early_bird" }) });
-                    const { url } = await r.json();
-                    if (url) window.location.href = url;
-                  } catch {}
-                }} style={{ display:"inline-block", background:"linear-gradient(135deg,#e8cda9,#c9aa82)", color:"#1a1208", borderRadius:7, padding:"8px 16px", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", border:"none", cursor:"pointer", fontFamily:"'Josefin Sans',sans-serif" }}>
-                  Voir les tarifs →
+            {forgotMode ? (
+              resetSent ? (
+                <div style={{ textAlign:"center", padding:"16px 0" }}>
+                  <div style={{ fontSize:28, marginBottom:12 }}>✉️</div>
+                  <div style={{ fontSize:13, color:CR, fontFamily:JF, fontWeight:600, marginBottom:8 }}>Lien envoyé !</div>
+                  <div style={{ fontSize:11, color:DIM, fontFamily:JF, lineHeight:1.6 }}>Vérifie ta boîte mail et clique sur le lien pour réinitialiser ton mot de passe.</div>
+                  <button onClick={()=>{ setForgotMode(false); setResetSent(false); setError(""); }} style={{ marginTop:20, background:"none", border:`1px solid ${BDR}`, borderRadius:8, padding:"10px 20px", color:DIM, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer" }}>
+                    Retour
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginBottom:8, fontSize:12, color:DIM, fontFamily:JF, lineHeight:1.5 }}>Entre ton email pour recevoir un lien de réinitialisation.</div>
+                  <div style={{ marginBottom:14 }}>
+                    <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendReset()}
+                      style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:CARD_BDR, borderRadius:10, padding:"14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
+                  </div>
+                  {error && <div style={{ marginBottom:12, fontSize:11, color:"#e05a5a", fontFamily:JF }}>{error}</div>}
+                  <button onClick={sendReset} disabled={loading}
+                    style={{ width:"100%", padding:"14px", borderRadius:10, border:"none", background:loading?"rgba(255,255,255,0.05)":CR, color:loading?"rgba(255,255,255,0.3)":BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", cursor:loading?"not-allowed":"pointer", transition:"all 0.2s", marginBottom:12 }}>
+                    {loading?"···":"Envoyer le lien"}
+                  </button>
+                  <button onClick={()=>{ setForgotMode(false); setError(""); }} style={{ width:"100%", background:"none", border:"none", color:DIM, fontSize:11, fontFamily:JF, cursor:"pointer", textAlign:"center" }}>
+                    ← Retour à la connexion
+                  </button>
+                </>
+              )
+            ) : (
+              <>
+                <div style={{ marginBottom:12 }}>
+                  <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}
+                    style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:CARD_BDR, borderRadius:10, padding:"14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
+                </div>
+                <div style={{ marginBottom:6, position:"relative" }}>
+                  <input type={showPwd?"text":"password"} placeholder="Mot de passe" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}
+                    style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:CARD_BDR, borderRadius:10, padding:"14px 46px 14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
+                  <button onClick={()=>setShowPwd(v=>!v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", lineHeight:1, padding:0 }}>
+                    {showPwd
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+                  </button>
+                </div>
+                <div style={{ marginBottom:14, textAlign:"right" }}>
+                  <button onClick={()=>{ setForgotMode(true); setError(""); setSuccess(""); }} style={{ background:"none", border:"none", color:DIM, fontSize:11, fontFamily:JF, cursor:"pointer", padding:0 }}>
+                    Mot de passe oublié ?
+                  </button>
+                </div>
+                {error   && <div style={{ marginBottom:12, fontSize:11, color:"#e05a5a", fontFamily:JF }}>{error}</div>}
+                {paywall && (
+                  <div style={{ marginBottom:12, padding:"12px 14px", borderRadius:10, background:"rgba(232,205,169,0.07)", border:"1px solid rgba(232,205,169,0.22)", fontFamily:JF }}>
+                    <div style={{ fontSize:11, color:"#e8cda9", marginBottom:8, fontWeight:600, letterSpacing:"0.05em" }}>Accès réservé aux membres</div>
+                    <div style={{ fontSize:11, color:"rgba(232,205,169,0.65)", marginBottom:10, lineHeight:1.55 }}>Cet email n'a pas de licence active. Choisis un plan pour créer ton compte.</div>
+                    <button onClick={async () => {
+                      try {
+                        const r = await fetch("/api/create-checkout", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ plan:"early_bird" }) });
+                        const { url } = await r.json();
+                        if (url) window.location.href = url;
+                      } catch {}
+                    }} style={{ display:"inline-block", background:"linear-gradient(135deg,#e8cda9,#c9aa82)", color:"#1a1208", borderRadius:7, padding:"8px 16px", fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", border:"none", cursor:"pointer", fontFamily:"'Josefin Sans',sans-serif" }}>
+                      Voir les tarifs →
+                    </button>
+                  </div>
+                )}
+                {success && <div style={{ marginBottom:12, fontSize:11, color:"#4caf6e", fontFamily:JF }}>{success}</div>}
+                <button onClick={submit} disabled={loading}
+                  style={{ width:"100%", padding:"14px", borderRadius:10, border:"none", background:loading?"rgba(255,255,255,0.05)":CR, color:loading?"rgba(255,255,255,0.3)":BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", cursor:loading?"not-allowed":"pointer", transition:"all 0.2s" }}>
+                  {loading?"···":"Se connecter"}
                 </button>
-              </div>
+              </>
             )}
-            {success && <div style={{ marginBottom:12, fontSize:11, color:"#4caf6e", fontFamily:JF }}>{success}</div>}
-            <button onClick={submit} disabled={loading}
-              style={{ width:"100%", padding:"14px", borderRadius:10, border:"none", background:loading?"rgba(255,255,255,0.05)":CR, color:loading?"rgba(255,255,255,0.3)":BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", cursor:loading?"not-allowed":"pointer", transition:"all 0.2s" }}>
-              {loading?"···":"Se connecter"}
-            </button>
           </div>
         </div>
       )}
@@ -1057,11 +1103,83 @@ function MT5Connect({ user, darkMode, onTradesImported }) {
   );
 }
 
+/* ─── RESET PASSWORD SCREEN ─────────────────────────────────────── */
+function ResetPasswordScreen({ onDone }) {
+  const JF = "'Josefin Sans',sans-serif";
+  const BG = "#060609"; const CR = "#f5f2ea";
+  const BDR = "rgba(245,242,234,0.08)";
+  const CARD_BDR = `1px solid ${BDR}`;
+  const [password, setPassword]     = useState("");
+  const [confirm,  setConfirm]      = useState("");
+  const [showPwd,  setShowPwd]      = useState(false);
+  const [loading,  setLoading]      = useState(false);
+  const [error,    setError]        = useState("");
+  const [done,     setDone]         = useState(false);
+
+  const submit = async () => {
+    if (!password || !confirm) { setError("Remplis les deux champs."); return; }
+    if (password !== confirm)  { setError("Les mots de passe ne correspondent pas."); return; }
+    if (password.length < 6)   { setError("Le mot de passe doit faire au moins 6 caractères."); return; }
+    setLoading(true); setError("");
+    const { error: updateErr } = await supabase.auth.updateUser({ password });
+    if (updateErr) { setError(updateErr.message); setLoading(false); return; }
+    setDone(true);
+    setTimeout(onDone, 2000);
+  };
+
+  const match = password && confirm && password === confirm;
+
+  return (
+    <div style={{ minHeight:"100vh", background:BG, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <style>{FONTS}</style>
+      <div style={{ background:"rgba(10,10,16,0.98)", border:CARD_BDR, borderRadius:20, padding:"40px 36px", maxWidth:380, width:"100%", boxShadow:"0 40px 80px rgba(0,0,0,0.85)" }}>
+        <div style={{ marginBottom:28, textAlign:"center" }}>
+          <img src="/fyltra-logo-black.svg" style={{ height:56, width:"auto", marginBottom:8 }} alt="Fyltra" />
+          <div style={{ fontSize:10, color:"rgba(245,242,234,0.45)", letterSpacing:"0.15em", textTransform:"uppercase", fontFamily:JF }}>Nouveau mot de passe</div>
+        </div>
+        {done ? (
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontSize:28, marginBottom:12 }}>✓</div>
+            <div style={{ fontSize:13, color:CR, fontFamily:JF }}>Mot de passe mis à jour !</div>
+          </div>
+        ) : (
+          <>
+            <div style={{ marginBottom:12, position:"relative" }}>
+              <input type={showPwd?"text":"password"} placeholder="Nouveau mot de passe" value={password} onChange={e=>setPassword(e.target.value)}
+                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:CARD_BDR, borderRadius:10, padding:"14px 46px 14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
+              <button onClick={()=>setShowPwd(v=>!v)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", lineHeight:1, padding:0 }}>
+                {showPwd
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+              </button>
+            </div>
+            <div style={{ marginBottom:14, position:"relative" }}>
+              <input type={showPwd?"text":"password"} placeholder="Confirmer le mot de passe" value={confirm} onChange={e=>setConfirm(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}
+                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:`1px solid ${confirm ? (match ? "rgba(76,175,110,0.5)" : "rgba(224,90,90,0.5)") : BDR}`, borderRadius:10, padding:"14px 46px 14px 16px", color:CR, fontSize:14, fontFamily:JF, fontWeight:300, outline:"none", boxSizing:"border-box" }}/>
+              {confirm && (
+                <span style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", fontSize:14, color: match ? "#4caf6e" : "#e05a5a" }}>
+                  {match ? "✓" : "✗"}
+                </span>
+              )}
+            </div>
+            {error && <div style={{ marginBottom:12, fontSize:11, color:"#e05a5a", fontFamily:JF }}>{error}</div>}
+            <button onClick={submit} disabled={loading}
+              style={{ width:"100%", padding:"14px", borderRadius:10, border:"none", background:loading?"rgba(255,255,255,0.05)":CR, color:loading?"rgba(255,255,255,0.3)":BG, fontSize:10, fontFamily:JF, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", cursor:loading?"not-allowed":"pointer", transition:"all 0.2s" }}>
+              {loading?"···":"Enregistrer"}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── MAIN APP ───────────────────────────────────────────────────── */
 export default function App() {
   const isMobile = useIsMobile();
   const [user,        setUser]        = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [trades,      setTrades]      = useState(() => load(KEYS.trades, []));
   const [extraInstr,  setExtraInstr]  = useState(() => load(KEYS.instruments, []));
   const [extraEmotions, setExtraEmotions] = useState(() => load('fyltra_emotions_v1', []));
@@ -1197,8 +1315,9 @@ export default function App() {
       setUser(session?.user ?? null);
       setAuthLoading(false);
     });
-    const { data:{ subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+    const { data:{ subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -3815,6 +3934,8 @@ ${recentTrades}`;
     </div>
   );
   if (!user) return <Navigate to="/" replace />;
+
+  if (passwordRecovery) return <ResetPasswordScreen onDone={() => setPasswordRecovery(false)} />;
 
   return (
     <div style={{ minHeight:"100vh", background:C.bg, color:C.white, fontFamily:"'Josefin Sans',sans-serif" }}>
