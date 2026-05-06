@@ -1292,8 +1292,13 @@ async function goCheckout(plan, setLoading) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ plan }),
     });
-    const { url } = await res.json();
-    if (url) window.location.href = url;
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      console.error("Checkout error:", data.error);
+      setLoading(false);
+    }
   } catch (e) {
     console.error(e);
     setLoading(false);
