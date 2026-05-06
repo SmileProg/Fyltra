@@ -38,7 +38,17 @@ module.exports = async function handler(req, res) {
 
     // 3. Récupérer l'abonnement Stripe
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    let sub;
+    try {
+      sub = await stripe.subscriptions.retrieve(subscriptionId);
+    } catch (stripeErr) {
+      // ID invalide (ex: ancien ID LemonSqueezy) → retour données DB uniquement
+      return res.status(200).json({
+        id: null, status: "active",
+        productName: planLabel, variantName: priceLabel,
+        renewsAt: null, cancelled: false,
+      });
+    }
 
     return res.status(200).json({
       id: sub.id,
