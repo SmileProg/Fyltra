@@ -1179,7 +1179,7 @@ export default function App() {
   const isMobile = useIsMobile();
   const [user,        setUser]        = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(() => window.location.hash.includes('type=recovery'));
   const [trades,      setTrades]      = useState(() => load(KEYS.trades, []));
   const [extraInstr,  setExtraInstr]  = useState(() => load(KEYS.instruments, []));
   const [extraEmotions, setExtraEmotions] = useState(() => load('fyltra_emotions_v1', []));
@@ -1319,11 +1319,11 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data:{ session } }) => {
       setUser(session?.user ?? null);
-      setAuthLoading(false);
+      if (!window.location.hash.includes('type=recovery')) setAuthLoading(false);
     });
     const { data:{ subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
+      if (event === "PASSWORD_RECOVERY") { setPasswordRecovery(true); setAuthLoading(false); }
     });
     return () => subscription.unsubscribe();
   }, []);
