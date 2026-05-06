@@ -50,13 +50,15 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    const toIso = ts => (ts && !isNaN(ts)) ? new Date(ts * 1000).toISOString() : null;
+
     return res.status(200).json({
       id: sub.id,
       status: sub.status,
       productName: planLabel,
       variantName: priceLabel,
-      renewsAt: new Date(sub.current_period_end * 1000).toISOString(),
-      endsAt: sub.cancel_at ? new Date(sub.cancel_at * 1000).toISOString() : null,
+      renewsAt: toIso(sub.current_period_end),
+      endsAt: toIso(sub.cancel_at),
       cancelled: sub.cancel_at_period_end,
     });
   } catch (e) {
