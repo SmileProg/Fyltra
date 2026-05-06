@@ -3802,7 +3802,7 @@ ${recentTrades}`;
             if (!emailNew) { setEmailMsg("Entre un nouvel email."); return; }
             if (emailNew === user?.email) { setEmailMsg("C'est déjà ton email actuel."); return; }
             setEmailSaving(true); setEmailMsg("");
-            const { error } = await supabase.auth.updateUser({ email: emailNew });
+            const { error } = await supabase.auth.updateUser({ email: emailNew }, { emailRedirectTo: "https://fyltra.app/app" });
             if (error) { setEmailMsg(error.message); } else { setEmailMsg("ok"); setEmailNew(""); }
             setEmailSaving(false);
           }} style={{padding:"11px 24px",borderRadius:8,border:"none",background:emailSaving?`rgba(255,255,255,0.06)`:`linear-gradient(135deg,${C.accent},#c9aa82)`,color:emailSaving?C.gray1:"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:13,cursor:emailSaving?"not-allowed":"pointer",transition:"all 0.2s"}}>
