@@ -1,3 +1,5 @@
+const Stripe = require("stripe");
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -8,25 +10,21 @@ module.exports = async function handler(req, res) {
   const { subscriptionId } = req.body || {};
   if (!subscriptionId) return res.status(400).json({ error: "subscriptionId required" });
 
-  const LS_KEY = process.env.LS_API_KEY;
-  if (!LS_KEY) return res.status(500).json({ error: "LS_API_KEY not configured" });
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
-    // DELETE cancels at end of current billing period
-    const resp = await fetch(`https://api.lemonsqueezy.com/v1/subscriptions/${subscriptionId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${LS_KEY}`, Accept: "application/vnd.api+json" },
+    // Annulation à la fin de la période en cours
+    const sub = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true,
     });
 
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      return res.status(resp.status).json({ error: err.errors?.[0]?.detail || "Lemon Squeezy API error" });
-    }
+    const endsAt = sub.cancel_at
+      ? new Date(sub.cancel_at * 1000).toISOString()
+      : null;
 
-    const data = await resp.json().catch(() => ({}));
-    const endsAt = data.data?.attributes?.ends_at ?? null;
     return res.status(200).json({ ok: true, endsAt });
   } catch (e) {
+    console.error("cancel-subscription error:", e.message);
     return res.status(500).json({ error: e.message });
   }
 };
