@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
 
     const endsAt = sub.cancel_at
       ? new Date(sub.cancel_at * 1000).toISOString()
-      : null;
+      : new Date(sub.current_period_end * 1000).toISOString();
 
     return res.status(200).json({ ok: true, endsAt });
   } catch (e) {
