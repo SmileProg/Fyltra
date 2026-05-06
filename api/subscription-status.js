@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
     }
 
     // 3. Récupérer l'abonnement Stripe
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" });
     let sub;
     try {
       sub = await stripe.subscriptions.retrieve(subscriptionId);
@@ -61,7 +61,6 @@ module.exports = async function handler(req, res) {
       renewsAt: toIso(sub.current_period_end),
       endsAt: toIso(sub.cancel_at),
       cancelled: sub.cancel_at_period_end,
-      _debug_keys: Object.keys(sub),
     });
   } catch (e) {
     console.error("subscription-status error:", e.message);
