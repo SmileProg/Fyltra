@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
   }
 
   const session = event.data.object;
-  const email = (session.customer_email || "").toLowerCase().trim();
+  const email = (session.customer_email || session.customer_details?.email || "").toLowerCase().trim();
   const plan = session.metadata?.plan || "unknown";
   const stripeCustomerId = session.customer || "";
   const stripeSubscriptionId = session.subscription || "";
