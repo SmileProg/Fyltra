@@ -1283,6 +1283,8 @@ export default function App() {
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [pwdForm, setPwdForm] = useState({ newPwd:"", confirmPwd:"", show:false });
+  const [colorSaving,  setColorSaving]  = useState(null);
+  const [dayEndSaving, setDayEndSaving] = useState(null);
   const [pwdSaving, setPwdSaving] = useState(false);
   const [pwdMsg, setPwdMsg] = useState("");
   const [emailNew, setEmailNew] = useState("");
@@ -1422,18 +1424,16 @@ export default function App() {
     if (user && !isLoadingDB.current) saveUserSettings({ dark_mode: darkMode });
   }, [darkMode, customBg, customTextWhite]);
   useEffect(() => {
-    if (isLoadingDB.current) return;
     localStorage.setItem("fyltra_cbg",  customBg);
     localStorage.setItem("fyltra_cbg2", customBg2);
     if (customTextWhite === null) localStorage.removeItem("fyltra_ctxt");
     else localStorage.setItem("fyltra_ctxt", customTextWhite ? "1" : "0");
-    if (user) saveUserSettings({ custom_bg: customBg||null, custom_bg2: customBg2||null, custom_text_white: customTextWhite });
   }, [customBg, customBg2, customTextWhite]);
   useEffect(() => { if (isLoadingDB.current) return; localStorage.setItem("fyltra_lang", lang); if (user) saveUserSettings({ lang }); }, [lang]);
   useEffect(() => { if (isLoadingDB.current) return; save('fyltra_layout_v1', acctLayout); if (user) saveUserSettings({ acct_layout: acctLayout }); }, [acctLayout]);
   useEffect(() => { if (isLoadingDB.current) return; localStorage.setItem("fyltra_trade_mode", tradeMode); if (user) saveUserSettings({ trade_mode: tradeMode }); }, [tradeMode]);
   useEffect(() => { if (isLoadingDB.current) return; localStorage.setItem("fyltra_trade_fixed_mode", tradeFixedMode); if (user) saveUserSettings({ trade_fixed_mode: tradeFixedMode }); }, [tradeFixedMode]);
-  useEffect(() => { if (isLoadingDB.current) return; localStorage.setItem("fyltra_day_end_time", dayEndTime); if (user) saveUserSettings({ day_end_time: dayEndTime }); }, [dayEndTime]);
+  useEffect(() => { localStorage.setItem("fyltra_day_end_time", dayEndTime); }, [dayEndTime]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
 
@@ -4313,11 +4313,21 @@ ${recentTrades}`;
             ))}
           </div>
         </div>
-        {(customBg||customBg2||customTextWhite!==null)&&(
-          <button onClick={()=>{setCustomBg("");setCustomBg2("");setCustomTextWhite(null);}} style={{fontSize:11,color:"rgba(229,100,100,0.7)",fontFamily:"'Josefin Sans',sans-serif",background:"none",border:"1px solid rgba(229,100,100,0.2)",borderRadius:8,padding:"7px 16px",cursor:"pointer",transition:"all 0.2s"}}>
-            Réinitialiser les couleurs
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <button onClick={async()=>{
+            setColorSaving("saving");
+            await saveUserSettings({ custom_bg:customBg||null, custom_bg2:customBg2||null, custom_text_white:customTextWhite });
+            setColorSaving("ok");
+            setTimeout(()=>setColorSaving(null),2000);
+          }} style={{padding:"9px 20px",borderRadius:8,border:"none",background:colorSaving==="ok"?"rgba(74,222,128,0.1)":colorSaving==="saving"?"rgba(255,255,255,0.06)":`linear-gradient(135deg,${C.accent},#c9aa82)`,color:colorSaving==="ok"?"#4ade80":colorSaving==="saving"?C.gray1:"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:colorSaving?"not-allowed":"pointer",transition:"all 0.2s",letterSpacing:"0.1em"}}>
+            {colorSaving==="ok"?"✓ Sauvegardé":colorSaving==="saving"?"···":"Sauvegarder"}
           </button>
-        )}
+          {(customBg||customBg2||customTextWhite!==null)&&(
+            <button onClick={()=>{setCustomBg("");setCustomBg2("");setCustomTextWhite(null);}} style={{fontSize:11,color:"rgba(229,100,100,0.7)",fontFamily:"'Josefin Sans',sans-serif",background:"none",border:"1px solid rgba(229,100,100,0.2)",borderRadius:8,padding:"7px 16px",cursor:"pointer",transition:"all 0.2s"}}>
+              Réinitialiser
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── FIN DE JOURNÉE ── */}
@@ -4339,6 +4349,16 @@ ${recentTrades}`;
             <TimePicker value={dayEndTime} onChange={setDayEndTime} />
           </div>
         )}
+        <div style={{marginTop:14}}>
+          <button onClick={async()=>{
+            setDayEndSaving("saving");
+            await saveUserSettings({ day_end_time: dayEndTime });
+            setDayEndSaving("ok");
+            setTimeout(()=>setDayEndSaving(null),2000);
+          }} style={{padding:"9px 20px",borderRadius:8,border:"none",background:dayEndSaving==="ok"?"rgba(74,222,128,0.1)":dayEndSaving==="saving"?"rgba(255,255,255,0.06)":`linear-gradient(135deg,${C.accent},#c9aa82)`,color:dayEndSaving==="ok"?"#4ade80":dayEndSaving==="saving"?C.gray1:"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:dayEndSaving?"not-allowed":"pointer",transition:"all 0.2s",letterSpacing:"0.1em"}}>
+            {dayEndSaving==="ok"?"✓ Sauvegardé":dayEndSaving==="saving"?"···":"Sauvegarder"}
+          </button>
+        </div>
       </div>
 
       {/* ── TRADE SETTINGS ── */}
