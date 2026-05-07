@@ -1492,35 +1492,32 @@ export default function App() {
     } else {
       setTrades(prev => [{ ...newTrade, id:Date.now() }, ...prev]);
     }
-    // Auto-archive propfirms that just hit their target or drawdown
-    if (newTrade.accountIds && newTrade.accountIds.length > 0) {
-      newTrade.accountIds.forEach(pfId => {
-        const pf = propfirms.find(p => p.id === pfId);
-        if (!pf || pf.status === "passed" || pf.status === "breached") return;
-        if (pf.type !== "propfirm") return;
-        const allTrades = [...trades, newTrade].filter(t => !t.accountIds || t.accountIds.length === 0 || t.accountIds.includes(pfId));
-        const pfPnl = allTrades.reduce((s, t) => s + (t.pnl || 0), 0);
-        const cap = parseFloat(pf.capital) || 0;
-        const target = parseFloat(pf.target) || 0;
-        const maxLoss = parseFloat(pf.maxLoss) || 0;
-        if (target > 0 && pfPnl >= target) {
-          setPropfirms(prev => prev.map(p => p.id === pfId ? { ...p, status:"passed" } : p));
-        } else if (maxLoss > 0) {
-          let mll;
-          if (pf.trailingDD) {
-            const dates = [...new Set(allTrades.map(t => t.date))].sort();
-            let cum = 0, peak = 0;
-            dates.forEach(d => { cum += allTrades.filter(t => t.date === d).reduce((s,t) => s+(t.pnl||0), 0); if (cum > peak) peak = cum; });
-            mll = cap + Math.max(0, peak) - maxLoss;
-          } else {
-            mll = cap - maxLoss;
-          }
-          if (cap + pfPnl <= mll) {
-            setPropfirms(prev => prev.map(p => p.id === pfId ? { ...p, status:"breached" } : p));
-          }
+    // Auto-archive any active propfirm that just hit its target or drawdown
+    const updatedTrades = [...trades, newTrade];
+    propfirms.filter(p => p.type === "propfirm" && (!p.status || p.status === "active")).forEach(pf => {
+      const pfId = pf.id;
+      const pfTrades = updatedTrades.filter(t => !t.accountIds || t.accountIds.length === 0 || t.accountIds.includes(pfId));
+      const pfPnl = pfTrades.reduce((s, t) => s + (t.pnl || 0), 0);
+      const cap = parseFloat(pf.capital) || 0;
+      const target = parseFloat(pf.target) || 0;
+      const maxLoss = parseFloat(pf.maxLoss) || 0;
+      if (target > 0 && pfPnl >= target) {
+        setPropfirms(prev => prev.map(p => p.id === pfId ? { ...p, status:"passed" } : p));
+      } else if (maxLoss > 0) {
+        let mll;
+        if (pf.trailingDD) {
+          const dates = [...new Set(pfTrades.map(t => t.date))].sort();
+          let cum = 0, peak = 0;
+          dates.forEach(d => { cum += pfTrades.filter(t => t.date === d).reduce((s,t) => s+(t.pnl||0), 0); if (cum > peak) peak = cum; });
+          mll = cap + Math.max(0, peak) - maxLoss;
+        } else {
+          mll = cap - maxLoss;
         }
-      });
-    }
+        if (cap + pfPnl <= mll) {
+          setPropfirms(prev => prev.map(p => p.id === pfId ? { ...p, status:"breached" } : p));
+        }
+      }
+    });
     setPnlRaw(""); setForm(f => ({ ...f, entry:"", exit:"", rr:"", size:"", notes:"", accountIds:[], strategyId:null }));
     setSaved(true); setTimeout(() => setSaved(false), 2500);
   };
