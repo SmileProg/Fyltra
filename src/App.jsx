@@ -2844,6 +2844,16 @@ ${recentTrades}`;
               const acctTrades=trades.filter(t=>!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id));
               const wins=acctTrades.filter(t=>t.result==="WIN").length;
               const wr=acctTrades.length?Math.round(wins/acctTrades.length*100):0;
+              // For trailing DD breach: show drawdown from peak, not total P&L from start
+              let displayPnl=pnl, peakPnlVal=0, showPeak=false;
+              if(!isPass&&pf.trailingDD){
+                const dates=[...new Set(acctTrades.map(t=>t.date))].sort();
+                let cum=0,pk=0;
+                dates.forEach(d=>{cum+=acctTrades.filter(t=>t.date===d).reduce((s,t)=>s+(t.pnl||0),0);if(cum>pk)pk=cum;});
+                peakPnlVal=pk;
+                displayPnl=pnl-pk;
+                showPeak=true;
+              }
               return (
                 <div key={pf.id} style={{background:C.bg2,border:`1px solid ${isPass?"rgba(201,170,130,0.18)":"rgba(192,57,43,0.15)"}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"20px":"16px",marginBottom:!isMobile?14:10}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
@@ -2856,7 +2866,8 @@ ${recentTrades}`;
                       <div style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",marginTop:4,textTransform:"uppercase"}}>{cap.toLocaleString()}{currency}{pf.type==="propfirm"?` · cible ${target.toLocaleString()}${currency}`:""}</div>
                     </div>
                     <div style={{textAlign:"right"}}>
-                      <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,fontSize:20,color:pnl>=0?"#2a6e3a":"#c0392b"}}>{pnl>=0?"+":""}{fmtMoney(pnl)}{currency}</div>
+                      <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,fontSize:20,color:displayPnl>=0?"#2a6e3a":"#c0392b"}}>{displayPnl>=0?"+":""}{fmtMoney(displayPnl)}{currency}</div>
+                      {showPeak&&<div style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:1,letterSpacing:"0.06em"}}>depuis +{fmtMoney(peakPnlVal)}{currency} au sommet</div>}
                       <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{wr}% WR · {acctTrades.length} trade{acctTrades.length!==1?"s":""}</div>
                     </div>
                   </div>
