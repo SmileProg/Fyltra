@@ -1399,11 +1399,13 @@ export default function App() {
   }, [user]);
 
   const saveUserSettings = async (patch) => {
-    if (!user) return;
-    await supabase.from("user_settings").upsert(
+    if (!user) return { error: { message: "Non connecté" } };
+    const { error } = await supabase.from("user_settings").upsert(
       { user_id: user.id, ...patch, updated_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
+    if (error) console.error("saveUserSettings error:", error.message, patch);
+    return { error };
   };
 
   useEffect(() => { if (!user) save(KEYS.trades, trades); }, [trades]);
@@ -4316,11 +4318,11 @@ ${recentTrades}`;
         <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
           <button onClick={async()=>{
             setColorSaving("saving");
-            await saveUserSettings({ custom_bg:customBg||null, custom_bg2:customBg2||null, custom_text_white:customTextWhite });
-            setColorSaving("ok");
-            setTimeout(()=>setColorSaving(null),2000);
-          }} style={{padding:"9px 20px",borderRadius:8,border:"none",background:colorSaving==="ok"?"rgba(74,222,128,0.1)":colorSaving==="saving"?"rgba(255,255,255,0.06)":`linear-gradient(135deg,${C.accent},#c9aa82)`,color:colorSaving==="ok"?"#4ade80":colorSaving==="saving"?C.gray1:"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:colorSaving?"not-allowed":"pointer",transition:"all 0.2s",letterSpacing:"0.1em"}}>
-            {colorSaving==="ok"?"✓ Sauvegardé":colorSaving==="saving"?"···":"Sauvegarder"}
+            const { error } = await saveUserSettings({ custom_bg:customBg||null, custom_bg2:customBg2||null, custom_text_white:customTextWhite });
+            setColorSaving(error ? `error:${error.message}` : "ok");
+            setTimeout(()=>setColorSaving(null),3000);
+          }} style={{padding:"9px 20px",borderRadius:8,border:colorSaving&&colorSaving!=="ok"&&colorSaving!=="saving"?"1px solid rgba(229,100,100,0.4)":"none",background:colorSaving==="ok"?"rgba(74,222,128,0.1)":colorSaving==="saving"?"rgba(255,255,255,0.06)":colorSaving?`rgba(229,100,100,0.1)`:`linear-gradient(135deg,${C.accent},#c9aa82)`,color:colorSaving==="ok"?"#4ade80":colorSaving==="saving"?C.gray1:colorSaving?"rgba(229,100,100,0.9)":"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:colorSaving?"not-allowed":"pointer",transition:"all 0.2s",letterSpacing:"0.1em"}}>
+            {colorSaving==="ok"?"✓ Sauvegardé":colorSaving==="saving"?"···":colorSaving?"✗ Erreur":"Sauvegarder"}
           </button>
           {(customBg||customBg2||customTextWhite!==null)&&(
             <button onClick={()=>{setCustomBg("");setCustomBg2("");setCustomTextWhite(null);}} style={{fontSize:11,color:"rgba(229,100,100,0.7)",fontFamily:"'Josefin Sans',sans-serif",background:"none",border:"1px solid rgba(229,100,100,0.2)",borderRadius:8,padding:"7px 16px",cursor:"pointer",transition:"all 0.2s"}}>
@@ -4352,11 +4354,11 @@ ${recentTrades}`;
         <div style={{marginTop:14}}>
           <button onClick={async()=>{
             setDayEndSaving("saving");
-            await saveUserSettings({ day_end_time: dayEndTime });
-            setDayEndSaving("ok");
-            setTimeout(()=>setDayEndSaving(null),2000);
-          }} style={{padding:"9px 20px",borderRadius:8,border:"none",background:dayEndSaving==="ok"?"rgba(74,222,128,0.1)":dayEndSaving==="saving"?"rgba(255,255,255,0.06)":`linear-gradient(135deg,${C.accent},#c9aa82)`,color:dayEndSaving==="ok"?"#4ade80":dayEndSaving==="saving"?C.gray1:"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:dayEndSaving?"not-allowed":"pointer",transition:"all 0.2s",letterSpacing:"0.1em"}}>
-            {dayEndSaving==="ok"?"✓ Sauvegardé":dayEndSaving==="saving"?"···":"Sauvegarder"}
+            const { error } = await saveUserSettings({ day_end_time: dayEndTime });
+            setDayEndSaving(error ? `error:${error.message}` : "ok");
+            setTimeout(()=>setDayEndSaving(null),3000);
+          }} style={{padding:"9px 20px",borderRadius:8,border:dayEndSaving&&dayEndSaving!=="ok"&&dayEndSaving!=="saving"?"1px solid rgba(229,100,100,0.4)":"none",background:dayEndSaving==="ok"?"rgba(74,222,128,0.1)":dayEndSaving==="saving"?"rgba(255,255,255,0.06)":dayEndSaving?`rgba(229,100,100,0.1)`:`linear-gradient(135deg,${C.accent},#c9aa82)`,color:dayEndSaving==="ok"?"#4ade80":dayEndSaving==="saving"?C.gray1:dayEndSaving?"rgba(229,100,100,0.9)":"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:dayEndSaving?"not-allowed":"pointer",transition:"all 0.2s",letterSpacing:"0.1em"}}>
+            {dayEndSaving==="ok"?"✓ Sauvegardé":dayEndSaving==="saving"?"···":dayEndSaving?"✗ Erreur":"Sauvegarder"}
           </button>
         </div>
       </div>
