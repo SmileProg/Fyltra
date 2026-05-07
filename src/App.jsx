@@ -1378,6 +1378,9 @@ export default function App() {
       setExtraInstr(d?.extra_instruments ?? []);
       setExtraEmotions(d?.extra_emotions ?? []);
       if (d?.dark_mode !== undefined && d?.dark_mode !== null) setDarkMode(d.dark_mode);
+      if (d?.custom_bg !== undefined && d?.custom_bg !== null) setCustomBg(d.custom_bg);
+      if (d?.custom_bg2 !== undefined && d?.custom_bg2 !== null) setCustomBg2(d.custom_bg2);
+      if (d?.custom_text_white !== undefined && d?.custom_text_white !== null) setCustomTextWhite(d.custom_text_white);
       if (d?.currency) setCurrency(d.currency);
       if (d?.lang) setLang(d.lang);
       if (d?.acct_layout) setAcctLayout(d.acct_layout);
@@ -1419,10 +1422,12 @@ export default function App() {
     if (user && !isLoadingDB.current) saveUserSettings({ dark_mode: darkMode });
   }, [darkMode, customBg, customTextWhite]);
   useEffect(() => {
+    if (isLoadingDB.current) return;
     localStorage.setItem("fyltra_cbg",  customBg);
     localStorage.setItem("fyltra_cbg2", customBg2);
     if (customTextWhite === null) localStorage.removeItem("fyltra_ctxt");
     else localStorage.setItem("fyltra_ctxt", customTextWhite ? "1" : "0");
+    if (user) saveUserSettings({ custom_bg: customBg||null, custom_bg2: customBg2||null, custom_text_white: customTextWhite });
   }, [customBg, customBg2, customTextWhite]);
   useEffect(() => { if (isLoadingDB.current) return; localStorage.setItem("fyltra_lang", lang); if (user) saveUserSettings({ lang }); }, [lang]);
   useEffect(() => { if (isLoadingDB.current) return; save('fyltra_layout_v1', acctLayout); if (user) saveUserSettings({ acct_layout: acctLayout }); }, [acctLayout]);
