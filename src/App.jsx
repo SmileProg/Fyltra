@@ -244,7 +244,6 @@ function Sidebar({ view, setView, darkMode, onSignOut, nickname, firstName }) {
         transform: active ? "translateY(-1px)" : isHovered ? "translateY(-0.5px)" : "translateY(0)",
         position:"relative", zIndex:1,
       }}>
-        <span style={{ fontSize:17, color:active ? "#111" : "rgba(255,255,255,0.4)", lineHeight:1, width:22, textAlign:"center", transition:"color 0.25s" }}>{item.icon}</span>
         <span style={{ fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight: active ? 700 : 300, letterSpacing:"0.1em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.4)", transition:"color 0.25s", whiteSpace:"nowrap" }}>{item.label}</span>
       </button>
     );
@@ -2020,65 +2019,68 @@ ${recentTrades}`;
     <div>
       <PageTitle sub="Classements" title="Statistiques" />
 
-      {/* ══════════════════ APERÇU JAUGES PROP FIRMS ══════════════════ */}
+      {/* ══════════════════ COURBES D'ÉQUITÉ PROP FIRMS ══════════════════ */}
       {propfirms.filter(p=>p.type==="propfirm"&&(!p.status||p.status==="active")).length>0&&(()=>{
         const activePfs=propfirms.filter(p=>p.type==="propfirm"&&(!p.status||p.status==="active"));
         return (
-          <div style={{marginBottom:20}}>
-            <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:10}}>Équité des comptes</div>
-            <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4,marginRight:!isMobile?0:-16}}>
+          <div style={{marginBottom:24}}>
+            <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:10}}>Courbes d'équité</div>
+            <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:4}}>
               {activePfs.map(pf=>{
                 const cap=parseFloat(pf.capital)||0;
                 const target=parseFloat(pf.target)||0;
                 const maxLoss=parseFloat(pf.maxLoss)||0;
                 const pfTrades=trades.filter(t=>!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id));
+                const sorted=[...pfTrades].sort((a,b)=>a.date.localeCompare(b.date));
+                let cum=0;
+                const chartData=[{v:0},...sorted.map(t=>{cum+=t.pnl||0;return{v:parseFloat(cum.toFixed(2))};})];
                 const pnl=pfTrades.reduce((s,t)=>s+(t.pnl||0),0);
+                const isProfit=pnl>=0;
                 const peakPnl=(()=>{
                   const dates=[...new Set(pfTrades.map(t=>t.date))].sort();
-                  let cum=0,pk=0;
-                  dates.forEach(d=>{cum+=pfTrades.filter(t=>t.date===d).reduce((s,t)=>s+(t.pnl||0),0);if(cum>pk)pk=cum;});
+                  let c=0,pk=0;
+                  dates.forEach(d=>{c+=pfTrades.filter(t=>t.date===d).reduce((s,t)=>s+(t.pnl||0),0);if(c>pk)pk=c;});
                   return pk;
                 })();
                 const mll=maxLoss>0?(pf.trailingDD?cap+Math.max(0,peakPnl)-maxLoss:cap-maxLoss):null;
                 const tgt=target>0?cap+target:null;
-                const currentCap=cap+pnl;
                 const totalRange=(mll!==null&&tgt!==null)?tgt-mll:0;
+                const currentCap=cap+pnl;
                 const startPct=totalRange?(cap-mll)/totalRange*100:50;
                 const currentPct=totalRange?Math.min(100,Math.max(0,(currentCap-mll)/totalRange*100)):50;
-                const isProfit=pnl>=0;
                 const fillLeft=isProfit?startPct:currentPct;
                 const fillWidth=Math.abs(currentPct-startPct);
                 const inDanger=mll!==null&&(cap+pnl)<=mll+maxLoss*0.1;
                 return (
-                  <div
-                    key={pf.id}
-                    onClick={()=>{setSelectedPf(pf);setView("propfirm");}}
-                    style={{
-                      flexShrink:0,width:!isMobile?200:170,
-                      background:C.bg2,
-                      border:`1px solid ${inDanger?"rgba(192,57,43,0.3)":C.border}`,
-                      borderRadius:10,padding:"12px 14px",cursor:"pointer",
-                      boxShadow:"0 4px 20px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.06)",
-                      transition:"border 0.2s",
-                    }}
-                  >
+                  <div key={pf.id} onClick={()=>{setSelectedPf(pf);setView("propfirm");}} style={{flexShrink:0,width:!isMobile?260:220,background:C.bg2,border:`1px solid ${inDanger?"rgba(192,57,43,0.3)":C.border}`,borderRadius:12,padding:"14px 16px",cursor:"pointer",boxShadow:"0 4px 20px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.06)",transition:"border 0.2s"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
                       <div>
-                        <div style={{fontFamily:"'Barlow',sans-serif",fontWeight:600,fontSize:12,color:C.white,letterSpacing:"0.06em",lineHeight:1.2}}>{pf.firm||"Fond Propre"}</div>
-                        {pf.name&&<div style={{fontSize:9,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{pf.name}</div>}
+                        <div style={{fontFamily:"'Barlow',sans-serif",fontWeight:600,fontSize:13,color:C.white,letterSpacing:"0.05em"}}>{pf.firm||"Fond Propre"}</div>
+                        {pf.name&&<div style={{fontSize:9,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:1}}>{pf.name}</div>}
                       </div>
-                      <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,fontSize:13,color:isProfit?"#4ade80":"#f87171"}}>{pnl>=0?"+":""}{fmtMoney(pnl)}{currency}</div>
+                      <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,fontSize:14,color:isProfit?"#4ade80":"#f87171"}}>{pnl>=0?"+":""}{fmtMoney(pnl)}{currency}</div>
                     </div>
+                    {/* Courbe */}
+                    <div style={{marginBottom:totalRange>0?10:0}}>
+                      <ResponsiveContainer width="100%" height={64}>
+                        <LineChart data={chartData} margin={{top:4,right:2,left:0,bottom:0}}>
+                          <ReferenceLine y={0} stroke="rgba(255,255,255,0.1)" strokeWidth={1}/>
+                          <Tooltip contentStyle={{background:"rgba(14,14,14,0.95)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,fontSize:9,color:"#fff",padding:"4px 8px"}} formatter={v=>[`${v>=0?"+":""}${fmtMoney(v)}${currency}`,""]} labelFormatter={()=>""}/>
+                          <Line type="monotone" dataKey="v" stroke={isProfit?"#4caf6e":"#e05a5a"} strokeWidth={1.5} dot={false} activeDot={{r:3,strokeWidth:0,fill:isProfit?"#4caf6e":"#e05a5a"}}/>
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    {/* Jauge MLL→TARGET */}
                     {totalRange>0&&(
                       <div>
-                        <div style={{position:"relative",height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:6}}>
-                          <div style={{position:"absolute",left:fillLeft+"%",width:fillWidth+"%",height:"100%",borderRadius:2,background:isProfit?"rgba(74,222,128,0.7)":"rgba(229,100,100,0.7)",transition:"all 0.5s"}}/>
+                        <div style={{position:"relative",height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:5}}>
+                          <div style={{position:"absolute",left:fillLeft+"%",width:fillWidth+"%",height:"100%",borderRadius:2,background:isProfit?"rgba(74,222,128,0.65)":"rgba(229,100,100,0.65)"}}/>
                           <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",width:1.5,height:9,background:C.dim,borderRadius:1,top:-3}}/>
-                          <div style={{position:"absolute",left:currentPct+"%",transform:"translateX(-50%)",width:2.5,height:8,background:isProfit?"#4ade80":"#e05a5a",borderRadius:1,top:-2.5,transition:"left 0.5s",boxShadow:isProfit?"0 0 5px rgba(74,222,128,0.7)":"0 0 5px rgba(229,100,100,0.7)"}}/>
+                          <div style={{position:"absolute",left:currentPct+"%",transform:"translateX(-50%)",width:2.5,height:8,background:isProfit?"#4ade80":"#e05a5a",borderRadius:1,top:-2.5,transition:"left 0.5s",boxShadow:isProfit?"0 0 4px rgba(74,222,128,0.8)":"0 0 4px rgba(229,100,100,0.8)"}}/>
                         </div>
                         <div style={{display:"flex",justifyContent:"space-between"}}>
-                          <div style={{fontSize:8,color:"rgba(229,100,100,0.6)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.08em",textTransform:"uppercase"}}>MLL</div>
-                          <div style={{fontSize:8,color:"rgba(74,222,128,0.6)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.08em",textTransform:"uppercase"}}>TARGET</div>
+                          <span style={{fontSize:8,color:"rgba(229,100,100,0.55)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.08em",textTransform:"uppercase"}}>MLL</span>
+                          <span style={{fontSize:8,color:"rgba(74,222,128,0.55)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.08em",textTransform:"uppercase"}}>TARGET</span>
                         </div>
                       </div>
                     )}
@@ -4391,8 +4393,7 @@ ${recentTrades}`;
               <div onClick={closeMenu} style={{position:"fixed",inset:0,zIndex:298}}/>
               <div style={{position:"fixed",top:70,right:16,zIndex:299,animation:`${menuClosing?"slideToRight":"slideFromRight"} 0.24s cubic-bezier(.4,0,.2,1)`,display:"flex",flexDirection:"column",gap:6,background:"rgba(14,14,14,0.96)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:20,padding:"10px",boxShadow:"0 16px 48px rgba(0,0,0,0.35)",border:"1px solid rgba(255,255,255,0.07)",minWidth:160}}>
                 {[{k:"trades",l:"Historique",i:"☰"},{k:"history",l:"Statistiques",i:"≡"},{k:"strategy",l:"Plan",i:"◈"},{k:"profil",l:"Profil",i:"◐"},{k:"settings",l:"Paramètres",i:"◎"}].map(item=>(
-                  <button key={item.k} onClick={()=>{setView(item.k);setShowMenu(false);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent",transition:"background 0.15s"}}>
-                    <span style={{fontSize:17,color:"rgba(255,255,255,0.6)",lineHeight:1,width:20,textAlign:"center"}}>{item.i}</span>
+                  <button key={item.k} onClick={()=>{setView(item.k);setShowMenu(false);}} style={{display:"flex",alignItems:"center",padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent",transition:"background 0.15s"}}>
                     <span style={{fontSize:13,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.06em",color:"rgba(255,255,255,0.7)"}}>{item.l}</span>
                   </button>
                 ))}
