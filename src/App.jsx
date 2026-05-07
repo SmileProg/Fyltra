@@ -21,10 +21,11 @@ const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","A
 const MONTHS_SH = ["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc"];
 const KEYS = { trades:"fyltra_trades_v1", instruments:"fyltra_instr_v1", strategies:"fyltra_strategies_v1", capital:"fyltra_cap_v1", propfirms:"fyltra_propfirms_v1" };
 const NAV = [
-  { key:"propfirm",  icon:"◉",  label:"Compte" },
-  { key:"add",       icon:"＋", label:"Trade" },
-  { key:"trades",    icon:"☰",  label:"Historique" },
-  { key:"ai",        icon:"◆",  label:"IA" },
+  { key:"propfirm",    icon:"◉",  label:"Compte" },
+  { key:"add",         icon:"＋", label:"Trade" },
+  { key:"trades",      icon:"☰",  label:"Historique" },
+  { key:"classement",  icon:"⬡",  label:"Classement" },
+  { key:"ai",          icon:"◆",  label:"IA" },
 ];
 
 /* ─── Colors ─────────────────────────────────────────────────────── */
@@ -217,14 +218,15 @@ function PillNav({ view, setView, darkMode }) {
 
 /* ─── Desktop Sidebar ────────────────────────────────────────────── */
 const FULL_NAV = [
-  { key:"propfirm",  icon:"◉",  label:"Compte" },
-  { key:"add",       icon:"＋", label:"Trade" },
-  { key:"trades",    icon:"☰",  label:"Historique" },
-  { key:"history",   icon:"≡",  label:"Statistiques" },
-  { key:"strategy",  icon:"◈",  label:"Plan" },
-  { key:"ai",        icon:"◆",  label:"IA" },
-  { key:"profil",    icon:"◐",  label:"Profil" },
-  { key:"settings",  icon:"◎",  label:"Paramètres" },
+  { key:"propfirm",   icon:"◉",  label:"Compte" },
+  { key:"add",        icon:"＋", label:"Trade" },
+  { key:"trades",     icon:"☰",  label:"Historique" },
+  { key:"history",    icon:"≡",  label:"Statistiques" },
+  { key:"strategy",   icon:"◈",  label:"Plan" },
+  { key:"classement", icon:"⬡",  label:"Classement" },
+  { key:"ai",         icon:"◆",  label:"IA" },
+  { key:"profil",     icon:"◐",  label:"Profil" },
+  { key:"settings",   icon:"◎",  label:"Paramètres" },
 ];
 function Sidebar({ view, setView, darkMode, onSignOut, nickname, firstName }) {
   const [hovered, setHovered] = useState(null);
@@ -268,7 +270,7 @@ function Sidebar({ view, setView, darkMode, onSignOut, nickname, firstName }) {
       {/* Main nav pill */}
       <div style={{ padding:"16px 12px 10px", flex:1 }}>
         <div style={pillStyle}>
-          {[{key:"propfirm",icon:"◉",label:"Compte"},{key:"add",icon:"＋",label:"Trade"},{key:"trades",icon:"☰",label:"Historique"},{key:"history",icon:"≡",label:"Statistiques"},{key:"strategy",icon:"◈",label:"Plan"}].map(item => <NavBtn key={item.key} item={item} />)}
+          {[{key:"propfirm",icon:"◉",label:"Compte"},{key:"add",icon:"＋",label:"Trade"},{key:"trades",icon:"☰",label:"Historique"},{key:"history",icon:"≡",label:"Statistiques"},{key:"strategy",icon:"◈",label:"Plan"},{key:"classement",icon:"⬡",label:"Classement"}].map(item => <NavBtn key={item.key} item={item} />)}
         </div>
       </div>
 
@@ -1286,6 +1288,11 @@ export default function App() {
   const [colorSaving,  setColorSaving]  = useState(null);
   const [dayEndSaving, setDayEndSaving] = useState(null);
   const [pwdSaving, setPwdSaving] = useState(false);
+  const [compete,    setCompete]    = useState(false);
+  const [anonymous,  setAnonymous]  = useState(false);
+  const [lbData,     setLbData]     = useState(null);
+  const [lbLoading,  setLbLoading]  = useState(false);
+  const [lbUserRank, setLbUserRank] = useState(null);
   const [pwdMsg, setPwdMsg] = useState("");
   const [emailNew, setEmailNew] = useState("");
   const [emailSaving, setEmailSaving] = useState(false);
@@ -1391,6 +1398,8 @@ export default function App() {
       if (d?.trade_mode) setTradeMode(d.trade_mode);
       if (d?.trade_fixed_mode) setTradeFixedMode(d.trade_fixed_mode);
       if (d?.day_end_time !== undefined && d?.day_end_time !== null) setDayEndTime(d.day_end_time);
+      if (d?.compete !== undefined && d?.compete !== null) setCompete(d.compete);
+      if (d?.anonymous !== undefined && d?.anonymous !== null) setAnonymous(d.anonymous);
       if (d?.first_name || d?.last_name || d?.nickname || d?.address || d?.phone)
         setProfileForm({ firstName:d.first_name||"", lastName:d.last_name||"", nickname:d.nickname||"", address:d.address||"", phone:d.phone||"" });
       // Release flag after React has processed all the state updates and run their effects
@@ -4200,6 +4209,32 @@ ${recentTrades}`;
           </button>
         </div>
 
+        {/* ── Classement ── */}
+        <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),0 0 0 1px rgba(255,255,255,0.09),inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
+          <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:16}}>Classement global</div>
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            {[
+              { state: compete, setter: setCompete, key: "compete", label: "Participer au classement", desc: "Ton score Fyltra apparaît dans le classement global. Tu peux te retirer à tout moment." },
+              { state: anonymous, setter: setAnonymous, key: "anonymous", label: "Mode anonyme", desc: "Seul ton surnom (ou prénom si pas de surnom) est visible. Ton email reste privé.", disabled: !compete },
+            ].map(({ state, setter, key, label, desc, disabled }) => (
+              <div key={key} style={{display:"flex",alignItems:"flex-start",gap:12,opacity:disabled?0.4:1,transition:"opacity 0.2s"}}>
+                <button onClick={async()=>{
+                  if(disabled)return;
+                  const next=!state;
+                  setter(next);
+                  await saveUserSettings({[key]:next});
+                }} style={{flexShrink:0,marginTop:2,width:40,height:22,borderRadius:11,border:"none",cursor:disabled?"not-allowed":"pointer",background:state?"#4caf6e":"rgba(255,255,255,0.12)",transition:"background 0.2s",position:"relative"}}>
+                  <span style={{position:"absolute",top:3,left:state?20:3,width:16,height:16,borderRadius:"50%",background:"#fff",transition:"left 0.2s",display:"block"}}/>
+                </button>
+                <div>
+                  <div style={{fontSize:13,color:C.white,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.03em"}}>{label}</div>
+                  <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2,lineHeight:1.5}}>{desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* ── Subscription ── */}
         <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),0 0 0 1px rgba(255,255,255,0.09),inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px"}}>
           <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:16}}>Abonnement</div>
@@ -4428,15 +4463,226 @@ ${recentTrades}`;
     </div>
   );
 
+  /* ── Fyltra Score ─────────────────────────────────────────────── */
+  const calcFyltraScore = () => {
+    if (!trades.length) return 0;
+    const now = new Date();
+    const d30 = new Date(now); d30.setDate(d30.getDate() - 30);
+    const last30 = trades.filter(t => new Date(t.date) >= d30);
+
+    // 1. Consistance : % de semaines positives (sur 8 dernières semaines)
+    let posWeeks = 0, totalWeeks = 0;
+    for (let i = 0; i < 8; i++) {
+      const wStart = new Date(now); wStart.setDate(wStart.getDate() - (i+1)*7);
+      const wEnd   = new Date(now); wEnd.setDate(wEnd.getDate() - i*7);
+      const wTrades = trades.filter(t => { const d = new Date(t.date); return d >= wStart && d < wEnd; });
+      if (wTrades.length > 0) { totalWeeks++; if (wTrades.reduce((s,t) => s+(t.pnl||0), 0) > 0) posWeeks++; }
+    }
+    const consistency = totalWeeks > 0 ? (posWeeks / totalWeeks) : 0;
+
+    // 2. Win Rate (plafonné à 65% pour le max)
+    const allW = trades.filter(t => t.result === "WIN").length;
+    const wrPct = trades.length > 0 ? allW / trades.length : 0;
+    const wrScore = Math.min(1, wrPct / 0.65);
+
+    // 3. Taux de journalisation (notes > 10 chars dans last30)
+    const noted = last30.filter(t => t.notes && t.notes.trim().length > 10).length;
+    const journalScore = last30.length > 0 ? noted / last30.length : 0;
+
+    // 4. Sharpe simplifié (sur last30)
+    if (last30.length >= 3) {
+      const pnls = last30.map(t => t.pnl || 0);
+      const mean = pnls.reduce((a,b) => a+b, 0) / pnls.length;
+      const std  = Math.sqrt(pnls.reduce((s,p) => s + Math.pow(p-mean,2), 0) / pnls.length);
+      var sharpeRaw = std > 0 ? mean / std : (mean > 0 ? 1 : 0);
+    } else { var sharpeRaw = 0; }
+    const sharpeScore = Math.min(1, Math.max(0, (sharpeRaw + 0.5) / 2));
+
+    // 5. Discipline émotionnelle (éviter négatives sur last30)
+    const negEmotions = Object.entries(EMOTION_POLARITY).filter(([,v]) => v === "negative").map(([k]) => k);
+    const negTrades = last30.filter(t => negEmotions.includes(t.emotion));
+    const negLoss   = negTrades.filter(t => t.result === "LOSS").length;
+    const negTotal  = negTrades.length;
+    const emoScore  = negTotal > 0 ? 1 - (negLoss / negTotal) : 1;
+
+    // 6. Régularité (jours actifs sur last 30)
+    const activeDays = new Set(last30.map(t => t.date)).size;
+    const regularityScore = Math.min(1, activeDays / 15);
+
+    const raw = (
+      consistency   * 250 +
+      wrScore       * 200 +
+      journalScore  * 200 +
+      sharpeScore   * 150 +
+      emoScore      * 100 +
+      regularityScore * 100
+    );
+    return Math.round(Math.min(1000, Math.max(0, raw)));
+  };
+
+  const getTier = score => score >= 850 ? "Diamant" : score >= 650 ? "Or" : score >= 400 ? "Argent" : "Bronze";
+  const tierColor = tier => TIER_COLORS[tier] || "#c4a46b";
+  const TIER_COLORS = { Diamant:"#7dd3fc", Or:"#e8cda9", Argent:"#cbd5e1", Bronze:"#c4a46b" };
+
+  /* ── Leaderboard Content ──────────────────────────────────────── */
+  const classementContent = (() => {
+    const myScore = calcFyltraScore();
+    const myTier  = getTier(myScore);
+
+    const loadLeaderboard = async () => {
+      setLbLoading(true);
+      // Upsert my score if competing
+      if (compete && user) {
+        const displayName = anonymous
+          ? (profileForm.nickname || profileForm.firstName || "Anonyme")
+          : (profileForm.nickname || profileForm.firstName || user.email?.split("@")[0] || "Trader");
+        await supabase.from("leaderboard").upsert(
+          { user_id: user.id, display_name: displayName, score: myScore, tier: myTier, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+      }
+      // Fetch top 10
+      const { data: top10 } = await supabase.from("leaderboard").select("*").order("score", { ascending: false }).limit(10);
+      setLbData(top10 || []);
+      // Find my rank if I'm competing and not in top 10
+      if (compete && user) {
+        const myInTop = (top10 || []).findIndex(r => r.user_id === user.id);
+        if (myInTop === -1) {
+          const { count } = await supabase.from("leaderboard").select("*", { count:"exact", head:true }).gt("score", myScore);
+          setLbUserRank((count || 0) + 1);
+        } else {
+          setLbUserRank(myInTop + 1);
+        }
+      }
+      setLbLoading(false);
+    };
+
+    if (view === "classement" && lbData === null && !lbLoading) loadLeaderboard();
+
+    const rankIcon = rank => rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+
+    return (
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <PageTitle sub="Compétition" title="Classement" />
+
+        {/* My score card */}
+        <div style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px 20px", marginBottom: 16, boxShadow: "0 4px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.28)", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${TIER_COLORS[myTier]},transparent)` }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 9, color: C.dim, textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "'Josefin Sans',sans-serif", fontWeight: 600, marginBottom: 4 }}>Mon score Fyltra</div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 44, fontWeight: 900, color: TIER_COLORS[myTier], lineHeight: 1, letterSpacing: "-0.02em" }}>{myScore}</div>
+              <div style={{ fontSize: 11, color: TIER_COLORS[myTier], fontFamily: "'Josefin Sans',sans-serif", marginTop: 4, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>{myTier}</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+              {[
+                { label: "Consistance", max: 250 },
+                { label: "Win Rate",    max: 200 },
+                { label: "Journal",     max: 200 },
+                { label: "Sharpe",      max: 150 },
+                { label: "Émotions",    max: 100 },
+                { label: "Régularité",  max: 100 },
+              ].map(({ label, max }) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ fontSize: 9, color: C.gray1, fontFamily: "'Josefin Sans',sans-serif", textTransform: "uppercase", letterSpacing: "0.1em", minWidth: 72, textAlign: "right" }}>{label}</div>
+                  <div style={{ width: 80, height: 4, borderRadius: 2, background: C.bg3, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min(100, myScore / 1000 * 100)}%`, background: TIER_COLORS[myTier], borderRadius: 2, transition: "width 0.6s" }} />
+                  </div>
+                  <div style={{ fontSize: 9, color: C.dim, fontFamily: "'Josefin Sans',sans-serif", minWidth: 26, textAlign: "right" }}>/{max}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {!compete && (
+            <div style={{ marginTop: 14, padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 8, border: `1px solid ${C.border}` }}>
+              <div style={{ fontSize: 11, color: C.gray1, fontFamily: "'Josefin Sans',sans-serif", lineHeight: 1.5 }}>
+                Tu n'es pas encore en compétition. Active <span style={{ color: C.white, fontWeight: 600 }}>Participer au classement</span> dans ton <button onClick={() => setView("profil")} style={{ background: "none", border: "none", cursor: "pointer", color: "#7dd3fc", fontFamily: "'Josefin Sans',sans-serif", fontSize: 11, padding: 0, textDecoration: "underline" }}>Profil</button> pour apparaître dans le classement.
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Tier legend */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
+          {[["Bronze","<400","#c4a46b"],["Argent","<650","#cbd5e1"],["Or","<850","#e8cda9"],["Diamant","≥850","#7dd3fc"]].map(([t,range,color])=>(
+            <div key={t} style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `2px solid ${color}`, borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
+              <div style={{ fontSize: 11, color: color, fontFamily: "'Josefin Sans',sans-serif", fontWeight: 700, letterSpacing: "0.05em" }}>{t}</div>
+              <div style={{ fontSize: 9, color: C.gray1, fontFamily: "'Josefin Sans',sans-serif", marginTop: 2 }}>{range}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Leaderboard table */}
+        <div style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.28)" }}>
+          <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.18em", fontFamily: "'Josefin Sans',sans-serif", fontWeight: 600 }}>Top 10 Global</div>
+            <button onClick={() => { setLbData(null); setLbUserRank(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: C.gray1, fontSize: 11, fontFamily: "'Josefin Sans',sans-serif", letterSpacing: "0.05em" }}>↻ Actualiser</button>
+          </div>
+
+          {lbLoading ? (
+            <div style={{ padding: "32px", textAlign: "center", color: C.gray1, fontSize: 12, fontFamily: "'Josefin Sans',sans-serif" }}>Chargement...</div>
+          ) : !lbData || lbData.length === 0 ? (
+            <div style={{ padding: "32px", textAlign: "center", color: C.gray1, fontSize: 12, fontFamily: "'Josefin Sans',sans-serif", lineHeight: 1.6 }}>
+              Aucun trader en compétition pour l'instant.<br/>Sois le premier !
+            </div>
+          ) : (
+            <>
+              {lbData.map((entry, idx) => {
+                const rank = idx + 1;
+                const isMe = entry.user_id === user?.id;
+                const tc = TIER_COLORS[entry.tier] || TIER_COLORS.Bronze;
+                return (
+                  <div key={entry.user_id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: idx < lbData.length - 1 ? `1px solid ${C.border}` : "none", background: isMe ? "rgba(255,255,255,0.04)" : "transparent", transition: "background 0.15s" }}>
+                    <div style={{ fontSize: rank <= 3 ? 18 : 13, minWidth: 28, textAlign: "center", fontFamily: "'Josefin Sans',sans-serif", fontWeight: 700, color: rank <= 3 ? "#fff" : C.gray1 }}>
+                      {rank <= 3 ? ["🥇","🥈","🥉"][rank-1] : `#${rank}`}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, color: isMe ? C.white : C.dim, fontFamily: "'Josefin Sans',sans-serif", fontWeight: isMe ? 700 : 400, letterSpacing: "0.03em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {entry.display_name}{isMe ? " (moi)" : ""}
+                      </div>
+                      <div style={{ fontSize: 9, color: tc, fontFamily: "'Josefin Sans',sans-serif", textTransform: "uppercase", letterSpacing: "0.14em", marginTop: 2 }}>{entry.tier}</div>
+                    </div>
+                    <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: tc, letterSpacing: "-0.01em" }}>{entry.score}</div>
+                  </div>
+                );
+              })}
+
+              {/* User's rank below top 10 */}
+              {compete && lbUserRank && lbUserRank > 10 && (
+                <>
+                  <div style={{ padding: "8px 20px", textAlign: "center", color: C.gray2, fontSize: 11, fontFamily: "'Josefin Sans',sans-serif", letterSpacing: "0.05em" }}>· · ·</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", background: "rgba(255,255,255,0.04)", borderTop: `1px solid ${C.border}` }}>
+                    <div style={{ fontSize: 13, minWidth: 28, textAlign: "center", fontFamily: "'Josefin Sans',sans-serif", fontWeight: 700, color: C.gray1 }}>#{lbUserRank}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, color: C.white, fontFamily: "'Josefin Sans',sans-serif", fontWeight: 700 }}>{profileForm.nickname || profileForm.firstName || "Moi"}</div>
+                      <div style={{ fontSize: 9, color: TIER_COLORS[myTier], fontFamily: "'Josefin Sans',sans-serif", textTransform: "uppercase", letterSpacing: "0.14em", marginTop: 2 }}>{myTier}</div>
+                    </div>
+                    <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: TIER_COLORS[myTier] }}>{myScore}</div>
+                  </div>
+                  <div style={{ padding: "12px 20px 16px", textAlign: "center" }}>
+                    <div style={{ fontSize: 12, color: C.gray1, fontFamily: "'Josefin Sans',sans-serif", lineHeight: 1.5 }}>
+                      Vous êtes <span style={{ color: C.white, fontWeight: 600 }}>#{lbUserRank}</span> dans le classement global. Continuez à progresser pour intégrer le Top 10 !
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  })();
+
   const getContent = (desktop) => {
-    if (view === "propfirm")  return selectedPf ? accountDetailContent(selectedPf, desktop) : propfirmContent;
-    if (view === "add")       return addTradeContent;
-    if (view === "history")   return historyContent;
-    if (view === "trades")    return tradesContent;
-    if (view === "strategy")  return strategyContent;
-    if (view === "ai")        return aiContent;
-    if (view === "profil")    return profileContent;
-    if (view === "settings")  return settingsContent;
+    if (view === "propfirm")    return selectedPf ? accountDetailContent(selectedPf, desktop) : propfirmContent;
+    if (view === "add")         return addTradeContent;
+    if (view === "history")     return historyContent;
+    if (view === "trades")      return tradesContent;
+    if (view === "strategy")    return strategyContent;
+    if (view === "ai")          return aiContent;
+    if (view === "profil")      return profileContent;
+    if (view === "settings")    return settingsContent;
+    if (view === "classement")  return classementContent;
     return null;
   };
 
@@ -4489,7 +4735,7 @@ ${recentTrades}`;
             <>
               <div onClick={closeMenu} style={{position:"fixed",inset:0,zIndex:298}}/>
               <div style={{position:"fixed",top:70,right:16,zIndex:299,animation:`${menuClosing?"slideToRight":"slideFromRight"} 0.24s cubic-bezier(.4,0,.2,1)`,display:"flex",flexDirection:"column",gap:6,background:"rgba(14,14,14,0.96)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:20,padding:"10px",boxShadow:"0 16px 48px rgba(0,0,0,0.35)",border:"1px solid rgba(255,255,255,0.07)",minWidth:160}}>
-                {[{k:"trades",l:"Historique",i:"☰"},{k:"history",l:"Statistiques",i:"≡"},{k:"strategy",l:"Plan",i:"◈"},{k:"profil",l:"Profil",i:"◐"},{k:"settings",l:"Paramètres",i:"◎"}].map(item=>(
+                {[{k:"trades",l:"Historique",i:"☰"},{k:"history",l:"Statistiques",i:"≡"},{k:"strategy",l:"Plan",i:"◈"},{k:"classement",l:"Classement",i:"⬡"},{k:"profil",l:"Profil",i:"◐"},{k:"settings",l:"Paramètres",i:"◎"}].map(item=>(
                   <button key={item.k} onClick={()=>{setView(item.k);setShowMenu(false);}} style={{display:"flex",alignItems:"center",padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent",transition:"background 0.15s"}}>
                     <span style={{fontSize:13,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.06em",color:"rgba(255,255,255,0.7)"}}>{item.l}</span>
                   </button>
@@ -4637,7 +4883,7 @@ ${recentTrades}`;
               <div>
                 <div style={{ fontSize:11, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", marginBottom:2, fontFamily:"'Josefin Sans',sans-serif" }}>{FULL_NAV.find(n => n.key === view)?.label}</div>
                 <div style={{ fontFamily:"'Josefin Sans',sans-serif", fontSize:26, fontWeight:700, color:C.white, letterSpacing:"-0.025em" }}>
-                  {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Statistiques" : view === "trades" ? "Historique" : view === "strategy" ? "Plan de Trading" : view === "profil" ? "Profil" : view === "tools" ? "Outils" : "Analyse IA"}
+                  {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Statistiques" : view === "trades" ? "Historique" : view === "strategy" ? "Plan de Trading" : view === "classement" ? "Classement" : view === "profil" ? "Profil" : view === "tools" ? "Outils" : "Analyse IA"}
                 </div>
               </div>
               <button onClick={()=>setDarkMode(d=>!d)} title={darkMode?"Mode clair":"Mode sombre"} style={{background:darkMode?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",border:`1px solid ${C.border}`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.gray1,flexShrink:0,transition:"all 0.2s",marginBottom:4}}>
