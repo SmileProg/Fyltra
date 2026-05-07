@@ -2021,6 +2021,77 @@ ${recentTrades}`;
     <div>
       <PageTitle sub="Classements" title="Statistiques" />
 
+      {/* ══════════════════ APERÇU JAUGES PROP FIRMS ══════════════════ */}
+      {propfirms.filter(p=>p.type==="propfirm"&&(!p.status||p.status==="active")).length>0&&(()=>{
+        const activePfs=propfirms.filter(p=>p.type==="propfirm"&&(!p.status||p.status==="active"));
+        return (
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:10}}>Équité des comptes</div>
+            <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4,marginRight:!isMobile?0:-16}}>
+              {activePfs.map(pf=>{
+                const cap=parseFloat(pf.capital)||0;
+                const target=parseFloat(pf.target)||0;
+                const maxLoss=parseFloat(pf.maxLoss)||0;
+                const pfTrades=trades.filter(t=>!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id));
+                const pnl=pfTrades.reduce((s,t)=>s+(t.pnl||0),0);
+                const peakPnl=(()=>{
+                  const dates=[...new Set(pfTrades.map(t=>t.date))].sort();
+                  let cum=0,pk=0;
+                  dates.forEach(d=>{cum+=pfTrades.filter(t=>t.date===d).reduce((s,t)=>s+(t.pnl||0),0);if(cum>pk)pk=cum;});
+                  return pk;
+                })();
+                const mll=maxLoss>0?(pf.trailingDD?cap+Math.max(0,peakPnl)-maxLoss:cap-maxLoss):null;
+                const tgt=target>0?cap+target:null;
+                const currentCap=cap+pnl;
+                const totalRange=(mll!==null&&tgt!==null)?tgt-mll:0;
+                const startPct=totalRange?(cap-mll)/totalRange*100:50;
+                const currentPct=totalRange?Math.min(100,Math.max(0,(currentCap-mll)/totalRange*100)):50;
+                const isProfit=pnl>=0;
+                const fillLeft=isProfit?startPct:currentPct;
+                const fillWidth=Math.abs(currentPct-startPct);
+                const alerts=getPfAlerts(pf);
+                const inDanger=alerts.some(a=>a.type==="danger");
+                return (
+                  <div
+                    key={pf.id}
+                    onClick={()=>{setSelectedPf(pf);setView("propfirm");}}
+                    style={{
+                      flexShrink:0,width:!isMobile?200:170,
+                      background:C.bg2,
+                      border:`1px solid ${inDanger?"rgba(192,57,43,0.3)":C.border}`,
+                      borderRadius:10,padding:"12px 14px",cursor:"pointer",
+                      boxShadow:"0 4px 20px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.06)",
+                      transition:"border 0.2s",
+                    }}
+                  >
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                      <div>
+                        <div style={{fontFamily:"'Barlow',sans-serif",fontWeight:600,fontSize:12,color:C.white,letterSpacing:"0.06em",lineHeight:1.2}}>{pf.firm||"Fond Propre"}</div>
+                        {pf.name&&<div style={{fontSize:9,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{pf.name}</div>}
+                      </div>
+                      <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,fontSize:13,color:isProfit?"#4ade80":"#f87171"}}>{pnl>=0?"+":""}{fmtMoney(pnl)}{currency}</div>
+                    </div>
+                    {totalRange>0&&(
+                      <div>
+                        <div style={{position:"relative",height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:6}}>
+                          <div style={{position:"absolute",left:fillLeft+"%",width:fillWidth+"%",height:"100%",borderRadius:2,background:isProfit?"rgba(74,222,128,0.7)":"rgba(229,100,100,0.7)",transition:"all 0.5s"}}/>
+                          <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",width:1.5,height:9,background:C.dim,borderRadius:1,top:-3}}/>
+                          <div style={{position:"absolute",left:currentPct+"%",transform:"translateX(-50%)",width:2.5,height:8,background:isProfit?"#4ade80":"#e05a5a",borderRadius:1,top:-2.5,transition:"left 0.5s",boxShadow:isProfit?"0 0 5px rgba(74,222,128,0.7)":"0 0 5px rgba(229,100,100,0.7)"}}/>
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between"}}>
+                          <div style={{fontSize:8,color:"rgba(229,100,100,0.6)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.08em",textTransform:"uppercase"}}>MLL</div>
+                          <div style={{fontSize:8,color:"rgba(74,222,128,0.6)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.08em",textTransform:"uppercase"}}>TARGET</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ══════════════════ ANALYTICS AVANCÉS ══════════════════ */}
       {trades.length >= 3 && (() => {
         const isDark = C.bg === "#0f0f0f";
