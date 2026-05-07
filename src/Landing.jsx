@@ -646,319 +646,171 @@ function ZoomParallaxFeatures({ C }) {
   );
 }
 
-/* ─── ScrollCards ────────────────────────────────────────────────── */
+/* ─── Gallery4 (carousel screenshots) ───────────────────────────── */
 function ScrollCards({ C }) {
-  const containerRef = useRef();
-  const cardRefs    = useRef([]);
-  const overlayRefs = useRef([]);
+  const [current, setCurrent] = useState(0);
+  const dragStart = useRef(null);
 
-  const N = 5;
+  const GOLD     = "#e8cda9";
+  const GOLDDIM  = "rgba(232,205,169,0.18)";
 
-  useEffect(() => {
-    let pending = false;
+  /* card width: responsive */
+  const cardW = typeof window !== "undefined" ? Math.min(360, window.innerWidth * 0.8) : 360;
+  const GAP   = 20;
 
-    const update = () => {
-      pending = false;
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const scrollable = containerRef.current.offsetHeight - window.innerHeight;
-      const prog = Math.max(0, Math.min(1, -rect.top / scrollable));
-
-      const lps = [
-        1,
-        ...Array.from({ length: N - 1 }, (_, i) => {
-          const s = i / (N - 1), en = (i + 1) / (N - 1);
-          const raw = Math.max(0, Math.min(1, (prog - s) / (en - s)));
-          return raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
-        }),
-      ];
-
-      lps.forEach((lp, i) => {
-        const el = cardRefs.current[i];
-        if (!el) return;
-        const onTop   = lps.slice(i + 1).reduce((sum, v) => sum + v, 0);
-        const entryTY = (1 - lp) * 110;
-        const stackTY = -onTop * 20;
-        const scale   = Math.max(0.84, 1 - onTop * 0.036);
-        el.style.transform = `translateY(calc(${entryTY}vh + ${stackTY}px)) scale(${scale})`;
-        const ov = overlayRefs.current[i];
-        if (ov) ov.style.background = `rgba(0,0,0,${Math.min(0.5, onTop * 0.14).toFixed(3)})`;
-      });
-    };
-
-    const onScroll = () => { if (!pending) { pending = true; requestAnimationFrame(update); } };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    update();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const SBG  = "#0a0a0c";
-  const SBG2 = "#141418";
-  const SBDR = "rgba(255,255,255,0.07)";
-  const STXT = "#f0ede8";
-  const SDIM = "rgba(240,237,232,0.38)";
-  const SACC = "#e8cda9";
-  const SGRN = "#4ade80";
-  const SRED = "#f87171";
-
-  /* Pill toggle shared style — matches real app exactly */
-  const pillOuter = {
-    background:"linear-gradient(180deg,rgba(60,60,60,0.97) 0%,rgba(18,18,18,0.99) 55%,rgba(8,8,8,1) 100%)",
-    borderRadius:100, padding:"5px", display:"flex", flexDirection:"row",
-    boxShadow:"0 6px 20px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.13),inset 0 1px 0 rgba(255,255,255,0.32),inset 0 -2px 0 rgba(0,0,0,0.8)",
-  };
-  const pillActive = {
-    flex:1, padding:"11px 20px", borderRadius:100, textAlign:"center",
-    background:"radial-gradient(ellipse at 50% 35%,rgba(252,252,252,0.92) 0%,rgba(215,215,215,0.85) 55%,rgba(200,200,200,0.75) 100%)",
-    boxShadow:"0 0 24px 6px rgba(255,255,255,0.18),0 4px 14px rgba(0,0,0,0.4)",
-  };
-  const pillInactive = {
-    flex:1, padding:"11px 20px", borderRadius:100, textAlign:"center",
-    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-  };
-
-  const cards = [
-    /* ── Card 0 : SWING / DAY (appears immediately, no entry animation) ── */
+  const items = [
     {
-      tag: "Swing & Day Trading",
-      title: "Chaque setup méticuleusement documenté.",
-      desc: "Sessions, émotions, instruments — tout capturé en quelques secondes.",
-      accent: SGRN, accentRgb: "74,222,128",
-      content: (
-        <div style={{ padding:"18px 22px 100px", height:"100%", overflowY:"hidden", fontFamily:"'Josefin Sans','Outfit',sans-serif" }}>
-          <div style={{ display:"flex", gap:6, marginBottom:18 }}>
-            {["#ff5f57","#febc2e","#28c840"].map(c=><div key={c} style={{ width:9,height:9,borderRadius:"50%",background:c }}/>)}
-          </div>
-          {/* Mode toggle: SWING/DAY active */}
-          <div style={{ ...pillOuter, marginBottom:16 }}>
-            <div style={pillActive}>
-              <span style={{ fontSize:12,fontWeight:700,color:"#111",letterSpacing:"0.1em",textTransform:"uppercase" }}>SWING / DAY</span>
-            </div>
-            <div style={pillInactive}>
-              <span style={{ fontSize:11,color:"rgba(255,255,255,0.32)",letterSpacing:"0.1em",textTransform:"uppercase" }}>SCALPING</span>
-              <span style={{ fontSize:8,padding:"2px 8px",borderRadius:5,border:"1px solid rgba(255,255,255,0.18)",color:"rgba(255,255,255,0.28)",letterSpacing:"0.08em",textTransform:"uppercase" }}>SAISIE RAPIDE</span>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    /* ── Card 1 : SCALPING ── */
-    {
-      tag: "Scalping · Saisie rapide",
-      title: "Vitesse d'exécution maximale.",
-      desc: "Interface épurée, un clic suffit — aucune friction entre l'idée et l'ordre.",
-      accent: SACC, accentRgb: "232,205,169",
-      content: (
-        <div style={{ padding:"18px 22px 100px", height:"100%", overflowY:"hidden", fontFamily:"'Josefin Sans','Outfit',sans-serif" }}>
-          <div style={{ display:"flex", gap:6, marginBottom:18 }}>
-            {["#ff5f57","#febc2e","#28c840"].map(c=><div key={c} style={{ width:9,height:9,borderRadius:"50%",background:c }}/>)}
-          </div>
-          {/* Quick stats */}
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:9,marginBottom:9 }}>
-            {[["Instrument",<span style={{ fontSize:18,fontWeight:700,color:SACC,fontFamily:"'JetBrains Mono',monospace" }}>NQ</span>],["P&L session",<span style={{ fontSize:18,fontWeight:700,color:SGRN,fontFamily:"'JetBrains Mono',monospace" }}>+356€</span>],["Win rate",<span style={{ fontSize:18,fontWeight:700,color:STXT,fontFamily:"'JetBrains Mono',monospace" }}>72%</span>]].map(([l,v],k)=>(
-              <div key={k} style={{ background:SBG2,border:`1px solid ${SBDR}`,borderRadius:10,padding:"10px 13px" }}>
-                <div style={{ fontSize:7,color:SDIM,letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:5 }}>{l}</div>
-                {v}
-              </div>
-            ))}
-          </div>
-          {/* Direction buttons */}
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:9 }}>
-            <div style={{ borderRadius:10,padding:"14px",background:"rgba(74,222,128,0.1)",border:"1px solid rgba(74,222,128,0.2)",textAlign:"center" }}>
-              <div style={{ fontSize:12,fontWeight:700,color:SGRN,letterSpacing:"0.12em",textTransform:"uppercase" }}>▲ LONG</div>
-            </div>
-            <div style={{ borderRadius:10,padding:"14px",background:"rgba(248,113,113,0.07)",border:"1px solid rgba(248,113,113,0.14)",textAlign:"center" }}>
-              <div style={{ fontSize:12,fontWeight:700,color:SRED,letterSpacing:"0.12em",textTransform:"uppercase" }}>▼ SHORT</div>
-            </div>
-          </div>
-          {/* Scalps récents */}
-          <div style={{ background:SBG2,border:`1px solid ${SBDR}`,borderRadius:10,padding:"11px 13px" }}>
-            <div style={{ fontSize:7,color:SDIM,letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8 }}>Scalps récents</div>
-            {[
-              {inst:"NQ",dir:"LONG", pnl:"+124€",time:"09:32"},
-              {inst:"NQ",dir:"SHORT",pnl:"+78€", time:"09:28"},
-              {inst:"ES",dir:"LONG", pnl:"-42€", time:"09:19"},
-              {inst:"NQ",dir:"LONG", pnl:"+198€",time:"09:11"},
-            ].map((t,i)=>(
-              <div key={i} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<3?`1px solid ${SBDR}`:"none" }}>
-                <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-                  <div style={{ width:5,height:5,borderRadius:"50%",flexShrink:0,background:t.pnl.startsWith("+")?SGRN:SRED }}/>
-                  <span style={{ fontSize:10,color:STXT,fontWeight:600,letterSpacing:"0.04em" }}>{t.inst}</span>
-                  <span style={{ fontSize:9,color:SDIM,letterSpacing:"0.06em" }}>{t.dir}</span>
-                </div>
-                <div style={{ display:"flex",alignItems:"center",gap:14 }}>
-                  <span style={{ fontSize:9,color:SDIM,fontFamily:"'JetBrains Mono',monospace" }}>{t.time}</span>
-                  <span style={{ fontSize:11,fontWeight:700,color:t.pnl.startsWith("+")?SGRN:SRED,fontFamily:"'JetBrains Mono',monospace" }}>{t.pnl}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    /* ── Card 2 : VARIABLE / FIXE ── */
-    {
-      tag: "Résultat variable ou fixe",
-      title: "Vous choisissez comment mesurer vos trades.",
-      desc: "Résultat variable (prix réel) ou valeurs fixes (WIN/LOSS/RR) prédéfinies.",
-      accent: SGRN, accentRgb: "74,222,128",
-      content: (
-        <div style={{ padding:"18px 22px 100px", height:"100%", overflowY:"hidden", fontFamily:"'Josefin Sans','Outfit',sans-serif" }}>
-          <div style={{ display:"flex", gap:6, marginBottom:18 }}>
-            {["#ff5f57","#febc2e","#28c840"].map(c=><div key={c} style={{ width:9,height:9,borderRadius:"50%",background:c }}/>)}
-          </div>
-          {/* VARIABLE / FIXE toggle: FIXE active */}
-          <div style={{ ...pillOuter, marginBottom:16 }}>
-            <div style={pillInactive}>
-              <span style={{ fontSize:12,color:"rgba(255,255,255,0.32)",letterSpacing:"0.1em",textTransform:"uppercase" }}>VARIABLE</span>
-            </div>
-            <div style={pillActive}>
-              <span style={{ fontSize:12,fontWeight:700,color:"#111",letterSpacing:"0.1em",textTransform:"uppercase" }}>FIXE</span>
-            </div>
-          </div>
-          {/* Valeurs fixes appliquées */}
-          <div style={{ background:SBG2,border:`1px solid ${SBDR}`,borderRadius:10,padding:"14px 16px" }}>
-            <div style={{ fontSize:7,color:SDIM,letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:10 }}>Valeurs fixes appliquées</div>
-            <div style={{ display:"flex",alignItems:"center",gap:20,flexWrap:"wrap" }}>
-              <span style={{ fontSize:13,color:SDIM }}>WIN : <strong style={{ color:SGRN }}>+200€</strong></span>
-              <span style={{ fontSize:13,color:SDIM }}>LOSS : <strong style={{ color:SRED }}>-50€</strong></span>
-              <span style={{ fontSize:13,color:SDIM }}>R/R : <strong style={{ color:STXT }}>4:1</strong></span>
-              <span style={{ fontSize:13,color:SDIM }}>Taille : <strong style={{ color:STXT }}>2 contrats</strong></span>
-            </div>
-          </div>
-        </div>
-      ),
+      id: "journal",
+      tag: "Journal de trading", tagRgb: "74,222,128",
+      title: "Chaque trade, documenté.",
+      desc: "Résultat, session, émotion, instrument. Tout est là, trié et filtrable en un clic.",
+      image: "/screenshots/journal.png",
     },
     {
-      tag: "IA Coach",
+      id: "dashboard",
+      tag: "Tableau de bord", tagRgb: "232,205,169",
+      title: "Votre performance en temps réel.",
+      desc: "P&L cumulé, win rate, facteur de profit, equity curve — votre santé trading d'un coup d'œil.",
+      image: "/screenshots/dashboard.png",
+    },
+    {
+      id: "ia",
+      tag: "IA Coach", tagRgb: "167,139,250",
       title: "Votre analyste personnel.",
       desc: "Patterns réels, règles actionnables — tirés directement de vos propres données.",
-      accent: "#a78bfa", accentRgb: "167,139,250",
-      content: (
-        <div style={{ padding:"18px 22px 100px", height:"100%", overflowY:"hidden", fontFamily:"'Outfit',sans-serif" }}>
-          <div style={{ display:"flex", gap:6, marginBottom:16 }}>
-            {["#ff5f57","#febc2e","#28c840"].map(c=><div key={c} style={{ width:9,height:9,borderRadius:"50%",background:c }}/>)}
-          </div>
-          <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:14,background:SBG2,border:`1px solid ${SBDR}`,borderRadius:10,padding:"10px 14px" }}>
-            <span style={{ fontSize:14,color:"#a78bfa" }}>◆</span>
-            <span style={{ fontSize:12,fontWeight:700,color:STXT }}>IA Coach · Analyse du mois</span>
-            <div style={{ marginLeft:"auto",padding:"3px 10px",background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.2)",borderRadius:20,fontSize:9,color:"#a78bfa" }}>50 trades</div>
-          </div>
-          {[
-            { emoji:"🔍", label:"PATTERNS DÉTECTÉS", color:"rgba(167,139,250,0.65)", body:"London: 68% WR vs NY: 41% WR → 1.6× plus efficace le matin. Évite le Vendredi (P&L: -$312 cumulé)." },
-            { emoji:"🏆", label:"EDGE CONFIRMÉ",     color:"rgba(232,205,169,0.65)", body:"NQ + London + Confiant → 75% WR · +$2 140 · 22 trades. C'est ta zone de performance optimale." },
-            { emoji:"📌", label:"3 RÈGLES POUR DEMAIN", color:"rgba(74,222,128,0.65)", body:"1. Ne trade pas le Vendredi. 2. Si Anxieux, passe ton tour (WR: 22%). 3. Coupe à 1:1 minimum." },
-            { emoji:"⚠️", label:"DANGER ZONE",       color:"rgba(248,113,113,0.65)", body:"Vendredi + NY + Anxieux → pire combo. P&L: -$487 · WR: 18%." },
-          ].map(block=>(
-            <div key={block.label} style={{ background:SBG2,border:`1px solid ${SBDR}`,borderRadius:10,padding:"10px 13px",marginBottom:8 }}>
-              <div style={{ display:"flex",alignItems:"center",gap:7,marginBottom:5 }}>
-                <span style={{ fontSize:11 }}>{block.emoji}</span>
-                <span style={{ fontSize:8,letterSpacing:"0.16em",textTransform:"uppercase",color:block.color,fontWeight:600 }}>{block.label}</span>
-              </div>
-              <p style={{ fontSize:11,color:SDIM,lineHeight:1.6,margin:0 }}>{block.body}</p>
-            </div>
-          ))}
-        </div>
-      ),
+      image: "/screenshots/ia.png",
     },
     {
-      tag: "Multi-comptes & Prop Firms",
+      id: "comptes",
+      tag: "Multi-comptes & Prop Firms", tagRgb: "232,205,169",
       title: "Tous vos comptes, une seule vue.",
-      desc: "Prop firms, comptes propres — chacun avec ses règles, drawdown max, et equity séparée.",
-      accent: SACC, accentRgb: "232,205,169",
-      content: (
-        <div style={{ padding:"18px 22px 100px", height:"100%", overflowY:"hidden", fontFamily:"'Outfit',sans-serif" }}>
-          <div style={{ display:"flex", gap:6, marginBottom:16 }}>
-            {["#ff5f57","#febc2e","#28c840"].map(c=><div key={c} style={{ width:9,height:9,borderRadius:"50%",background:c }}/>)}
-          </div>
-          <div style={{ marginBottom:14 }}>
-            <div style={{ fontSize:8,color:SDIM,letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:3 }}>Comptes actifs</div>
-            <div style={{ fontSize:14,fontWeight:700,color:STXT }}>4 comptes · $187 000 gérés</div>
-          </div>
-          {[
-            { name:"FTMO Challenge",  firm:"FTMO", size:"$100K", pnl:"+$4 217", pct:"+4.2%", dd:2.1, ddMax:10,  ok:true  },
-            { name:"MyForexFunds",    firm:"MFF",  size:"$50K",  pnl:"+$1 840", pct:"+3.7%", dd:1.4, ddMax:5,   ok:true  },
-            { name:"Compte propre",   firm:"Perso",size:"$12K",  pnl:"+$680",  pct:"+5.6%",  dd:0.9, ddMax:null,ok:true  },
-            { name:"E8 Funding",      firm:"E8",   size:"$25K",  pnl:"-$380",  pct:"-1.5%",  dd:1.5, ddMax:4,   ok:false },
-          ].map((acc,i)=>(
-            <div key={i} style={{ background:SBG2,border:`1px solid ${acc.ok?SBDR:"rgba(248,113,113,0.18)"}`,borderRadius:10,padding:"10px 13px",marginBottom:8 }}>
-              <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:acc.ddMax?5:0 }}>
-                <div>
-                  <div style={{ fontSize:11,fontWeight:600,color:STXT,lineHeight:1 }}>{acc.name}</div>
-                  <div style={{ fontSize:9,color:SDIM,marginTop:2 }}>{acc.firm} · {acc.size}</div>
-                </div>
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ fontSize:12,fontWeight:700,color:acc.ok?SGRN:SRED,fontFamily:"'JetBrains Mono',monospace" }}>{acc.pnl}</div>
-                  <div style={{ fontSize:9,color:acc.ok?"rgba(74,222,128,0.6)":"rgba(248,113,113,0.6)" }}>{acc.pct}</div>
-                </div>
-              </div>
-              {acc.ddMax && (
-                <div>
-                  <div style={{ display:"flex",justifyContent:"space-between",marginBottom:3 }}>
-                    <span style={{ fontSize:8,color:SDIM }}>Drawdown</span>
-                    <span style={{ fontSize:8,color:SDIM }}>{acc.dd}% / {acc.ddMax}%</span>
-                  </div>
-                  <div style={{ height:3,background:"rgba(255,255,255,0.06)",borderRadius:3 }}>
-                    <div style={{ width:`${(acc.dd/acc.ddMax)*100}%`,height:"100%",borderRadius:3,background:acc.ok?"rgba(74,222,128,0.7)":"rgba(248,113,113,0.7)" }}/>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ),
+      desc: "Prop firms, fonds propres — chacun avec ses règles, drawdown max et equity séparée.",
+      image: "/screenshots/comptes.png",
+    },
+    {
+      id: "stats",
+      tag: "Statistiques", tagRgb: "74,222,128",
+      title: "Vos données sans filtre.",
+      desc: "Win rate par session, P&L par émotion, profit factor par instrument. Brut et exploitable.",
+      image: "/screenshots/stats.png",
     },
   ];
 
-  return (
-    <div id="pour-tous-les-traders" ref={containerRef} style={{ height:`${N*100}vh`, position:"relative", background:C.bg }}>
-      <div style={{ position:"sticky", top:0, height:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", overflow:"hidden", background:C.bg }}>
-        <BGPattern variant="grid" mask="fade-edges" size={36} fill={C.patternFill} />
+  const goTo = i => setCurrent(Math.max(0, Math.min(items.length - 1, i)));
 
-        {/* section label */}
-        <div style={{ position:"absolute", top:"clamp(52px,6vh,80px)", left:0, right:0, textAlign:"center", zIndex:N+5, pointerEvents:"none" }}>
-          <div style={{ display:"inline-block", background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:100, padding:"5px 16px" }}>
+  const onPointerDown = e => { dragStart.current = e.clientX; };
+  const onPointerUp   = e => {
+    if (dragStart.current === null) return;
+    const d = e.clientX - dragStart.current;
+    if (d > 50) goTo(current - 1);
+    else if (d < -50) goTo(current + 1);
+    dragStart.current = null;
+  };
+
+  const ArrowBtn = ({ onClick, disabled, dir }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={dir}
+      style={{
+        width:40, height:40, borderRadius:"50%", outline:"none",
+        background: disabled ? "transparent" : "rgba(255,255,255,0.04)",
+        border: `1px solid ${disabled ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.14)"}`,
+        color: disabled ? "rgba(255,255,255,0.18)" : C.text,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        cursor: disabled ? "default" : "pointer",
+        fontSize:18, lineHeight:1, transition:"all 0.2s",
+      }}
+    >{dir === "prev" ? "←" : "→"}</button>
+  );
+
+  return (
+    <section id="pour-tous-les-traders" style={{ padding:"100px 0 80px", background:C.bg, overflow:"hidden" }}>
+      {/* ── Header ── */}
+      <div style={{ padding:"0 clamp(24px,5vw,88px)", marginBottom:48, display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:24 }}>
+        <div style={{ maxWidth:560 }}>
+          <div style={{ display:"inline-block", background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:100, padding:"5px 16px", marginBottom:18 }}>
             <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDim, letterSpacing:"0.2em", textTransform:"uppercase" }}>Pour tous les traders</span>
           </div>
+          <h2 style={{ fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:"clamp(26px,3.5vw,46px)", color:C.text, letterSpacing:"-0.03em", lineHeight:1.1, margin:"0 0 14px" }}>
+            Tout ce dont vous avez besoin,{" "}
+            <span style={{ color:GOLD }}>au même endroit.</span>
+          </h2>
+          <p style={{ fontSize:15, color:C.textDim, lineHeight:1.65, margin:0 }}>
+            Journal, statistiques, IA Coach, gestion de prop firms — une seule app pour progresser vraiment.
+          </p>
         </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <ArrowBtn dir="prev" onClick={() => goTo(current - 1)} disabled={current === 0} />
+          <ArrowBtn dir="next" onClick={() => goTo(current + 1)} disabled={current === items.length - 1} />
+        </div>
+      </div>
 
-        {cards.map((card, i) => (
+      {/* ── Carousel ── */}
+      <div style={{ overflow:"hidden", paddingLeft:"clamp(24px,5vw,88px)" }}>
+        <div
+          style={{
+            display:"flex", gap:GAP,
+            transform:`translateX(-${current * (cardW + GAP)}px)`,
+            transition:"transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)",
+            cursor:"grab", userSelect:"none",
+          }}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+        >
+          {items.map((item, i) => (
+            <div
+              key={item.id}
+              onClick={() => goTo(i)}
+              style={{
+                flexShrink:0, width:cardW, height:Math.round(cardW * 1.38),
+                borderRadius:16, overflow:"hidden", position:"relative",
+                cursor: i === current ? "grab" : "pointer",
+                transition:"opacity 0.4s",
+                opacity: Math.abs(i - current) > 2 ? 0 : 1 - Math.abs(i - current) * 0.1,
+              }}
+            >
+              {/* Placeholder bg (shown while image loads or if missing) */}
+              <div style={{ position:"absolute", inset:0, background:"#0d0d10" }} />
+              {/* Screenshot */}
+              <img
+                src={item.image}
+                alt={item.title}
+                draggable={false}
+                style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"top", display:"block" }}
+              />
+              {/* Gradient */}
+              <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top, rgba(4,4,6,0.97) 28%, rgba(4,4,6,0.3) 60%, transparent)", pointerEvents:"none" }} />
+              {/* Text */}
+              <div style={{ position:"absolute", bottom:0, left:0, right:0, padding:"28px 24px", pointerEvents:"none" }}>
+                <div style={{ display:"inline-flex", alignItems:"center", background:`rgba(${item.tagRgb},0.1)`, border:`1px solid rgba(${item.tagRgb},0.25)`, borderRadius:100, padding:"3px 12px", marginBottom:10 }}>
+                  <span style={{ fontSize:9, letterSpacing:"0.14em", textTransform:"uppercase", color:`rgb(${item.tagRgb})`, fontFamily:"'JetBrains Mono',monospace" }}>{item.tag}</span>
+                </div>
+                <h3 style={{ fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:"clamp(16px,2vw,22px)", color:"#fff", letterSpacing:"-0.02em", margin:"0 0 8px", lineHeight:1.25 }}>{item.title}</h3>
+                <p style={{ fontSize:12, color:"rgba(255,255,255,0.48)", lineHeight:1.6, margin:0, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Dots ── */}
+      <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:7, marginTop:36 }}>
+        {items.map((_, i) => (
           <div
             key={i}
-            ref={el => { cardRefs.current[i] = el; }}
-            className="l-scroll-card"
+            onClick={() => goTo(i)}
             style={{
-              position:"absolute",
-              width:"min(88vw, 960px)",
-              height:"52vh",
-              zIndex: i + 1,
-              /* initial state: card 0 visible, others below viewport */
-              transform: i === 0 ? "translateY(0) scale(1)" : "translateY(110vh) scale(1)",
-              transformOrigin:"center center",
-              willChange:"transform",
-              borderRadius:20, overflow:"hidden",
-              background:SBG,
-              boxShadow:"0 40px 100px rgba(0,0,0,0.82),0 0 0 1px rgba(255,255,255,0.07),inset 0 1px 0 rgba(255,255,255,0.06)",
+              width: i === current ? 22 : 6,
+              height:6, borderRadius:3, cursor:"pointer",
+              background: i === current ? GOLD : GOLDDIM,
+              transition:"all 0.3s ease",
             }}
-          >
-            <div style={{ position:"absolute", inset:0, overflow:"hidden" }}>
-              {card.content}
-            </div>
-            <div
-              ref={el => { overlayRefs.current[i] = el; }}
-              style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0)", zIndex:3, pointerEvents:"none" }}
-            />
-            <div style={{ position:"absolute", bottom:0, left:0, right:0, padding:"70px 32px 28px", background:"linear-gradient(to top,rgba(5,5,7,0.98) 55%,transparent)", zIndex:4, pointerEvents:"none" }}>
-              <div style={{ display:"inline-flex", alignItems:"center", background:`rgba(${card.accentRgb},0.1)`, border:`1px solid rgba(${card.accentRgb},0.22)`, borderRadius:100, padding:"3px 12px", marginBottom:10 }}>
-                <span style={{ fontSize:10, letterSpacing:"0.14em", textTransform:"uppercase", color:card.accent, fontFamily:"'JetBrains Mono',monospace" }}>{card.tag}</span>
-              </div>
-              <h3 style={{ fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:"clamp(17px,2.2vw,26px)", color:"#ffffff", letterSpacing:"-0.02em", marginBottom:8, lineHeight:1.2 }}>{card.title}</h3>
-              <p style={{ fontSize:13, color:"rgba(255,255,255,0.42)", lineHeight:1.55, maxWidth:580, margin:0 }}>{card.desc}</p>
-            </div>
-          </div>
+          />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
