@@ -1570,7 +1570,7 @@ export default function App() {
   const wins      = filtered.filter(t => t.result === "WIN").length;
   const pnlSum    = filtered.reduce((s, t) => s + (t.pnl || 0), 0);
   const winRate   = total ? Math.round((wins / total) * 100) : 0;
-  const avgRR     = total ? (filtered.reduce((s, t) => s + (parseFloat(t.rr) || 0), 0) / total).toFixed(1) : "—";
+  const avgRR     = (() => { const rt=filtered.filter(t=>parseFloat(t.rr)>0); return rt.length ? (rt.reduce((s,t)=>s+parseFloat(t.rr),0)/rt.length).toFixed(1) : "—"; })();
   const sessionStats = SESSIONS.map(s => { const st = filtered.filter(t => t.session === s); const wr = st.length ? Math.round((st.filter(t => t.result === "WIN").length / st.length) * 100) : 0; return { name:s, count:st.length, wr, pnl:st.reduce((a, t) => a + (t.pnl || 0), 0) }; }).filter(s => s.count > 0);
 
   // ── Discipline Score (0-100) ──
@@ -2127,15 +2127,17 @@ ${recentTrades}`;
         const lbl = {fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600};
         const ff = "'Josefin Sans',sans-serif";
 
-        // Equity & Drawdown
+        // Equity & Drawdown — si jamais positif, référence = capital
         let cum=0,peak=0,maxDD=0;
         sorted.forEach(t=>{
           cum+=t.pnl||0;
           if(cum>peak) peak=cum;
-          const dd=peak>0?(peak-cum)/peak*100:0;
+          const ref=peak>0?peak:cap;
+          const dd=ref>0?Math.max(0,(ref-cum)/ref*100):0;
           if(dd>maxDD) maxDD=dd;
         });
-        const currentDD = peak>0?(peak-cum)/peak*100:0;
+        const refNow=peak>0?peak:cap;
+        const currentDD=refNow>0?Math.max(0,(refNow-cum)/refNow*100):0;
 
         // Win/Loss
         const wins=sorted.filter(t=>t.result==="WIN");
@@ -3303,7 +3305,7 @@ ${recentTrades}`;
     const allAvgWin = allWins ? acctTrades.filter(t=>t.result==="WIN").reduce((s,t)=>s+(t.pnl||0),0)/allWins : 0;
     const allAvgLoss = allLosses ? Math.abs(acctTrades.filter(t=>t.result==="LOSS").reduce((s,t)=>s+(t.pnl||0),0)/allLosses) : 0;
     const profitFactor = allAvgLoss>0 ? (allAvgWin*allWins/(allAvgLoss*allLosses)).toFixed(2) : "∞";
-    const allAvgRR = allTotal ? (acctTrades.reduce((s,t)=>s+(parseFloat(t.rr)||0),0)/allTotal).toFixed(1) : "—";
+    const allAvgRR = (() => { const rt=acctTrades.filter(t=>parseFloat(t.rr)>0); return rt.length ? (rt.reduce((s,t)=>s+parseFloat(t.rr),0)/rt.length).toFixed(1) : "—"; })();
     const bestDay = (() => { const byD={}; acctTrades.forEach(t=>{byD[t.date]=(byD[t.date]||0)+(t.pnl||0);}); return Math.max(0,...Object.values(byD)); })();
     const worstDay = (() => { const byD={}; acctTrades.forEach(t=>{byD[t.date]=(byD[t.date]||0)+(t.pnl||0);}); return Math.min(0,...Object.values(byD)); })();
 
