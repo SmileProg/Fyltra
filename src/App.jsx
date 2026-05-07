@@ -2020,8 +2020,8 @@ ${recentTrades}`;
       <PageTitle sub="Classements" title="Statistiques" />
 
       {/* ══════════════════ COURBES D'ÉQUITÉ PROP FIRMS ══════════════════ */}
-      {propfirms.filter(p=>p.type==="propfirm"&&(!p.status||p.status==="active")).length>0&&(()=>{
-        const activePfs=propfirms.filter(p=>p.type==="propfirm"&&(!p.status||p.status==="active"));
+      {propfirms.filter(p=>!p.status||p.status==="active").length>0&&(()=>{
+        const activePfs=propfirms.filter(p=>!p.status||p.status==="active");
         return (
           <div style={{marginBottom:24}}>
             <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:10}}>Courbes d'équité</div>
@@ -3122,6 +3122,27 @@ ${recentTrades}`;
                       </div>
                     );
                   })()}
+                </div>
+              );
+            })()}
+
+            {editingPf?.id !== pf.id && (()=>{
+              const pfT=trades.filter(t=>!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id));
+              if(pfT.length<2) return null;
+              const sorted=[...pfT].sort((a,b)=>a.date.localeCompare(b.date));
+              let cum=0;
+              const cd=[{v:0},...sorted.map(t=>{cum+=t.pnl||0;return{v:parseFloat(cum.toFixed(2))};})];
+              const isP=pnl>=0;
+              return (
+                <div style={{marginTop:10,marginBottom:4}}>
+                  <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:4}}>Courbe d'équité</div>
+                  <ResponsiveContainer width="100%" height={68}>
+                    <LineChart data={cd} margin={{top:4,right:4,left:0,bottom:0}}>
+                      <ReferenceLine y={0} stroke="rgba(255,255,255,0.1)" strokeWidth={1}/>
+                      <Tooltip contentStyle={{background:"rgba(14,14,14,0.95)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,fontSize:9,color:"#fff",padding:"4px 8px"}} formatter={v=>[`${v>=0?"+":""}${fmtMoney(v)}${currency}`,""]} labelFormatter={()=>""}/>
+                      <Line type="monotone" dataKey="v" stroke={isP?"#4caf6e":"#e05a5a"} strokeWidth={1.5} dot={false} activeDot={{r:3,strokeWidth:0,fill:isP?"#4caf6e":"#e05a5a"}}/>
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               );
             })()}
