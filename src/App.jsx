@@ -23,6 +23,7 @@ const KEYS = { trades:"fyltra_trades_v1", instruments:"fyltra_instr_v1", strateg
 const NAV = [
   { key:"propfirm",  icon:"◉",  label:"Compte" },
   { key:"add",       icon:"＋", label:"Trade" },
+  { key:"trades",    icon:"☰",  label:"Historique" },
   { key:"ai",        icon:"◆",  label:"IA" },
 ];
 
@@ -219,6 +220,7 @@ function PillNav({ view, setView, darkMode }) {
 const FULL_NAV = [
   { key:"propfirm",  icon:"◉",  label:"Compte" },
   { key:"add",       icon:"＋", label:"Trade" },
+  { key:"trades",    icon:"☰",  label:"Historique" },
   { key:"history",   icon:"≡",  label:"Statistiques" },
   { key:"strategy",  icon:"◈",  label:"Plan" },
   { key:"ai",        icon:"◆",  label:"IA" },
@@ -268,7 +270,7 @@ function Sidebar({ view, setView, darkMode, onSignOut, nickname, firstName }) {
       {/* Main nav pill */}
       <div style={{ padding:"16px 12px 10px", flex:1 }}>
         <div style={pillStyle}>
-          {[{key:"propfirm",icon:"◉",label:"Compte"},{key:"add",icon:"＋",label:"Trade"},{key:"history",icon:"≡",label:"Statistiques"},{key:"strategy",icon:"◈",label:"Plan"}].map(item => <NavBtn key={item.key} item={item} />)}
+          {[{key:"propfirm",icon:"◉",label:"Compte"},{key:"add",icon:"＋",label:"Trade"},{key:"trades",icon:"☰",label:"Historique"},{key:"history",icon:"≡",label:"Statistiques"},{key:"strategy",icon:"◈",label:"Plan"}].map(item => <NavBtn key={item.key} item={item} />)}
         </div>
       </div>
 
@@ -1453,10 +1455,14 @@ export default function App() {
   // Pre-fill fixed values when switching to add view
   useEffect(() => {
     if (view === "add") {
+      const nowTime = new Date().toTimeString().slice(0, 5);
+      const nowDate = new Date();
+      if (dayEndTime && nowTime >= dayEndTime) nowDate.setDate(nowDate.getDate() + 1);
+      const effectiveDate = nowDate.toISOString().split("T")[0];
       setPnlRaw("");
-      setForm(f => ({ ...f, entry:"", exit:"", rr:"", size:"", notes:"", accountIds: selectedPf ? [selectedPf.id] : [], strategyId:null }));
+      setForm(f => ({ ...f, date: effectiveDate, time: nowTime, entry:"", exit:"", rr:"", size:"", notes:"", accountIds: selectedPf ? [selectedPf.id] : [], strategyId:null }));
     }
-  }, [view]);
+  }, [view, dayEndTime]);
 
   const handleInstrument = v => {
     if (v === "Autre") { setShowCustom(true); set("instrument", "Autre"); }
@@ -1532,7 +1538,7 @@ export default function App() {
 
   // Both stats and calendar filter by selected month
   const filterByPeriod = list => list.filter(t => {
-    const d = new Date(t.date + "T12:00:00");
+    const d = new Date(tradeDay(t) + "T12:00:00");
     return d.getFullYear() === calYear && d.getMonth() === calMonth;
   });
   const calFiltered = filterByPeriod(trades);
@@ -1797,8 +1803,8 @@ ${recentTrades}`;
       </div>
 
       <div style={{display:"flex",gap:8}}>
-        <Field label="Date"><DatePicker value={form.date} onChange={v => set("date", v)} /></Field>
-        <Field label="Heure"><TimePicker value={form.time||""} onChange={v => set("time", v)} /></Field>
+        <div style={{flex:1}}><Field label="Date"><DatePicker value={form.date} onChange={v => set("date", v)} /></Field></div>
+        <div style={{flex:1}}><Field label="Heure"><TimePicker value={form.time||""} onChange={v => set("time", v)} /></Field></div>
       </div>
       <Field label="Instrument">
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
@@ -2329,6 +2335,14 @@ ${recentTrades}`;
           </div>
         );
       })()}
+      <div style={{textAlign:"center",padding:"8px 0 0"}}>
+        <button onClick={()=>setView("trades")} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 24px",color:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>☰ Voir l'historique des trades →</button>
+      </div>
+    </div>
+  );
+
+  const tradesContent = (
+    <div>
       <PageTitle sub="Historique" title="Mes Trades" />
       {trades.length === 0 ? (
         <div style={{ textAlign:"center", padding:"60px 0" }}>
@@ -4071,9 +4085,9 @@ ${recentTrades}`;
           </button>
         </div>
         {dayEndTime && (
-          <div style={{display:"flex",alignItems:"center",gap:10,marginTop:12}}>
-            <span style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>Heure de fermeture des marchés :</span>
-            <input type="time" value={dayEndTime} onChange={e=>setDayEndTime(e.target.value)} style={{background:C.bg3,border:`1px solid ${C.border}`,borderRadius:7,padding:"7px 10px",color:C.white,fontFamily:"'Josefin Sans',sans-serif",fontSize:13,outline:"none"}}/>
+          <div style={{marginTop:12}}>
+            <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Heure de fermeture des marchés</div>
+            <TimePicker value={dayEndTime} onChange={setDayEndTime} />
           </div>
         )}
       </div>
@@ -4142,6 +4156,7 @@ ${recentTrades}`;
     if (view === "propfirm")  return selectedPf ? accountDetailContent(selectedPf, desktop) : propfirmContent;
     if (view === "add")       return addTradeContent;
     if (view === "history")   return historyContent;
+    if (view === "trades")    return tradesContent;
     if (view === "strategy")  return strategyContent;
     if (view === "ai")        return aiContent;
     if (view === "profil")    return profileContent;
@@ -4198,7 +4213,7 @@ ${recentTrades}`;
             <>
               <div onClick={closeMenu} style={{position:"fixed",inset:0,zIndex:298}}/>
               <div style={{position:"fixed",top:70,right:16,zIndex:299,animation:`${menuClosing?"slideToRight":"slideFromRight"} 0.24s cubic-bezier(.4,0,.2,1)`,display:"flex",flexDirection:"column",gap:6,background:"rgba(14,14,14,0.96)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:20,padding:"10px",boxShadow:"0 16px 48px rgba(0,0,0,0.35)",border:"1px solid rgba(255,255,255,0.07)",minWidth:160}}>
-                {[{k:"history",l:"Statistiques",i:"≡"},{k:"strategy",l:"Plan",i:"◈"},{k:"profil",l:"Profil",i:"◐"},{k:"settings",l:"Paramètres",i:"◎"}].map(item=>(
+                {[{k:"trades",l:"Historique",i:"☰"},{k:"history",l:"Statistiques",i:"≡"},{k:"strategy",l:"Plan",i:"◈"},{k:"profil",l:"Profil",i:"◐"},{k:"settings",l:"Paramètres",i:"◎"}].map(item=>(
                   <button key={item.k} onClick={()=>{setView(item.k);setShowMenu(false);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent",transition:"background 0.15s"}}>
                     <span style={{fontSize:17,color:"rgba(255,255,255,0.6)",lineHeight:1,width:20,textAlign:"center"}}>{item.i}</span>
                     <span style={{fontSize:13,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.06em",color:"rgba(255,255,255,0.7)"}}>{item.l}</span>
@@ -4347,7 +4362,7 @@ ${recentTrades}`;
               <div>
                 <div style={{ fontSize:11, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", marginBottom:2, fontFamily:"'Josefin Sans',sans-serif" }}>{FULL_NAV.find(n => n.key === view)?.label}</div>
                 <div style={{ fontFamily:"'Josefin Sans',sans-serif", fontSize:26, fontWeight:700, color:C.white, letterSpacing:"-0.025em" }}>
-                  {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Statistiques" : view === "strategy" ? "Plan de Trading" : view === "profil" ? "Profil" : view === "tools" ? "Outils" : "Analyse IA"}
+                  {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Statistiques" : view === "trades" ? "Historique" : view === "strategy" ? "Plan de Trading" : view === "profil" ? "Profil" : view === "tools" ? "Outils" : "Analyse IA"}
                 </div>
               </div>
               <button onClick={()=>setDarkMode(d=>!d)} title={darkMode?"Mode clair":"Mode sombre"} style={{background:darkMode?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",border:`1px solid ${C.border}`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.gray1,flexShrink:0,transition:"all 0.2s",marginBottom:4}}>
