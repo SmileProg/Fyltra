@@ -383,6 +383,8 @@ const cmpTrades = (a, b) =>
 
 /* ─── P&L Chart ──────────────────────────────────────────────────── */
 function PnlChart({ filtered, capital, pnlSum, height, cur }) {
+  const gidRef = useRef(`pnlc_${Math.random().toString(36).slice(2,8)}`);
+  const gid = gidRef.current;
   if (!filtered || filtered.length < 2) return null;
   const sorted = [...filtered].sort(cmpTrades);
   let cum = 0;
@@ -395,15 +397,25 @@ function PnlChart({ filtered, capital, pnlSum, height, cur }) {
   ];
   const vals = data.map(d => d.v);
   const minV = Math.min(...vals), maxV = Math.max(...vals);
-  const pad = Math.max((maxV - minV) * 0.15, 30);
-  const lineColor = pnlSum >= 0 ? "#2a6e3a" : "#c0392b";
   const absMax = Math.max(Math.abs(minV), Math.abs(maxV), 30);
   const step = Math.ceil(absMax / 2 / 50) * 50 || 50;
   const yDomain = [-step * 2, step * 2];
   const yTicks = [-step * 2, -step, 0, step, step * 2];
+  // domain is symmetric so zero is always at 50%
+  const zeroPct = 50;
   return (
     <ResponsiveContainer width="100%" height={height || 150}>
-      <LineChart data={data} margin={{ top:4, right:4, left:0, bottom:0 }}>
+      <AreaChart data={data} margin={{ top:4, right:4, left:0, bottom:0 }}>
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset={`${zeroPct}%`} stopColor="#4caf6e" stopOpacity={1}/>
+            <stop offset={`${zeroPct}%`} stopColor="#e05a5a" stopOpacity={1}/>
+          </linearGradient>
+          <linearGradient id={`${gid}f`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset={`${zeroPct}%`} stopColor="#4caf6e" stopOpacity={0.15}/>
+            <stop offset={`${zeroPct}%`} stopColor="#e05a5a" stopOpacity={0.15}/>
+          </linearGradient>
+        </defs>
         <XAxis dataKey="label" tick={{ fontSize:9, fontFamily:"'Josefin Sans',sans-serif", fill:C.gray1 }} tickLine={false} axisLine={false} interval={Math.max(0, Math.floor(data.length/6)-1)} />
         <YAxis
           domain={yDomain}
@@ -421,8 +433,8 @@ function PnlChart({ filtered, capital, pnlSum, height, cur }) {
           ) : null}
         />
         <ReferenceLine y={0} stroke={C.gray2} strokeWidth={1} />
-        <Line type="monotone" dataKey="v" stroke={lineColor} strokeWidth={2} dot={{ r:2, fill:lineColor, strokeWidth:0 }} activeDot={{ r:5, fill:lineColor, strokeWidth:0 }} />
-      </LineChart>
+        <Area type="monotone" dataKey="v" stroke={`url(#${gid})`} strokeWidth={2} fill={`url(#${gid}f)`} dot={{ r:2, fill:`url(#${gid})`, strokeWidth:0 }} activeDot={{ r:5, strokeWidth:0 }} />
+      </AreaChart>
     </ResponsiveContainer>
   );
 }
