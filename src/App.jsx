@@ -206,9 +206,8 @@ function PillNav({ view, setView, darkMode }) {
         const active = view === item.key;
         const isHovered = hovered === item.key && !active;
         return (
-          <button key={item.key} onClick={() => setView(item.key)} onMouseEnter={() => setHovered(item.key)} onMouseLeave={() => setHovered(null)} style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"8px 14px", borderRadius:44, border:"none", cursor:"pointer", background:active ? "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.93) 0%, rgba(225,225,225,0.85) 55%, rgba(200,200,200,0.75) 100%)" : isHovered ? "rgba(255,255,255,0.05)" : "transparent", boxShadow:active ? "0 0 26px 8px rgba(255,255,255,0.22), 0 0 50px 16px rgba(255,255,255,0.09), 0 6px 20px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3)" : "none", transform:"translateY(0)", transition:"all 0.25s cubic-bezier(.4,0,.2,1)", minWidth:52, position:"relative", zIndex:1 }}>
-            <span style={{ fontSize:16, lineHeight:1, color:active ? "#111" : "rgba(255,255,255,0.4)", transition:"color 0.2s" }}>{item.icon}</span>
-            <span style={{ fontSize:8, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.35)", transition:"color 0.2s" }}>{item.label}</span>
+          <button key={item.key} onClick={() => setView(item.key)} onMouseEnter={() => setHovered(item.key)} onMouseLeave={() => setHovered(null)} style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"9px 16px", borderRadius:44, border:"none", cursor:"pointer", background:active ? "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.93) 0%, rgba(225,225,225,0.85) 55%, rgba(200,200,200,0.75) 100%)" : isHovered ? "rgba(255,255,255,0.05)" : "transparent", boxShadow:active ? "0 0 26px 8px rgba(255,255,255,0.22), 0 0 50px 16px rgba(255,255,255,0.09), 0 6px 20px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3)" : "none", transition:"all 0.25s cubic-bezier(.4,0,.2,1)", position:"relative", zIndex:1 }}>
+            <span style={{ fontSize:9, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.14em", textTransform:"uppercase", color:active ? "#222" : "rgba(255,255,255,0.45)", transition:"color 0.2s", whiteSpace:"nowrap" }}>{item.label}</span>
           </button>
         );
       })}
@@ -2049,8 +2048,7 @@ ${recentTrades}`;
                 const isProfit=pnl>=0;
                 const fillLeft=isProfit?startPct:currentPct;
                 const fillWidth=Math.abs(currentPct-startPct);
-                const alerts=getPfAlerts(pf);
-                const inDanger=alerts.some(a=>a.type==="danger");
+                const inDanger=mll!==null&&(cap+pnl)<=mll+maxLoss*0.1;
                 return (
                   <div
                     key={pf.id}
