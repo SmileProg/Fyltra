@@ -3531,16 +3531,21 @@ ${recentTrades}`;
           const todayAvgW=todayWins?statsTrades.filter(t=>t.result==="WIN").reduce((s,t)=>s+(t.pnl||0),0)/todayWins:0;
           const todayAvgL=todayLosses?Math.abs(statsTrades.filter(t=>t.result==="LOSS").reduce((s,t)=>s+(t.pnl||0),0)/todayLosses):0;
           const todayPF=todayAvgL>0?(todayAvgW*todayWins/(todayAvgL*todayLosses)).toFixed(2):todayWins>0?"∞":"—";
-          const todayRR=todayTotal?(statsTrades.reduce((s,t)=>s+(parseFloat(t.rr)||0),0)/todayTotal).toFixed(1):"—";
+          const todayRRt=statsTrades.filter(t=>parseFloat(t.rr)>0);
+          const todayRR=todayRRt.length?(todayRRt.reduce((s,t)=>s+parseFloat(t.rr),0)/todayRRt.length).toFixed(1):"—";
+          const todayGrossW=statsTrades.filter(t=>t.result==="WIN").reduce((s,t)=>s+(t.pnl||0),0);
+          const todayGrossL=Math.abs(statsTrades.filter(t=>t.result==="LOSS").reduce((s,t)=>s+(t.pnl||0),0));
           return (
             <div style={{marginBottom:12}}>
               <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>Statistiques · {acctView==="global"?"Global":"Aujourd'hui"}</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
                 <MiniCard label="Profit Factor" value={todayPF==="—"||todayPF==="∞"?todayPF:todayPF+"x"} color={parseFloat(todayPF)>=1||todayPF==="∞"?"#2a6e3a":"#c0392b"} li={0}/>
                 <MiniCard label="RR Moyen" value={todayRR==="—"?"—":todayRR+":1"} color={C.dim} li={1}/>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8}}>
                 <MiniCard label="Nb Trades" value={todayTotal||"—"} color={C.white} li={2}/>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <MiniCard label="Gains bruts" value={todayGrossW>0?`+${fmtMoney(todayGrossW)}${currency}`:"—"} color="#2a6e3a"/>
+                <MiniCard label="Pertes brutes" value={todayGrossL>0?`-${fmtMoney(todayGrossL)}${currency}`:"—"} color="#c0392b"/>
               </div>
             </div>
           );
