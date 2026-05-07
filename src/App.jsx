@@ -3469,40 +3469,6 @@ ${recentTrades}`;
             );
           })()}
 
-          {/* ── Equity Curve ── */}
-          {acctTrades.length>=2&&(()=>{
-            const sortedDet=[...acctTrades].sort((a,b)=>a.date.localeCompare(b.date));
-            let cumDet=0;
-            const detData=[{v:0,d:"",inst:""},...sortedDet.map(t=>{cumDet+=t.pnl||0;return{v:parseFloat(cumDet.toFixed(2)),d:t.date,inst:t.instrument||""};})];
-            const detVals=detData.map(d=>d.v);
-            const detMax=Math.max(...detVals), detMin=Math.min(...detVals);
-            const detZp=detMax===detMin?100:Math.min(100,Math.max(0,detMax/(detMax-detMin)*100));
-            const detGid=`det_${pf.id}`;
-            return (
-              <div style={{borderTop:`1px solid ${C.border}`,paddingTop:16,marginTop:4}}>
-                <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:8}}>Courbe d'équité</div>
-                <ResponsiveContainer width="100%" height={140}>
-                  <AreaChart data={detData} margin={{top:6,right:4,left:0,bottom:0}}>
-                    <defs>
-                      <linearGradient id={detGid} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset={`${detZp}%`} stopColor="#4caf6e" stopOpacity={1}/>
-                        <stop offset={`${detZp}%`} stopColor="#e05a5a" stopOpacity={1}/>
-                      </linearGradient>
-                      <linearGradient id={`${detGid}f`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset={`${detZp}%`} stopColor="#4caf6e" stopOpacity={0.18}/>
-                        <stop offset={`${detZp}%`} stopColor="#e05a5a" stopOpacity={0.18}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="d" tick={{fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fill:C.dim}} tickLine={false} axisLine={false} interval="preserveStartEnd" tickFormatter={v=>v?v.slice(5):""}/>
-                    <YAxis tick={{fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fill:C.dim}} tickLine={false} axisLine={false} width={42} tickFormatter={v=>`${v>=0?"+":""}${fmtMoney(v)}`}/>
-                    <ReferenceLine y={0} stroke={darkMode?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.12)"} strokeWidth={1} strokeDasharray="3 3"/>
-                    <Tooltip contentStyle={{background:darkMode?"rgba(14,14,14,0.96)":"rgba(255,255,255,0.96)",border:`1px solid ${C.border}`,borderRadius:7,fontSize:10,color:C.white,padding:"5px 10px"}} formatter={v=>[`${v>=0?"+":""}${fmtMoney(v)}${currency}`,""]} labelFormatter={(_,pl)=>pl?.[0]?.payload?.inst||""}/>
-                    <Area type="monotone" dataKey="v" stroke={`url(#${detGid})`} strokeWidth={2} fill={`url(#${detGid}f)`} dot={{r:2.5,fill:`url(#${detGid})`,strokeWidth:0}} activeDot={{r:4,strokeWidth:0}}/>
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            );
-          })()}
         </div>
       );
     })() : null;
