@@ -4290,7 +4290,7 @@ ${recentTrades}`;
       {/* ── COULEURS ── */}
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
         <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:16}}>Couleurs</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+        <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12,marginBottom:14}}>
           {[["Fond",customBg,setCustomBg,darkMode?"#0f0f0f":"#f8f7f5"],["Cartes",customBg2,setCustomBg2,darkMode?"#1a1a1a":"#f0ede8"]].map(([label,val,setter,def])=>(
             <div key={label}>
               <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>{label}</div>
