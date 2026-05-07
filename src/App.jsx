@@ -1290,6 +1290,7 @@ export default function App() {
   const [editingTrade,setEditingTrade]= useState(null);
   const [editPnlRaw,  setEditPnlRaw]  = useState("");
   const [confirmDeleteTradeId, setConfirmDeleteTradeId] = useState(null);
+  const [tradesAccFilter, setTradesAccFilter] = useState("all");
   // Calendar navigation — single combined state avoids stale-closure bugs
   const now0 = new Date();
   const [calNav,   setCalNav]   = useState({ month: now0.getMonth(), year: now0.getFullYear() });
@@ -2346,12 +2347,35 @@ ${recentTrades}`;
   const tradesContent = (
     <div>
       <PageTitle sub="Historique" title="Mes Trades" />
-      {trades.length === 0 ? (
+      {/* ── Filtre par compte ── */}
+      {propfirms.length > 0 && (
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, paddingBottom:2 }}>
+          {[{ id:"all", label:"Tous" }, ...propfirms.map(p => ({ id:p.id, label:p.name || p.firm || "Compte" }))].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setTradesAccFilter(opt.id)}
+              style={{
+                padding:"5px 14px", borderRadius:20, fontSize:10, cursor:"pointer",
+                fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase",
+                border:`1px solid ${tradesAccFilter === opt.id ? C.accent : C.gray3}`,
+                background: tradesAccFilter === opt.id ? "rgba(232,205,169,0.1)" : "transparent",
+                color: tradesAccFilter === opt.id ? C.accent : C.gray1,
+                transition:"all 0.15s",
+              }}
+            >{opt.label}</button>
+          ))}
+        </div>
+      )}
+      {(() => {
+        const filtered = tradesAccFilter === "all"
+          ? trades
+          : trades.filter(t => !t.accountIds || t.accountIds.length === 0 || t.accountIds.includes(tradesAccFilter));
+        return filtered.length === 0 ? (
         <div style={{ textAlign:"center", padding:"60px 0" }}>
           <div style={{ fontSize:44, marginBottom:10, color:C.gray2 }}>◎</div>
           <div style={{ fontFamily:"'Josefin Sans',sans-serif", fontSize:14, fontWeight:300, color:C.gray1, letterSpacing:"0.08em" }}>Aucun trade enregistré</div>
         </div>
-      ) : [...trades].sort((a, b) => b.date.localeCompare(a.date)).map(t => {
+      ) : [...filtered].sort((a, b) => b.date.localeCompare(a.date)).map(t => {
         const pnl = t.pnl || 0; const isWin = t.result === "WIN"; const isLoss = t.result === "LOSS"; const isEditing = editingTrade?.id === t.id;
         return (
           <div key={t.id} style={{ background:C.bg2, border:`1px solid ${isEditing ? C.accent : isWin ? "rgba(74,222,128,0.15)" : isLoss ? "rgba(248,113,113,0.12)" : C.border}`, borderLeft:`3px solid ${isEditing ? C.accent : isWin ? "#4ade80" : isLoss ? "#f87171" : C.gray3}`, borderRadius:12, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:"13px 15px", marginBottom:8, transition:"border 0.2s" }}>
@@ -2456,7 +2480,8 @@ ${recentTrades}`;
             )}
           </div>
         );
-      })}
+      });
+    })()}
     </div>
   );
 
