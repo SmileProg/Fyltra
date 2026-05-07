@@ -2833,43 +2833,72 @@ ${recentTrades}`;
               </div>
             )}
 
-            {editingPf?.id !== pf.id && pf.type==="propfirm" && <div style={{marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Profit Target</span>
-                <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{fmtMoney(progress)}%</span>
-              </div>
-              <div style={{height:5,background:C.gray3,borderRadius:3,marginBottom:pf.hasDailyLoss&&parseFloat(pf.dailyLoss)>0?8:0}}>
-                <div style={{width:progress+"%",height:"100%",borderRadius:3,background:"#2a6e3a",transition:"width 0.5s"}}/>
-              </div>
-              {pf.hasDailyLoss && parseFloat(pf.dailyLoss)>0 && (()=>{
-                const dl=parseFloat(pf.dailyLoss);
-                const todayStr=new Date().toISOString().split("T")[0];
-                const todayLoss=Math.abs(Math.min(0,trades.filter(t=>t.date===todayStr&&(!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id))).reduce((s,t)=>s+(t.pnl||0),0)));
-                const dlPct=Math.min(100,(todayLoss/dl)*100);
-                const over=todayLoss>=dl;
-                return (
-                  <div>
-                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Daily Loss</span>
-                      <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{fmtMoney(todayLoss)}{currency} / {dl}€</span>
+            {editingPf?.id !== pf.id && pf.type==="propfirm" && (()=>{
+              const pfTrades = trades.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(pf.id));
+              const peakPnl = (() => {
+                const sortedDates = [...new Set(pfTrades.map(t => t.date))].sort();
+                let cum = 0, peak = 0;
+                sortedDates.forEach(date => {
+                  cum += pfTrades.filter(t => t.date === date).reduce((s, t) => s + (t.pnl || 0), 0);
+                  if (cum > peak) peak = cum;
+                });
+                return peak;
+              })();
+              const mll = pf.trailingDD ? cap + Math.max(0, peakPnl) - maxLoss : cap - maxLoss;
+              const tgt = cap + target;
+              const totalRange = tgt - mll;
+              const currentCap = cap + pnl;
+              const startPct = totalRange ? (cap - mll) / totalRange * 100 : 50;
+              const currentPct = totalRange ? Math.min(100, Math.max(0, (currentCap - mll) / totalRange * 100)) : 50;
+              const isProfit = pnl >= 0;
+              const fillLeft = isProfit ? startPct : currentPct;
+              const fillWidth = Math.abs(currentPct - startPct);
+              return (
+                <div style={{marginBottom:10}}>
+                  {/* START label row */}
+                  <div style={{position:"relative",height:16,marginBottom:4}}>
+                    <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.15em",textTransform:"uppercase",whiteSpace:"nowrap"}}>START</div>
+                    {pf.trailingDD && <div style={{position:"absolute",left:0,fontSize:9,color:C.accent,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>▲ Suiveur</div>}
+                  </div>
+                  {/* Bar */}
+                  <div style={{position:"relative",height:4,background:"rgba(255,255,255,0.06)",borderRadius:2}}>
+                    <div style={{position:"absolute",left:fillLeft+"%",width:fillWidth+"%",height:"100%",borderRadius:2,background:isProfit?"rgba(74,222,128,0.7)":"rgba(229,100,100,0.7)",transition:"all 0.6s",boxShadow:isProfit?"0 0 8px rgba(74,222,128,0.4)":"0 0 8px rgba(229,100,100,0.4)"}}/>
+                    <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",width:2,height:14,background:C.dim,borderRadius:1,top:-5}}/>
+                    <div style={{position:"absolute",left:currentPct+"%",transform:"translateX(-50%)",width:3,height:12,background:isProfit?"#4ade80":"#e05a5a",borderRadius:2,top:-4,transition:"left 0.6s",boxShadow:isProfit?"0 0 6px rgba(74,222,128,0.8)":"0 0 6px rgba(229,100,100,0.8)"}}/>
+                  </div>
+                  {/* MLL / TARGET labels */}
+                  <div style={{display:"flex",justifyContent:"space-between",marginTop:8,marginBottom:pf.hasDailyLoss&&parseFloat(pf.dailyLoss)>0?10:0}}>
+                    <div>
+                      <div style={{fontSize:11,fontWeight:300,color:"rgba(229,100,100,0.85)",fontFamily:"'Josefin Sans',sans-serif",lineHeight:1}}>{fmtMoney(mll)}{currency}</div>
+                      <div style={{fontSize:9,color:"rgba(229,100,100,0.5)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:3}}>MLL</div>
                     </div>
-                    <div style={{height:5,background:C.gray3,borderRadius:3}}>
-                      <div style={{width:dlPct+"%",height:"100%",borderRadius:3,background:over?"rgba(192,57,43,0.9)":dlPct>=70?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.3)",transition:"width 0.5s"}}/>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:11,fontWeight:300,color:"rgba(74,222,128,0.85)",fontFamily:"'Josefin Sans',sans-serif",lineHeight:1}}>{fmtMoney(tgt)}{currency}</div>
+                      <div style={{fontSize:9,color:"rgba(74,222,128,0.5)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:3}}>TARGET</div>
                     </div>
                   </div>
-                );
-              })()}
-            </div>}
-
-            {pf.type==="propfirm" && <div style={{marginBottom:12}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Drawdown</span>
-                <span style={{fontSize:10,color:ddProgress>=80?"rgba(192,57,43,0.8)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{fmtMoney(drawdown)}{currency} / {maxLoss}{currency}</span>
-              </div>
-              <div style={{height:5,background:C.gray3,borderRadius:3}}>
-                <div style={{width:ddProgress+"%",height:"100%",borderRadius:3,background:ddProgress>=80?"rgba(192,57,43,0.9)":ddProgress>=50?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.25)",transition:"width 0.5s"}}/>
-              </div>
-            </div>}
+                  {/* Daily Loss bar */}
+                  {pf.hasDailyLoss && parseFloat(pf.dailyLoss)>0 && (()=>{
+                    const dl=parseFloat(pf.dailyLoss);
+                    const todayStr=new Date().toISOString().split("T")[0];
+                    const todayLoss=Math.abs(Math.min(0,pfTrades.filter(t=>t.date===todayStr).reduce((s,t)=>s+(t.pnl||0),0)));
+                    const dlPct=Math.min(100,(todayLoss/dl)*100);
+                    const over=todayLoss>=dl;
+                    return (
+                      <div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                          <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Daily Loss</span>
+                          <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{fmtMoney(todayLoss)}{currency} / {dl}{currency}</span>
+                        </div>
+                        <div style={{height:4,background:C.gray3,borderRadius:2}}>
+                          <div style={{width:dlPct+"%",height:"100%",borderRadius:2,background:over?"rgba(192,57,43,0.9)":dlPct>=70?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.3)",transition:"width 0.5s"}}/>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
 
             {editingPf?.id !== pf.id && pf.type==="propfirm" && pf.hasInactivity && pf.inactivityDays && (()=>{
               const today = new Date(); today.setHours(0,0,0,0);
@@ -3115,7 +3144,7 @@ ${recentTrades}`;
             {/* START label */}
             <div style={{position:"relative",height:18,marginBottom:4}}>
               <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.15em",textTransform:"uppercase",whiteSpace:"nowrap"}}>START</div>
-              {pf.trailingDD && <div style={{position:"absolute",right:0,fontSize:9,color:C.accent,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>▲ Suiveur</div>}
+              {pf.trailingDD && <div style={{position:"absolute",left:0,fontSize:9,color:C.accent,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>▲ Suiveur</div>}
             </div>
 
             {/* Bar */}
