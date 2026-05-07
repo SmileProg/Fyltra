@@ -2658,9 +2658,9 @@ ${recentTrades}`;
             <Field label={
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                 <span>{pfPctMode?"Max Drawdown * (%)":"Max Drawdown *"}</span>
-                <button onClick={()=>pfSet("trailingDD",!pfForm.trailingDD)} style={{padding:"2px 10px",borderRadius:20,border:`1px solid ${pfForm.trailingDD?"rgba(232,205,169,0.6)":C.border}`,background:pfForm.trailingDD?"rgba(232,205,169,0.12)":"transparent",color:pfForm.trailingDD?C.accent:C.gray1,fontSize:9,fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,cursor:"pointer",letterSpacing:"0.12em",textTransform:"uppercase",transition:"all 0.2s"}}>
-                  {pfForm.trailingDD?"▲ Suiveur":"Fixe"}
-                </button>
+                <span onClick={()=>pfSet("trailingDD",!pfForm.trailingDD)} style={{cursor:"pointer",fontSize:9,fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:pfForm.trailingDD?C.accent:C.gray2,transition:"color 0.2s",userSelect:"none"}}>
+                  {pfForm.trailingDD?"▲ Suiveur actif":"Suiveur"}
+                </span>
               </div>
             }>
               <input type="text" inputMode="numeric" placeholder="" value={pfPctMode?pfPctValues.maxLoss:pfForm.maxLoss} onChange={e=>{const v=e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,"");if(pfPctMode){setPfPctValues(p=>({...p,maxLoss:v}));pfSet("maxLoss",pfForm.capital?String((parseFloat(pfForm.capital)*(parseFloat(v)||0)/100).toFixed(0)):"");}else pfSet("maxLoss",v);}} style={iStyle}/>
@@ -2780,9 +2780,9 @@ ${recentTrades}`;
                   {pf.type==="propfirm" && <div>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                       <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.18em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>Max Drawdown</div>
-                      <button onClick={()=>setEditingPf(p=>({...p,trailingDD:!p.trailingDD}))} style={{padding:"2px 10px",borderRadius:20,border:`1px solid ${editingPf.trailingDD?"rgba(232,205,169,0.6)":C.border}`,background:editingPf.trailingDD?"rgba(232,205,169,0.12)":"transparent",color:editingPf.trailingDD?C.accent:C.gray1,fontSize:9,fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,cursor:"pointer",letterSpacing:"0.12em",textTransform:"uppercase",transition:"all 0.2s"}}>
-                        {editingPf.trailingDD?"▲ Suiveur":"Fixe"}
-                      </button>
+                        <span onClick={()=>setEditingPf(p=>({...p,trailingDD:!p.trailingDD}))} style={{cursor:"pointer",fontSize:9,fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:editingPf.trailingDD?C.accent:C.gray2,transition:"color 0.2s",userSelect:"none"}}>
+                        {editingPf.trailingDD?"▲ Suiveur actif":"Suiveur"}
+                      </span>
                     </div>
                     <input type="text" inputMode="numeric" value={editingPf.maxLoss||""} onChange={e=>setEditingPf(p=>({...p,maxLoss:e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,"")}))} style={{...iStyle,padding:"9px 10px",fontSize:13}}/>
                   </div>}
@@ -3087,44 +3087,75 @@ ${recentTrades}`;
       );
     };
 
-    const sectionProgress = pf.type==="propfirm" ? (
-      <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
-        <div style={{marginBottom:10}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-            <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Profit Target</span>
-            <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{fmtMoney(allPnl)}{currency} / {target}{currency} · {fmtMoney(progress)}%</span>
-          </div>
-          <div style={{height:6,background:C.gray3,borderRadius:3}}>
-            <div style={{width:progress+"%",height:"100%",borderRadius:3,background:"#2a6e3a",transition:"width 0.6s"}}/>
-          </div>
-        </div>
-        <div>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-            <span style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Drawdown Max</span>
-            <span style={{fontSize:10,color:ddProgress>=80?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{fmtMoney(drawdown)}{currency} / {maxLoss}{currency}</span>
-          </div>
-          <div style={{height:6,background:C.gray3,borderRadius:3}}>
-            <div style={{width:ddProgress+"%",height:"100%",borderRadius:3,background:ddProgress>=80?"rgba(192,57,43,0.9)":ddProgress>=50?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.25)",transition:"width 0.6s"}}/>
-          </div>
-        </div>
-        {pf.hasDailyLoss && parseFloat(pf.dailyLoss)>0 && (()=>{
-          const dl=parseFloat(pf.dailyLoss);
-          const todayLossDL=Math.abs(Math.min(0,todayPnl));
-          const dlPct=Math.min(100,(todayLossDL/dl)*100);
-          const over=todayLossDL>=dl;
-          return (
-            <div style={{marginTop:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Daily Loss</span>
-                <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{fmtMoney(todayLossDL)}{currency} / {dl}€{over?" 🔴":""}</span>
+    const sectionProgress = pf.type==="propfirm" ? (() => {
+      const mll = cap - maxLoss;
+      const tgt = cap + target;
+      const totalRange = tgt - mll;
+      const currentCap = cap + allPnl;
+      const startPct = totalRange ? (cap - mll) / totalRange * 100 : 50;
+      const currentPct = totalRange ? Math.min(100, Math.max(0, (currentCap - mll) / totalRange * 100)) : 50;
+      const isProfit = allPnl >= 0;
+      const fillLeft = isProfit ? startPct : currentPct;
+      const fillWidth = Math.abs(currentPct - startPct);
+      return (
+        <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
+
+          {/* ── Gauge ── */}
+          <div style={{marginBottom:20}}>
+            {/* START label */}
+            <div style={{position:"relative",height:18,marginBottom:4}}>
+              <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.15em",textTransform:"uppercase",whiteSpace:"nowrap"}}>START</div>
+              {pf.trailingDD && <div style={{position:"absolute",right:0,fontSize:9,color:C.accent,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>▲ Suiveur</div>}
+            </div>
+
+            {/* Bar */}
+            <div style={{position:"relative",height:4,background:"rgba(255,255,255,0.06)",borderRadius:2}}>
+              {/* Fill */}
+              <div style={{position:"absolute",left:fillLeft+"%",width:fillWidth+"%",height:"100%",borderRadius:2,background:isProfit?"rgba(74,222,128,0.7)":"rgba(229,100,100,0.7)",transition:"all 0.6s",boxShadow:isProfit?"0 0 8px rgba(74,222,128,0.4)":"0 0 8px rgba(229,100,100,0.4)"}}/>
+              {/* START marker */}
+              <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",width:2,height:14,background:C.dim,borderRadius:1,top:-5}}/>
+              {/* Current marker */}
+              <div style={{position:"absolute",left:currentPct+"%",transform:"translateX(-50%)",width:3,height:12,background:isProfit?"#4ade80":"#e05a5a",borderRadius:2,top:-4,transition:"left 0.6s",boxShadow:isProfit?"0 0 6px rgba(74,222,128,0.8)":"0 0 6px rgba(229,100,100,0.8)"}}/>
+            </div>
+
+            {/* Labels */}
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:10,alignItems:"flex-start"}}>
+              <div>
+                <div style={{fontSize:!isMobile?18:15,fontWeight:300,color:"rgba(229,100,100,0.85)",fontFamily:"'Josefin Sans',sans-serif",lineHeight:1}}>{fmtMoney(mll)}{currency}</div>
+                <div style={{fontSize:9,color:"rgba(229,100,100,0.5)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:4}}>MLL</div>
               </div>
-              <div style={{height:6,background:C.gray3,borderRadius:3}}>
-                <div style={{width:dlPct+"%",height:"100%",borderRadius:3,background:over?"rgba(192,57,43,0.9)":dlPct>=70?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.3)",transition:"width 0.6s"}}/>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:!isMobile?15:13,fontWeight:300,color:isProfit?"#4ade80":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",lineHeight:1}}>{allPnl>=0?"+":""}{fmtMoney(allPnl)}{currency}</div>
+                <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:4}}>P&L</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:!isMobile?18:15,fontWeight:300,color:"rgba(74,222,128,0.85)",fontFamily:"'Josefin Sans',sans-serif",lineHeight:1}}>{fmtMoney(tgt)}{currency}</div>
+                <div style={{fontSize:9,color:"rgba(74,222,128,0.5)",fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:4}}>TARGET</div>
               </div>
             </div>
-          );
-        })()}
-      </div>
+          </div>
+
+          {/* ── Daily Loss bar ── */}
+          {pf.hasDailyLoss && parseFloat(pf.dailyLoss)>0 && (()=>{
+            const dl=parseFloat(pf.dailyLoss);
+            const todayLossDL=Math.abs(Math.min(0,todayPnl));
+            const dlPct=Math.min(100,(todayLossDL/dl)*100);
+            const over=todayLossDL>=dl;
+            return (
+              <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>Daily Loss</span>
+                  <span style={{fontSize:10,color:over?"rgba(192,57,43,0.9)":C.dim,fontFamily:"'Josefin Sans',sans-serif"}}>{fmtMoney(todayLossDL)}{currency} / {dl}{currency}{over?" ●":""}</span>
+                </div>
+                <div style={{height:4,background:C.gray3,borderRadius:2}}>
+                  <div style={{width:dlPct+"%",height:"100%",borderRadius:2,background:over?"rgba(192,57,43,0.9)":dlPct>=70?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.3)",transition:"width 0.6s"}}/>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      );
+    })()
     ) : null;
 
     const sectionToday = (
