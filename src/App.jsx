@@ -401,8 +401,8 @@ function PnlChart({ filtered, capital, pnlSum, height, cur }) {
   const step = Math.ceil(absMax / 2 / 50) * 50 || 50;
   const yDomain = [-step * 2, step * 2];
   const yTicks = [-step * 2, -step, 0, step, step * 2];
-  // domain is symmetric so zero is always at 50%
-  const zeroPct = 50;
+  // gradient is anchored to the path bounding box [minV, maxV], not the domain
+  const zeroPct = maxV === minV ? 50 : Math.min(100, Math.max(0, maxV / (maxV - minV) * 100));
   return (
     <ResponsiveContainer width="100%" height={height || 150}>
       <AreaChart data={data} margin={{ top:4, right:4, left:0, bottom:0 }}>
