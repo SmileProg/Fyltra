@@ -1253,6 +1253,7 @@ export default function App() {
   const [capital,     setCapital]     = useState(() => load(KEYS.capital, ""));
   const [propfirms,   setPropfirms]   = useState(() => load(KEYS.propfirms, []));
   const [pfView,      setPfView]      = useState("list"); // list | add-type | add-propfirm | add-personal
+  const [pfListTab,   setPfListTab]   = useState("active"); // active | archived
   const [pfForm,      setPfForm]      = useState({ type:"propfirm", name:"", firm:"", capital:"", target:"", dailyLoss:"", maxLoss:"", consistency:"", consistencyPct:"", hasDailyLoss:false, hasConsistency:false, hasInactivity:false, inactivityDays:"", inactivityFrom:"", trailingDD:false });
   const [activePf,    setActivePf]    = useState(null);
   const [chartAccountId, setChartAccountId] = useState("all");
@@ -1490,6 +1491,35 @@ export default function App() {
       if (data) setTrades(prev => [dbToTrade(data), ...prev]);
     } else {
       setTrades(prev => [{ ...newTrade, id:Date.now() }, ...prev]);
+    }
+    // Auto-archive propfirms that just hit their target or drawdown
+    if (newTrade.accountIds && newTrade.accountIds.length > 0) {
+      newTrade.accountIds.forEach(pfId => {
+        const pf = propfirms.find(p => p.id === pfId);
+        if (!pf || pf.status === "passed" || pf.status === "breached") return;
+        if (pf.type !== "propfirm") return;
+        const allTrades = [...trades, newTrade].filter(t => !t.accountIds || t.accountIds.length === 0 || t.accountIds.includes(pfId));
+        const pfPnl = allTrades.reduce((s, t) => s + (t.pnl || 0), 0);
+        const cap = parseFloat(pf.capital) || 0;
+        const target = parseFloat(pf.target) || 0;
+        const maxLoss = parseFloat(pf.maxLoss) || 0;
+        if (target > 0 && pfPnl >= target) {
+          setPropfirms(prev => prev.map(p => p.id === pfId ? { ...p, status:"passed" } : p));
+        } else if (maxLoss > 0) {
+          let mll;
+          if (pf.trailingDD) {
+            const dates = [...new Set(allTrades.map(t => t.date))].sort();
+            let cum = 0, peak = 0;
+            dates.forEach(d => { cum += allTrades.filter(t => t.date === d).reduce((s,t) => s+(t.pnl||0), 0); if (cum > peak) peak = cum; });
+            mll = cap + Math.max(0, peak) - maxLoss;
+          } else {
+            mll = cap - maxLoss;
+          }
+          if (cap + pfPnl <= mll) {
+            setPropfirms(prev => prev.map(p => p.id === pfId ? { ...p, status:"breached" } : p));
+          }
+        }
+      });
     }
     setPnlRaw(""); setForm(f => ({ ...f, entry:"", exit:"", rr:"", size:"", notes:"", accountIds:[], strategyId:null }));
     setSaved(true); setTimeout(() => setSaved(false), 2500);
@@ -2770,8 +2800,7 @@ ${recentTrades}`;
         </div>
       )}
 
-      {/* ── LIST ── */}
-      {pfView==="list" && propfirms.length===0 && (
+      {pfView==="list" && (!propfirms.length || pfListTab==="active") && propfirms.filter(p=>!p.status||p.status==="active").length===0 && propfirms.length===0 && (
         <div style={{textAlign:"center",padding:"60px 0"}}>
           <div style={{fontSize:44,marginBottom:10,color:C.gray2}}>◉</div>
           <div style={{fontFamily:"'Josefin Sans',sans-serif",fontSize:14,fontWeight:300,color:C.gray1,marginBottom:14,letterSpacing:"0.08em"}}>Aucun compte enregistré</div>
@@ -2779,7 +2808,78 @@ ${recentTrades}`;
         </div>
       )}
 
-      {pfView==="list" && propfirms.map((pf) => {
+      {/* ── PILLS Actifs / Archivés ── */}
+      {pfView==="list" && propfirms.length>0 && (
+        <div style={{display:"flex",gap:6,marginBottom:20}}>
+          {[{k:"active",l:"Actifs"},{k:"archived",l:"Archivés"}].map(tab=>(
+            <button key={tab.k} onClick={()=>setPfListTab(tab.k)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${pfListTab===tab.k?C.accent:C.border}`,background:pfListTab===tab.k?"rgba(0,0,0,0.06)":"transparent",color:pfListTab===tab.k?C.accent:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:pfListTab===tab.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>
+              {tab.l}{tab.k==="archived"&&propfirms.filter(p=>p.status==="passed"||p.status==="breached").length>0?` · ${propfirms.filter(p=>p.status==="passed"||p.status==="breached").length}`:""}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── ARCHIVE VIEW ── */}
+      {pfView==="list" && pfListTab==="archived" && (()=>{
+        const archived = propfirms.filter(p=>p.status==="passed"||p.status==="breached");
+        const passed = archived.filter(p=>p.status==="passed").length;
+        const breached = archived.filter(p=>p.status==="breached").length;
+        const rate = archived.length ? Math.round(passed/archived.length*100) : 0;
+        return (
+          <div>
+            {archived.length>0 && (
+              <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.08em",marginBottom:20}}>
+                <span style={{color:"rgba(201,170,130,0.9)"}}>{passed} validé{passed!==1?"s":""}</span>
+                <span style={{color:C.gray3}}> · </span>
+                <span style={{color:"rgba(192,57,43,0.8)"}}>{breached} breach</span>
+                <span style={{color:C.gray3}}> · </span>
+                <span style={{color:C.white}}>{rate}% de réussite</span>
+              </div>
+            )}
+            {archived.length===0 && (
+              <div style={{textAlign:"center",padding:"60px 0",color:C.gray2,fontSize:12,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.08em"}}>Aucun compte archivé</div>
+            )}
+            {archived.map(pf=>{
+              const cap=parseFloat(pf.capital)||0;
+              const target=parseFloat(pf.target)||0;
+              const pnl=getPfPnl(pf);
+              const isPass=pf.status==="passed";
+              const acctTrades=trades.filter(t=>!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id));
+              const wins=acctTrades.filter(t=>t.result==="WIN").length;
+              const wr=acctTrades.length?Math.round(wins/acctTrades.length*100):0;
+              return (
+                <div key={pf.id} style={{background:C.bg2,border:`1px solid ${isPass?"rgba(201,170,130,0.18)":"rgba(192,57,43,0.15)"}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"20px":"16px",marginBottom:!isMobile?14:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+                    <div>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                        <div style={{fontFamily:"'Barlow',sans-serif",fontWeight:600,fontSize:16,color:C.white,letterSpacing:"0.08em"}}>{pf.firm||"Fond Propre"}</div>
+                        <span style={{fontSize:9,fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,letterSpacing:"0.18em",textTransform:"uppercase",color:isPass?"rgba(201,170,130,0.9)":"rgba(192,57,43,0.8)",border:`1px solid ${isPass?"rgba(201,170,130,0.25)":"rgba(192,57,43,0.25)"}`,padding:"2px 7px",borderRadius:3}}>{isPass?"VALIDÉ":"BREACH"}</span>
+                      </div>
+                      {pf.name&&<div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{pf.name}</div>}
+                      <div style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",marginTop:4,textTransform:"uppercase"}}>{cap.toLocaleString()}{currency}{pf.type==="propfirm"?` · cible ${target.toLocaleString()}${currency}`:""}</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,fontSize:20,color:pnl>=0?"#2a6e3a":"#c0392b"}}>{pnl>=0?"+":""}{fmtMoney(pnl)}{currency}</div>
+                      <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{wr}% WR · {acctTrades.length} trade{acctTrades.length!==1?"s":""}</div>
+                    </div>
+                  </div>
+                  <button onClick={()=>setPropfirms(prev=>prev.map(p=>p.id===pf.id?{...p,status:"active"}:p))} style={{width:"100%",padding:"9px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.gray1,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>Restaurer</button>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {pfView==="list" && pfListTab==="active" && propfirms.filter(p=>!p.status||p.status==="active").length===0 && propfirms.length>0 && (
+        <div style={{textAlign:"center",padding:"60px 0"}}>
+          <div style={{fontSize:44,marginBottom:10,color:C.gray2}}>◉</div>
+          <div style={{fontFamily:"'Josefin Sans',sans-serif",fontSize:14,fontWeight:300,color:C.gray1,marginBottom:6,letterSpacing:"0.08em"}}>Tous les comptes sont archivés</div>
+          <button onClick={()=>setPfListTab("archived")} style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",background:"none",border:`1px solid ${C.border}`,borderRadius:6,padding:"8px 18px",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase"}}>Voir les archives</button>
+        </div>
+      )}
+
+      {pfView==="list" && pfListTab==="active" && propfirms.filter(p=>!p.status||p.status==="active").map((pf) => {
         const cap = parseFloat(pf.capital)||0;
         const target = parseFloat(pf.target)||0;
         const maxLoss = parseFloat(pf.maxLoss)||0;
