@@ -5,7 +5,7 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { patternData, stratCtx, tradeCount, coachInstructions } = req.body;
+  const { patternData, stratCtx, tradeCount, coachInstructions, customSystem } = req.body;
   if (!patternData) return res.status(400).json({ error: "patternData requis" });
 
   const KEY = process.env.GROQ_API_KEY;
@@ -51,8 +51,8 @@ Réponds en français. Direct, chiffres d'abord, conclusions ensuite.`;
         model: "llama-3.3-70b-versatile",
         max_tokens: 1800,
         messages: [
-          { role: "system", content: systemMsg },
-          { role: "user", content: `TOTAL : ${tradeCount} trades (attention : les statistiques ci-dessous regroupent ces MÊMES ${tradeCount} trades selon différentes dimensions — ne les additionne pas entre sections).\n\n${patternData}` }
+          { role: "system", content: customSystem || systemMsg },
+          { role: "user", content: customSystem ? patternData : `TOTAL : ${tradeCount} trades (attention : les statistiques ci-dessous regroupent ces MÊMES ${tradeCount} trades selon différentes dimensions — ne les additionne pas entre sections).\n\n${patternData}` }
         ]
       })
     });

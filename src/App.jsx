@@ -3539,7 +3539,7 @@ ${recentTrades}`;
             <div style={{marginBottom:12}}>
               <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>Statistiques · {acctView==="global"?"Global":"Aujourd'hui"}</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
-                <MiniCard label="Profit Factor" value={todayPF==="—"||todayPF==="∞"?todayPF:todayPF+"x"} color={parseFloat(todayPF)>=1||todayPF==="∞"?"#2a6e3a":"#c0392b"} li={0}/>
+                <MiniCard label="Profit Factor" value={todayPF} color={parseFloat(todayPF)>=1||todayPF==="∞"?"#2a6e3a":"#c0392b"} li={0}/>
                 <MiniCard label="RR Moyen" value={todayRR==="—"?"—":todayRR+":1"} color={C.dim} li={1}/>
                 <MiniCard label="Nb Trades" value={todayTotal||"—"} color={C.white} li={2}/>
               </div>
@@ -3938,7 +3938,7 @@ ${recentTrades}`;
     const systemMsg = "Tu es un coach de trading direct et exigeant. Fais un debriefing de fin de journée. Analyse : 1) ✅ Ce qui s'est bien passé 2) ❌ Ce qui doit être amélioré 3) 📌 1 règle à appliquer demain. Sois court, direct, sans blabla. Réponds en français.";
     const userMsg = `Compte: ${pf.firm}${pf.name?" "+pf.name:""}\nP&L du jour: ${todayPnl>=0?"+":""}${fmtMoney(todayPnl)}${currency}\n${todayTrades.length} trades:\n${summary}`;
     try {
-      const res = await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({summary:userMsg,customSystem:systemMsg})});
+      const res = await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({patternData:userMsg,customSystem:systemMsg,tradeCount:todayTrades.length})});
       if(!res.ok){const e=await res.json().catch(()=>({}));setEodText("Erreur: "+(e?.error||"inconnue"));setEodLoading(false);return;}
       const data=await res.json();
       if(data.text) setEodText(data.text); else setEodText("Réponse vide.");
