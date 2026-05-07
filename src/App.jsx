@@ -2033,7 +2033,7 @@ ${recentTrades}`;
                 const pfTrades=trades.filter(t=>!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id));
                 const sorted=[...pfTrades].sort((a,b)=>a.date.localeCompare(b.date));
                 let cum=0;
-                const chartData=[{v:0,inst:""},...sorted.map(t=>{cum+=t.pnl||0;return{v:parseFloat(cum.toFixed(2)),inst:t.instrument||""};})];
+                const chartData=[{v:0,d:"",inst:""},...sorted.map(t=>{cum+=t.pnl||0;return{v:parseFloat(cum.toFixed(2)),d:t.date,inst:t.instrument||""};})];
                 const pnl=pfTrades.reduce((s,t)=>s+(t.pnl||0),0);
                 const isProfit=pnl>=0;
                 const cVals=chartData.map(d=>d.v);
@@ -2066,7 +2066,7 @@ ${recentTrades}`;
                     </div>
                     {/* Courbe */}
                     <div style={{marginBottom:totalRange>0?10:0}}>
-                      <ResponsiveContainer width="100%" height={80}>
+                      <ResponsiveContainer width="100%" height={110}>
                         <AreaChart data={chartData} margin={{top:6,right:2,left:0,bottom:0}}>
                           <defs>
                             <linearGradient id={cgid} x1="0" y1="0" x2="0" y2="1">
@@ -2078,8 +2078,9 @@ ${recentTrades}`;
                               <stop offset={`${czp}%`} stopColor="#e05a5a" stopOpacity={0.15}/>
                             </linearGradient>
                           </defs>
-                          <ReferenceLine y={0} stroke="rgba(255,255,255,0.12)" strokeWidth={1} strokeDasharray="3 3"/>
-                          <Tooltip contentStyle={{background:"rgba(14,14,14,0.96)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:7,fontSize:10,color:"#fff",padding:"5px 10px"}} formatter={v=>[`${v>=0?"+":""}${fmtMoney(v)}${currency}`,""]} labelFormatter={(_,pl)=>pl?.[0]?.payload?.inst||""}/>
+                          <XAxis dataKey="d" tick={{fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fill:C.dim}} tickLine={false} axisLine={false} interval="preserveStartEnd" tickFormatter={v=>v?v.slice(5):""}/>
+                          <ReferenceLine y={0} stroke={darkMode?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.12)"} strokeWidth={1} strokeDasharray="3 3"/>
+                          <Tooltip contentStyle={{background:darkMode?"rgba(14,14,14,0.96)":"rgba(255,255,255,0.96)",border:`1px solid ${C.border}`,borderRadius:7,fontSize:10,color:C.white,padding:"5px 10px"}} formatter={v=>[`${v>=0?"+":""}${fmtMoney(v)}${currency}`,""]} labelFormatter={(_,pl)=>pl?.[0]?.payload?.inst||""}/>
                           <Area type="monotone" dataKey="v" stroke={`url(#${cgid})`} strokeWidth={2} fill={`url(#${cgid}f)`} dot={{r:2.5,fill:`url(#${cgid})`,strokeWidth:0}} activeDot={{r:4,strokeWidth:0}}/>
                         </AreaChart>
                       </ResponsiveContainer>
@@ -2087,7 +2088,7 @@ ${recentTrades}`;
                     {/* Jauge MLL→TARGET */}
                     {totalRange>0&&(
                       <div>
-                        <div style={{position:"relative",height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:5}}>
+                        <div style={{position:"relative",height:3,background:darkMode?"rgba(255,255,255,0.08)":C.gray3,borderRadius:2,marginBottom:5}}>
                           <div style={{position:"absolute",left:fillLeft+"%",width:fillWidth+"%",height:"100%",borderRadius:2,background:isProfit?"rgba(74,222,128,0.65)":"rgba(229,100,100,0.65)"}}/>
                           <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",width:1.5,height:9,background:C.dim,borderRadius:1,top:-3}}/>
                           <div style={{position:"absolute",left:currentPct+"%",transform:"translateX(-50%)",width:2.5,height:8,background:isProfit?"#4ade80":"#e05a5a",borderRadius:1,top:-2.5,transition:"left 0.5s",boxShadow:isProfit?"0 0 4px rgba(74,222,128,0.8)":"0 0 4px rgba(229,100,100,0.8)"}}/>
@@ -3102,7 +3103,7 @@ ${recentTrades}`;
                     {pf.trailingDD && <div style={{position:"absolute",left:0,fontSize:9,color:C.accent,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase"}}>▲ Suiveur</div>}
                   </div>
                   {/* Bar */}
-                  <div style={{position:"relative",height:4,background:"rgba(255,255,255,0.06)",borderRadius:2}}>
+                  <div style={{position:"relative",height:4,background:darkMode?"rgba(255,255,255,0.08)":C.gray3,borderRadius:2}}>
                     <div style={{position:"absolute",left:fillLeft+"%",width:fillWidth+"%",height:"100%",borderRadius:2,background:isProfit?"rgba(74,222,128,0.7)":"rgba(229,100,100,0.7)",transition:"all 0.6s",boxShadow:isProfit?"0 0 8px rgba(74,222,128,0.4)":"0 0 8px rgba(229,100,100,0.4)"}}/>
                     <div style={{position:"absolute",left:startPct+"%",transform:"translateX(-50%)",width:2,height:14,background:C.dim,borderRadius:1,top:-5}}/>
                     <div style={{position:"absolute",left:currentPct+"%",transform:"translateX(-50%)",width:3,height:12,background:isProfit?"#4ade80":"#e05a5a",borderRadius:2,top:-4,transition:"left 0.6s",boxShadow:isProfit?"0 0 6px rgba(74,222,128,0.8)":"0 0 6px rgba(229,100,100,0.8)"}}/>
@@ -3153,7 +3154,7 @@ ${recentTrades}`;
               return (
                 <div style={{marginTop:10,marginBottom:4}}>
                   <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:4}}>Courbe d'équité</div>
-                  <ResponsiveContainer width="100%" height={90}>
+                  <ResponsiveContainer width="100%" height={120}>
                     <AreaChart data={cd} margin={{top:6,right:4,left:0,bottom:0}}>
                       <defs>
                         <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
@@ -3165,8 +3166,9 @@ ${recentTrades}`;
                           <stop offset={`${zp}%`} stopColor="#e05a5a" stopOpacity={0.18}/>
                         </linearGradient>
                       </defs>
-                      <ReferenceLine y={0} stroke="rgba(255,255,255,0.12)" strokeWidth={1} strokeDasharray="3 3"/>
-                      <Tooltip contentStyle={{background:"rgba(14,14,14,0.96)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:7,fontSize:10,color:"#fff",padding:"5px 10px"}} formatter={v=>[`${v>=0?"+":""}${fmtMoney(v)}${currency}`,""]} labelFormatter={(_,pl)=>pl?.[0]?.payload?.inst||""}/>
+                      <XAxis dataKey="d" tick={{fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fill:C.dim}} tickLine={false} axisLine={false} interval="preserveStartEnd" tickFormatter={v=>v?v.slice(5):""}/>
+                      <ReferenceLine y={0} stroke={darkMode?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.12)"} strokeWidth={1} strokeDasharray="3 3"/>
+                      <Tooltip contentStyle={{background:darkMode?"rgba(14,14,14,0.96)":"rgba(255,255,255,0.96)",border:`1px solid ${C.border}`,borderRadius:7,fontSize:10,color:C.white,padding:"5px 10px"}} formatter={v=>[`${v>=0?"+":""}${fmtMoney(v)}${currency}`,""]} labelFormatter={(_,pl)=>pl?.[0]?.payload?.inst||""}/>
                       <Area type="monotone" dataKey="v" stroke={`url(#${gid})`} strokeWidth={2} fill={`url(#${gid}f)`} dot={{r:2.5,fill:`url(#${gid})`,strokeWidth:0}} activeDot={{r:4,strokeWidth:0}}/>
                     </AreaChart>
                   </ResponsiveContainer>
@@ -3422,7 +3424,7 @@ ${recentTrades}`;
             </div>
 
             {/* Bar */}
-            <div style={{position:"relative",height:4,background:"rgba(255,255,255,0.06)",borderRadius:2}}>
+            <div style={{position:"relative",height:4,background:darkMode?"rgba(255,255,255,0.08)":C.gray3,borderRadius:2}}>
               {/* Fill */}
               <div style={{position:"absolute",left:fillLeft+"%",width:fillWidth+"%",height:"100%",borderRadius:2,background:isProfit?"rgba(74,222,128,0.7)":"rgba(229,100,100,0.7)",transition:"all 0.6s",boxShadow:isProfit?"0 0 8px rgba(74,222,128,0.4)":"0 0 8px rgba(229,100,100,0.4)"}}/>
               {/* START marker */}
@@ -3463,6 +3465,41 @@ ${recentTrades}`;
                 <div style={{height:4,background:C.gray3,borderRadius:2}}>
                   <div style={{width:dlPct+"%",height:"100%",borderRadius:2,background:over?"rgba(192,57,43,0.9)":dlPct>=70?"rgba(192,57,43,0.5)":"rgba(192,57,43,0.3)",transition:"width 0.6s"}}/>
                 </div>
+              </div>
+            );
+          })()}
+
+          {/* ── Equity Curve ── */}
+          {acctTrades.length>=2&&(()=>{
+            const sortedDet=[...acctTrades].sort((a,b)=>a.date.localeCompare(b.date));
+            let cumDet=0;
+            const detData=[{v:0,d:"",inst:""},...sortedDet.map(t=>{cumDet+=t.pnl||0;return{v:parseFloat(cumDet.toFixed(2)),d:t.date,inst:t.instrument||""};})];
+            const detVals=detData.map(d=>d.v);
+            const detMax=Math.max(...detVals), detMin=Math.min(...detVals);
+            const detZp=detMax===detMin?100:Math.min(100,Math.max(0,detMax/(detMax-detMin)*100));
+            const detGid=`det_${pf.id}`;
+            return (
+              <div style={{borderTop:`1px solid ${C.border}`,paddingTop:16,marginTop:4}}>
+                <div style={{fontSize:9,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:8}}>Courbe d'équité</div>
+                <ResponsiveContainer width="100%" height={140}>
+                  <AreaChart data={detData} margin={{top:6,right:4,left:0,bottom:0}}>
+                    <defs>
+                      <linearGradient id={detGid} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset={`${detZp}%`} stopColor="#4caf6e" stopOpacity={1}/>
+                        <stop offset={`${detZp}%`} stopColor="#e05a5a" stopOpacity={1}/>
+                      </linearGradient>
+                      <linearGradient id={`${detGid}f`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset={`${detZp}%`} stopColor="#4caf6e" stopOpacity={0.18}/>
+                        <stop offset={`${detZp}%`} stopColor="#e05a5a" stopOpacity={0.18}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="d" tick={{fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fill:C.dim}} tickLine={false} axisLine={false} interval="preserveStartEnd" tickFormatter={v=>v?v.slice(5):""}/>
+                    <YAxis tick={{fontSize:8,fontFamily:"'Josefin Sans',sans-serif",fill:C.dim}} tickLine={false} axisLine={false} width={42} tickFormatter={v=>`${v>=0?"+":""}${fmtMoney(v)}`}/>
+                    <ReferenceLine y={0} stroke={darkMode?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.12)"} strokeWidth={1} strokeDasharray="3 3"/>
+                    <Tooltip contentStyle={{background:darkMode?"rgba(14,14,14,0.96)":"rgba(255,255,255,0.96)",border:`1px solid ${C.border}`,borderRadius:7,fontSize:10,color:C.white,padding:"5px 10px"}} formatter={v=>[`${v>=0?"+":""}${fmtMoney(v)}${currency}`,""]} labelFormatter={(_,pl)=>pl?.[0]?.payload?.inst||""}/>
+                    <Area type="monotone" dataKey="v" stroke={`url(#${detGid})`} strokeWidth={2} fill={`url(#${detGid}f)`} dot={{r:2.5,fill:`url(#${detGid})`,strokeWidth:0}} activeDot={{r:4,strokeWidth:0}}/>
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             );
           })()}
