@@ -314,19 +314,9 @@ function Calendar({ filtered, calMonth, calYear, onPrev, onNext, onDayClick, cur
   const firstDayJS  = new Date(Date.UTC(yr, m, 1)).getUTCDay(); // 0=Sun, timezone-safe
   const offset      = firstDayJS === 0 ? 6 : firstDayJS - 1;   // convert to Mon-first
   const todayStr = new Date().toISOString().split("T")[0];
-  const calTradeDay = (t) => {
-    if (!dayEndTime || !t.time) return t.date;
-    if (t.time >= dayEndTime) {
-      const d = new Date(t.date + "T12:00:00");
-      d.setDate(d.getDate() + 1);
-      return d.toISOString().split("T")[0];
-    }
-    return t.date;
-  };
   const byDay = {};
   filtered.forEach(t => {
-    const dateStr = calTradeDay(t);
-    const [ty, tm, td] = dateStr.split("-").map(Number);
+    const [ty, tm, td] = t.date.split("-").map(Number);
     if (ty === yr && tm - 1 === m) byDay[td] = (byDay[td] || 0) + (t.pnl || 0);
   });
   const maxAbs = Math.max(...Object.values(byDay).map(Math.abs), 1);
@@ -1305,7 +1295,7 @@ export default function App() {
   const [pfCalNav, setPfCalNav] = useState({ month: now0.getMonth(), year: now0.getFullYear() });
   const calMonth  = calNav.month;  const calYear   = calNav.year;
   const pfCalMonth = pfCalNav.month; const pfCalYear = pfCalNav.year;
-  const [form, setForm] = useState({ date:new Date().toISOString().split("T")[0], time:new Date().toTimeString().slice(0,5), instrument:"MNQ", direction:"LONG", result:"WIN", session:"New York", emotion:"Neutre", entry:"", exit:"", rr:"", size:"", sizeUnit:"contrats", notes:"", accountIds:[], strategyId:null });
+  const [form, setForm] = useState({ date:new Date().toISOString().split("T")[0], instrument:"MNQ", direction:"LONG", result:"WIN", session:"New York", emotion:"Neutre", entry:"", exit:"", rr:"", size:"", sizeUnit:"contrats", notes:"", accountIds:[], strategyId:null });
 
   const instruments = [...BASE_INSTRUMENTS, ...extraInstr, "Autre"];
   const availableYears = Array.from({ length:now0.getFullYear() - 2019 }, (_, i) => now0.getFullYear() - i);
@@ -1430,17 +1420,6 @@ export default function App() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
 
-  // ── Trading day cutoff ──
-  // If a trade's time >= dayEndTime, it belongs to the next calendar day
-  const tradeDay = (t) => {
-    if (!dayEndTime || !t.time) return t.date;
-    if (t.time >= dayEndTime) {
-      const d = new Date(t.date + "T12:00:00");
-      d.setDate(d.getDate() + 1);
-      return d.toISOString().split("T")[0];
-    }
-    return t.date;
-  };
   // "Today" in trading terms: if current time >= cutoff, trading day = tomorrow
   const tradingToday = (() => {
     if (!dayEndTime) return new Date().toISOString().split("T")[0];
@@ -1455,12 +1434,11 @@ export default function App() {
   // Pre-fill fixed values when switching to add view
   useEffect(() => {
     if (view === "add") {
-      const nowTime = new Date().toTimeString().slice(0, 5);
       const nowDate = new Date();
-      if (dayEndTime && nowTime >= dayEndTime) nowDate.setDate(nowDate.getDate() + 1);
+      if (dayEndTime && new Date().toTimeString().slice(0, 5) >= dayEndTime) nowDate.setDate(nowDate.getDate() + 1);
       const effectiveDate = nowDate.toISOString().split("T")[0];
       setPnlRaw("");
-      setForm(f => ({ ...f, date: effectiveDate, time: nowTime, entry:"", exit:"", rr:"", size:"", notes:"", accountIds: selectedPf ? [selectedPf.id] : [], strategyId:null }));
+      setForm(f => ({ ...f, date: effectiveDate, entry:"", exit:"", rr:"", size:"", notes:"", accountIds: selectedPf ? [selectedPf.id] : [], strategyId:null }));
     }
   }, [view, dayEndTime]);
 
@@ -1538,7 +1516,7 @@ export default function App() {
 
   // Both stats and calendar filter by selected month
   const filterByPeriod = list => list.filter(t => {
-    const d = new Date(tradeDay(t) + "T12:00:00");
+    const d = new Date(t.date + "T12:00:00");
     return d.getFullYear() === calYear && d.getMonth() === calMonth;
   });
   const calFiltered = filterByPeriod(trades);
@@ -1604,7 +1582,7 @@ export default function App() {
     const polarityMap = { ...EMOTION_POLARITY };
     extraEmotions.forEach(e => { if (typeof e === "object" && e.polarity) polarityMap[e.label] = e.polarity; });
 
-    const byDay     = group(t => DAYS[new Date(tradeDay(t)+"T12:00:00").getDay()]);
+    const byDay     = group(t => DAYS[new Date(t.date+"T12:00:00").getDay()]);
     const bySession = group(t => t.session);
     const byEmotion = group(t => t.emotion);
     const byInstr   = group(t => t.instrument);
@@ -1802,10 +1780,7 @@ ${recentTrades}`;
         ))}
       </div>
 
-      <div style={{display:"flex",gap:8}}>
-        <div style={{flex:1}}><Field label="Date"><DatePicker value={form.date} onChange={v => set("date", v)} /></Field></div>
-        <div style={{flex:1}}><Field label="Heure"><TimePicker value={form.time||""} onChange={v => set("time", v)} /></Field></div>
-      </div>
+      <Field label="Date"><DatePicker value={form.date} onChange={v => set("date", v)} /></Field>
       <Field label="Instrument">
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
           {BASE_INSTRUMENTS.map(o => <Chip key={o} label={o} active={form.instrument===o && !showCustom} onClick={()=>handleInstrument(o)}/>)}
@@ -2053,7 +2028,7 @@ ${recentTrades}`;
         // Consistency (% semaines positives)
         const weekMap={};
         sorted.forEach(t=>{
-          const d=new Date(tradeDay(t)+"T12:00:00");
+          const d=new Date(t.date+"T12:00:00");
           const key=`${d.getFullYear()}-${d.getMonth()}-W${Math.ceil(d.getDate()/7)}`;
           weekMap[key]=(weekMap[key]||0)+(t.pnl||0);
         });
@@ -2062,7 +2037,7 @@ ${recentTrades}`;
 
         // Sharpe simplifié (daily)
         const dayMap={};
-        sorted.forEach(t=>{ const d=tradeDay(t); dayMap[d]=(dayMap[d]||0)+(t.pnl||0); });
+        sorted.forEach(t=>{ dayMap[t.date]=(dayMap[t.date]||0)+(t.pnl||0); });
         const dVals=Object.values(dayMap);
         const avgD=dVals.reduce((s,v)=>s+v,0)/dVals.length;
         const stdD=Math.sqrt(dVals.reduce((s,v)=>s+(v-avgD)**2,0)/dVals.length)||1;
@@ -2089,7 +2064,7 @@ ${recentTrades}`;
 
         // Overtrading
         const avgTPD=sorted.length/Object.keys(dayMap).length;
-        const dayDetails=Object.entries(dayMap).map(([date,pnl])=>({date,pnl,count:sorted.filter(t=>tradeDay(t)===date).length}));
+        const dayDetails=Object.entries(dayMap).map(([date,pnl])=>({date,pnl,count:sorted.filter(t=>t.date===date).length}));
         const otDays=dayDetails.filter(d=>d.count>avgTPD*1.5).sort((a,b)=>b.count-a.count).slice(0,3);
 
         // R-Multiple distribution
@@ -2377,7 +2352,7 @@ ${recentTrades}`;
                   </div>
                 </div>
                 <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-                  {[t.date, t.time||null, t.session, t.emotion, t.rr ? `RR ${t.rr}` : null,
+                  {[t.date, t.session, t.emotion, t.rr ? `RR ${t.rr}` : null,
                     ...(t.accountIds && t.accountIds.length > 0
                       ? t.accountIds.map(id => propfirms.find(p => p.id === id)?.name).filter(Boolean)
                       : [])
@@ -2638,7 +2613,7 @@ ${recentTrades}`;
     }
 
     if (pf.hasDailyLoss && dailyLoss > 0) {
-      const todayPnl = trades.filter(t => tradeDay(t) === tradingToday).reduce((s,t)=>s+(t.pnl||0),0);
+      const todayPnl = trades.filter(t => t.date === tradingToday).reduce((s,t)=>s+(t.pnl||0),0);
       const todayLoss = Math.abs(Math.min(0, todayPnl));
       if (todayLoss >= dailyLoss) alerts.push({ type:"danger", msg:"Daily loss limit atteinte — Arrêtez de trader aujourd'hui." });
       else if (todayLoss >= dailyLoss * 0.7) alerts.push({ type:"warn", msg:`Daily loss : ${fmtMoney(todayLoss)}${currency} / ${dailyLoss}${currency} utilisés.` });
@@ -2884,10 +2859,10 @@ ${recentTrades}`;
             {editingPf?.id !== pf.id && pf.type==="propfirm" && (()=>{
               const pfTrades = trades.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(pf.id));
               const peakPnl = (() => {
-                const sortedDates = [...new Set(pfTrades.map(t => tradeDay(t)))].sort();
+                const sortedDates = [...new Set(pfTrades.map(t => t.date))].sort();
                 let cum = 0, peak = 0;
                 sortedDates.forEach(date => {
-                  cum += pfTrades.filter(t => tradeDay(t) === date).reduce((s, t) => s + (t.pnl || 0), 0);
+                  cum += pfTrades.filter(t => t.date === date).reduce((s, t) => s + (t.pnl || 0), 0);
                   if (cum > peak) peak = cum;
                 });
                 return peak;
@@ -2928,7 +2903,7 @@ ${recentTrades}`;
                   {/* Daily Loss bar */}
                   {pf.hasDailyLoss && parseFloat(pf.dailyLoss)>0 && (()=>{
                     const dl=parseFloat(pf.dailyLoss);
-                    const todayLoss=Math.abs(Math.min(0,pfTrades.filter(t=>tradeDay(t)===tradingToday).reduce((s,t)=>s+(t.pnl||0),0)));
+                    const todayLoss=Math.abs(Math.min(0,pfTrades.filter(t=>t.date===tradingToday).reduce((s,t)=>s+(t.pnl||0),0)));
                     const dlPct=Math.min(100,(todayLoss/dl)*100);
                     const over=todayLoss>=dl;
                     return (
@@ -2983,7 +2958,7 @@ ${recentTrades}`;
               const acctWins = acctTrades.filter(t=>t.result==="WIN").length;
               const acctWr = acctTrades.length ? Math.round(acctWins/acctTrades.length*100) : 0;
               const acctAvgRR = acctTrades.length ? (acctTrades.reduce((s,t)=>s+(parseFloat(t.rr)||0),0)/acctTrades.length).toFixed(1) : "—";
-              const todayTrades = acctTrades.filter(t=>tradeDay(t)===tradingToday);
+              const todayTrades = acctTrades.filter(t=>t.date===tradingToday);
               const todayPnl = todayTrades.reduce((s,t)=>s+(t.pnl||0),0);
               return (
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10,marginTop:4}}>
@@ -3063,8 +3038,8 @@ ${recentTrades}`;
     const allAvgLoss = allLosses ? Math.abs(acctTrades.filter(t=>t.result==="LOSS").reduce((s,t)=>s+(t.pnl||0),0)/allLosses) : 0;
     const profitFactor = allAvgLoss>0 ? (allAvgWin*allWins/(allAvgLoss*allLosses)).toFixed(2) : "∞";
     const allAvgRR = allTotal ? (acctTrades.reduce((s,t)=>s+(parseFloat(t.rr)||0),0)/allTotal).toFixed(1) : "—";
-    const bestDay = (() => { const byD={}; acctTrades.forEach(t=>{const d=tradeDay(t);byD[d]=(byD[d]||0)+(t.pnl||0);}); return Math.max(0,...Object.values(byD)); })();
-    const worstDay = (() => { const byD={}; acctTrades.forEach(t=>{const d=tradeDay(t);byD[d]=(byD[d]||0)+(t.pnl||0);}); return Math.min(0,...Object.values(byD)); })();
+    const bestDay = (() => { const byD={}; acctTrades.forEach(t=>{byD[t.date]=(byD[t.date]||0)+(t.pnl||0);}); return Math.max(0,...Object.values(byD)); })();
+    const worstDay = (() => { const byD={}; acctTrades.forEach(t=>{byD[t.date]=(byD[t.date]||0)+(t.pnl||0);}); return Math.min(0,...Object.values(byD)); })();
 
     // Drawdown calculation
     const cap = parseFloat(pf.capital)||0;
@@ -3086,7 +3061,7 @@ ${recentTrades}`;
     const pfAvgRR = pfTotal ? (pfFiltered.reduce((s,t)=>s+(parseFloat(t.rr)||0),0)/pfTotal).toFixed(1) : "—";
 
     // Today
-    const todayTrades = acctTrades.filter(t=>tradeDay(t)===todayStr);
+    const todayTrades = acctTrades.filter(t=>t.date===todayStr);
     const statsTrades = acctView==="global" ? acctTrades : todayTrades;
     const todayPnl = todayTrades.reduce((s,t)=>s+(t.pnl||0),0);
 
@@ -3166,10 +3141,10 @@ ${recentTrades}`;
     const sectionProgress = pf.type==="propfirm" ? (() => {
       // Trailing DD: peak cumulative P&L at end of each day (only moves up)
       const peakPnl = (() => {
-        const sortedDates = [...new Set(acctTrades.map(t => tradeDay(t)))].sort();
+        const sortedDates = [...new Set(acctTrades.map(t => t.date))].sort();
         let cum = 0, peak = 0;
         sortedDates.forEach(date => {
-          cum += acctTrades.filter(t => tradeDay(t) === date).reduce((s, t) => s + (t.pnl || 0), 0);
+          cum += acctTrades.filter(t => t.date === date).reduce((s, t) => s + (t.pnl || 0), 0);
           if (cum > peak) peak = cum;
         });
         return peak;
@@ -3456,7 +3431,7 @@ ${recentTrades}`;
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"16px 14px",marginBottom:12}}>
         <Calendar filtered={acctTrades} calMonth={pfCalMonth} calYear={pfCalYear} onPrev={prevPfMonth} onNext={nextPfMonth} cur={currency} dayEndTime={dayEndTime} onDayClick={({day,month,year})=>{
             const dateStr=`${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-            const dayTrades=acctTrades.filter(t=>tradeDay(t)===dateStr);
+            const dayTrades=acctTrades.filter(t=>t.date===dateStr);
             const dayPnl=dayTrades.reduce((s,t)=>s+(t.pnl||0),0);
             setSelectedDay({date:dateStr,trades:dayTrades,pnl:dayPnl});
         }}/>
@@ -3674,7 +3649,7 @@ ${recentTrades}`;
 
   // ── End of Day ──
   const runEOD = async (pf) => {
-    const todayTrades = trades.filter(t => tradeDay(t)===tradingToday && (!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id)));
+    const todayTrades = trades.filter(t => t.date===tradingToday && (!t.accountIds||t.accountIds.length===0||t.accountIds.includes(pf.id)));
     if(todayTrades.length===0){ setEodText("Aucun trade aujourd'hui sur ce compte."); return; }
     setEodLoading(true); setEodText("");
     const summary = [...todayTrades].sort(cmpTrades).map(t=>`${t.instrument}|${t.direction}|${t.session}|${t.emotion}|RR:${t.rr||"—"}|P&L:${t.pnl}€|${t.result}${t.notes?`|"${t.notes}"`:""}`).join("\n");
