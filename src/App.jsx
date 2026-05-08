@@ -1984,10 +1984,10 @@ ${recentTrades}`;
         </Field>
       )}
 
-      {propfirms.length > 0 && (
+      {propfirms.filter(p=>!p.status||p.status==="active").length > 0 && (
         <Field label="Compte(s) concerné(s)">
           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-            {propfirms.map(pf => {
+            {propfirms.filter(p=>!p.status||p.status==="active").map(pf => {
               const selected = form.accountIds.includes(pf.id);
               return (
                 <button key={pf.id} onClick={() => set("accountIds", selected ? form.accountIds.filter(id=>id!==pf.id) : [...form.accountIds, pf.id])} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 14px", borderRadius:6, border:`1px solid ${selected?C.accent:C.border}`, background:selected?"rgba(0,0,0,0.06)":"transparent", cursor:"pointer", transition:"all 0.15s" }}>
@@ -2572,11 +2572,11 @@ ${recentTrades}`;
                   <div><Label>RR</Label><input type="text" inputMode="decimal" value={editingTrade.rr||""} onChange={e => setEditingTrade(p => ({ ...p, rr:e.target.value.replace(/,/g,".") }))} style={{ ...iStyle, padding:"9px 10px", fontSize:13 }} /></div>
                 </div>
                 <div style={{ marginBottom:8 }}><Label>Notes</Label><textarea rows={2} value={editingTrade.notes || ""} onChange={e => setEditingTrade(p => ({ ...p, notes:e.target.value }))} style={{ ...iStyle, resize:"vertical", lineHeight:1.5, padding:"9px 10px", fontSize:13 }} /></div>
-                {propfirms.length > 0 && (
+                {propfirms.filter(p=>!p.status||p.status==="active").length > 0 && (
                   <div style={{ marginBottom:8 }}>
                     <Label>Compte(s)</Label>
                     <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
-                      {propfirms.map(pf => {
+                      {propfirms.filter(p=>!p.status||p.status==="active").map(pf => {
                         const sel = (editingTrade.accountIds||[]).includes(pf.id);
                         return <button key={pf.id} onClick={() => setEditingTrade(p => ({ ...p, accountIds: sel ? (p.accountIds||[]).filter(id=>id!==pf.id) : [...(p.accountIds||[]), pf.id] }))} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", borderRadius:5, border:`1px solid ${sel?C.accent:C.gray3}`, background:sel?"rgba(0,0,0,0.06)":"transparent", cursor:"pointer" }}>
                           <span style={{ fontSize:12, fontFamily:"'Josefin Sans',sans-serif", fontWeight:sel?600:300, color:sel?C.accent:C.white }}>{pf.firm}{pf.name?" · "+pf.name:""}</span>
