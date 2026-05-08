@@ -13,27 +13,38 @@ module.exports = async function handler(req, res) {
   const to = new Date();
 
   try {
-    // Vérifier l'état du compte
-    const stateRes = await fetch(`https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts/${accountId}`, {
-      headers: { "auth-token": TOKEN },
-    });
-    const stateText = await stateRes.text();
+    // 1. Vérifier l'état du compte + récupérer la région
     let stateData;
-    try { stateData = JSON.parse(stateText); } catch { return res.status(502).json({ error: `MetaAPI provisioning error: ${stateText.slice(0,120)}` }); }
-    if (!stateRes.ok) return res.status(stateRes.status).json({ error: stateData.message || "Compte introuvable" });
-    if (stateData.state !== "DEPLOYED") return res.status(202).json({ status: stateData.state, message: "Compte en cours de connexion, réessaie dans quelques minutes." });
+    try {
+      const stateRes = await fetch(
+        `https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts/${accountId}`,
+        { headers: { "auth-token": TOKEN } }
+      );
+      const stateText = await stateRes.text();
+      try { stateData = JSON.parse(stateText); }
+      catch { return res.status(502).json({ error: `MetaAPI provisioning (HTML reçu): ${stateText.slice(0, 120)}` }); }
+      if (!stateRes.ok) return res.status(stateRes.status).json({ error: stateData.message || "Compte introuvable" });
+      if (stateData.state !== "DEPLOYED") return res.status(202).json({ status: stateData.state, message: "Compte en cours de connexion, réessaie dans quelques minutes." });
+    } catch (e) {
+      return res.status(502).json({ error: `Connexion provisioning impossible: ${e.message}` });
+    }
 
-    // Récupérer l'historique des deals
-    const histRes = await fetch(
-      `https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts/${accountId}/history-deals/time/${from.toISOString()}/${to.toISOString()}`,
-      { headers: { "auth-token": TOKEN } }
-    );
-    const histText = await histRes.text();
+    // 2. Construire l'URL history avec la région du compte
+    const region = stateData.region || "new-york";
+    const histUrl = `https://mt-client-api-v1.${region}.agiliumtrade.ai/users/current/accounts/${accountId}/history-deals/time/${from.toISOString()}/${to.toISOString()}`;
+
     let histData;
-    try { histData = JSON.parse(histText); } catch { return res.status(502).json({ error: `MetaAPI history endpoint error: ${histText.slice(0,120)}` }); }
-    if (!histRes.ok) return res.status(histRes.status).json({ error: histData.message || "Erreur récupération historique" });
+    try {
+      const histRes = await fetch(histUrl, { headers: { "auth-token": TOKEN } });
+      const histText = await histRes.text();
+      try { histData = JSON.parse(histText); }
+      catch { return res.status(502).json({ error: `MetaAPI history (HTML reçu, région: ${region}): ${histText.slice(0, 120)}` }); }
+      if (!histRes.ok) return res.status(histRes.status).json({ error: histData.message || "Erreur récupération historique" });
+    } catch (e) {
+      return res.status(502).json({ error: `Connexion history impossible (région: ${region}): ${e.message}` });
+    }
 
-    // Convertir les deals MetaAPI en format Fyltra
+    // 3. Convertir les deals MetaAPI → format Fyltra
     const trades = (histData.deals || [])
       .filter(d => d.type === "DEAL_TYPE_BUY" || d.type === "DEAL_TYPE_SELL")
       .filter(d => d.entryType === "DEAL_ENTRY_OUT" || d.entryType === "DEAL_ENTRY_INOUT")
