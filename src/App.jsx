@@ -21,11 +21,9 @@ const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","A
 const MONTHS_SH = ["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc"];
 const KEYS = { trades:"fyltra_trades_v1", instruments:"fyltra_instr_v1", strategies:"fyltra_strategies_v1", capital:"fyltra_cap_v1", propfirms:"fyltra_propfirms_v1" };
 const NAV = [
-  { key:"propfirm",    icon:"◉",  label:"Compte" },
-  { key:"add",         icon:"＋", label:"Trade" },
-  { key:"trades",      icon:"☰",  label:"Historique" },
-  { key:"classement",  icon:"⬡",  label:"Classement" },
-  { key:"ai",          icon:"◆",  label:"IA" },
+  { key:"propfirm",  icon:"◉",  label:"Compte" },
+  { key:"add",       icon:"＋", label:"Trade" },
+  { key:"ai",        icon:"◆",  label:"IA" },
 ];
 
 /* ─── Colors ─────────────────────────────────────────────────────── */
