@@ -1309,6 +1309,7 @@ export default function App() {
   const [confirmDeleteTradeId, setConfirmDeleteTradeId] = useState(null);
   const [tradesAccFilter,  setTradesAccFilter]  = useState("all");
   const [historyAccFilter, setHistoryAccFilter] = useState("all");
+  const [histInfoCard,     setHistInfoCard]     = useState(null);
   // Calendar navigation — single combined state avoids stale-closure bugs
   const now0 = new Date();
   const [calNav,   setCalNav]   = useState({ month: now0.getMonth(), year: now0.getFullYear() });
@@ -2279,25 +2280,46 @@ ${recentTrades}`;
             <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.2em",fontFamily:ff,fontWeight:600,marginBottom:8}}>Métriques Avancées</div>
             <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)",gap:8,marginBottom:10}}>
               {[
-                {l:"Espérance / Trade",v:`${expectancy>=0?"+":""}${fmtMoney(expectancy)}${currency}`,c:expectancy>=0?"#4caf6e":"#e05a5a",sub:"Gain moyen espéré par trade"},
-                {l:"Drawdown Max",v:`${maxDD.toFixed(1)}%`,c:maxDD<10?"#4caf6e":maxDD<25?"#d4c060":"#e05a5a",sub:`Actuel : ${currentDD.toFixed(1)}%`},
-                {l:"Facteur de Profit",v:pf>=99?"∞":pf.toFixed(2),c:pf>=1.5?"#4caf6e":pf>=1?"#d4c060":"#e05a5a",sub:"Gains bruts / Pertes brutes"},
-                {l:"Critère de Kelly",v:`${Math.max(0,kelly).toFixed(1)}%`,c:kelly>0?"#4caf6e":"#e05a5a",sub:"Taille de position optimale"},
-                {l:"Consistance",v:`${consistency}%`,c:consistency>=60?"#4caf6e":consistency>=40?"#d4c060":"#e05a5a",sub:`${wVals.filter(v=>v>0).length}/${wVals.length} semaines`},
-                {l:"Ratio de Sharpe",v:sharpe.toFixed(2),c:sharpe>=1?"#4caf6e":sharpe>=0?"#d4c060":"#e05a5a",sub:"Rendement / volatilité journalière"},
-              ].map(m=>(
-                <div key={m.l} style={{...cardS,padding:"14px 12px"}}>
-                  <div style={lbl}>{m.l}</div>
-                  <div style={{fontSize:22,fontFamily:ff,fontWeight:300,color:m.c,marginTop:4,letterSpacing:"0.04em",lineHeight:1}}>{m.v}</div>
-                  <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginTop:3}}>{m.sub}</div>
-                </div>
-              ))}
+                {l:"Espérance / Trade",v:`${expectancy>=0?"+":""}${fmtMoney(expectancy)}${currency}`,c:expectancy>=0?"#4caf6e":"#e05a5a",sub:"Gain moyen espéré par trade",info:"Ce que tu gagnes ou perds en moyenne par trade. Formule : (WR × gain moyen) − (taux perte × perte moyenne). Positif = stratégie rentable à long terme."},
+                {l:"Drawdown Max",v:`${maxDD.toFixed(1)}%`,c:maxDD<10?"#4caf6e":maxDD<25?"#d4c060":"#e05a5a",sub:`Actuel : ${currentDD.toFixed(1)}%`,info:"La plus grosse baisse depuis un pic, en %. Ex : tu atteignais +500€ puis tu tombais à +200€ → DD = 60%. Le DD actuel est calculé par rapport au dernier sommet atteint."},
+                {l:"Facteur de Profit",v:pf>=99?"∞":pf.toFixed(2),c:pf>=1.5?"#4caf6e":pf>=1?"#d4c060":"#e05a5a",sub:"Gains bruts / Pertes brutes",info:"Total des gains divisé par total des pertes. En dessous de 1 tu perds plus que tu gagnes. 1.5+ est un bon signe. ∞ signifie aucune perte enregistrée."},
+                {l:"Critère de Kelly",v:`${Math.max(0,kelly).toFixed(1)}%`,c:kelly>0?"#4caf6e":"#e05a5a",sub:"Taille de position optimale",info:"Le % de ton capital à risquer par trade selon tes stats réelles (WR et ratio gain/perte). Sert à maximiser la croissance à long terme sans sur-exposer le capital."},
+                {l:"Consistance",v:`${consistency}%`,c:consistency>=60?"#4caf6e":consistency>=40?"#d4c060":"#e05a5a",sub:`${wVals.filter(v=>v>0).length}/${wVals.length} semaines`,info:"Pourcentage de semaines qui se terminent en positif. 60%+ = trading régulier et fiable. Une faible consistance peut indiquer des résultats trop aléatoires."},
+                {l:"Ratio de Sharpe",v:sharpe.toFixed(2),c:sharpe>=1?"#4caf6e":sharpe>=0?"#d4c060":"#e05a5a",sub:"Rendement / volatilité journalière",info:"Rendement moyen journalier divisé par la volatilité de tes jours. Plus c'est élevé, plus tu gagnes de façon régulière. ≥1 = excellent, entre 0 et 1 = correct, <0 = trop de jours perdants."},
+              ].map(m=>{
+                const open = histInfoCard === m.l;
+                return (
+                  <div key={m.l} style={{...cardS,padding:"14px 12px",position:"relative"}}>
+                    <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:4}}>
+                      <div style={lbl}>{m.l}</div>
+                      <button onClick={()=>setHistInfoCard(open?null:m.l)} style={{flexShrink:0,width:16,height:16,borderRadius:"50%",border:`1px solid ${C.gray2}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,marginTop:1}}>
+                        <span style={{fontSize:9,color:C.gray1,fontFamily:ff,fontWeight:600,lineHeight:1}}>i</span>
+                      </button>
+                    </div>
+                    {open
+                      ? <div style={{fontSize:9,color:C.dim,fontFamily:ff,marginTop:6,lineHeight:1.6}}>{m.info}</div>
+                      : <>
+                          <div style={{fontSize:22,fontFamily:ff,fontWeight:300,color:m.c,marginTop:4,letterSpacing:"0.04em",lineHeight:1}}>{m.v}</div>
+                          <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginTop:3}}>{m.sub}</div>
+                        </>
+                    }
+                  </div>
+                );
+              })}
             </div>
 
             {/* ── R-MULTIPLE DISTRIBUTION ── */}
             <div style={{...cardS,padding:"16px",marginBottom:10}}>
-              <div style={lbl}>Distribution R-Multiples</div>
-              <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>Où se situent tes sorties ?</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
+                <div style={lbl}>Distribution R-Multiples</div>
+                <button onClick={()=>setHistInfoCard(histInfoCard==="rr"?null:"rr")} style={{width:16,height:16,borderRadius:"50%",border:`1px solid ${C.gray2}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>
+                  <span style={{fontSize:9,color:C.gray1,fontFamily:ff,fontWeight:600,lineHeight:1}}>i</span>
+                </button>
+              </div>
+              {histInfoCard==="rr"
+                ? <div style={{fontSize:10,color:C.dim,fontFamily:ff,marginBottom:14,lineHeight:1.6}}>Histogramme de tes sorties de trade exprimées en R (multiples du risque initial). {"<"}0 = en perte, 0–1 = gagné mais sous le RR visé, 1–2 = dans le plan, 2+ = trade exceptionnel. Le WR d'équilibre est le WR minimum pour être rentable avec ton RR moyen.</div>
+                : <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>Où se situent tes sorties ?</div>
+              }
               <div style={{display:"flex",gap:8,alignItems:"flex-end",height:90,marginBottom:10}}>
                 {rrBuckets.map(b=>{
                   const h=rrTotal>0?Math.max(4,Math.round(b.count/rrTotal*74)):4;
@@ -2323,8 +2345,16 @@ ${recentTrades}`;
             {/* ── MATRICE ÉMOTIONNELLE ── */}
             {emoData.length>0 && (
               <div style={{...cardS,padding:"16px",marginBottom:10}}>
-                <div style={lbl}>Matrice Émotionnelle</div>
-                <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>Performance par état d'esprit</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
+                  <div style={lbl}>Matrice Émotionnelle</div>
+                  <button onClick={()=>setHistInfoCard(histInfoCard==="emo"?null:"emo")} style={{width:16,height:16,borderRadius:"50%",border:`1px solid ${C.gray2}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>
+                    <span style={{fontSize:9,color:C.gray1,fontFamily:ff,fontWeight:600,lineHeight:1}}>i</span>
+                  </button>
+                </div>
+                {histInfoCard==="emo"
+                  ? <div style={{fontSize:10,color:C.dim,fontFamily:ff,marginBottom:14,lineHeight:1.6}}>Pour chaque émotion enregistrée : nombre de trades, win rate et P&L total. Permet de voir si tu trades mieux dans certains états. Un WR élevé avec une émotion négative = tu gères la pression. Un WR faible avec une émotion positive = attention à la surconfiance.</div>
+                  : <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>Performance par état d'esprit</div>
+                }
                 <div style={{display:"grid",gridTemplateColumns:"1fr 48px 48px 72px",gap:"10px 8px",alignItems:"center"}}>
                   {["Émotion","Nb","Réussite","P&L"].map(h=>(
                     <div key={h} style={{fontSize:8,color:C.dim,fontFamily:ff,letterSpacing:"0.1em",textTransform:"uppercase",textAlign:h==="Émotion"?"left":"center"}}>{h}</div>
@@ -2349,8 +2379,14 @@ ${recentTrades}`;
             {/* ── STREAKS + OVERTRADING ── */}
             <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8,marginBottom:10}}>
               <div style={{...cardS,padding:"16px"}}>
-                <div style={lbl}>Séries</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:12}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:histInfoCard==="streaks"?8:0}}>
+                  <div style={lbl}>Séries</div>
+                  <button onClick={()=>setHistInfoCard(histInfoCard==="streaks"?null:"streaks")} style={{width:16,height:16,borderRadius:"50%",border:`1px solid ${C.gray2}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>
+                    <span style={{fontSize:9,color:C.gray1,fontFamily:ff,fontWeight:600,lineHeight:1}}>i</span>
+                  </button>
+                </div>
+                {histInfoCard==="streaks" && <div style={{fontSize:10,color:C.dim,fontFamily:ff,marginBottom:10,lineHeight:1.6}}>Série actuelle = les victoires ou défaites consécutives en cours. Meilleure et pire série = records historiques. Les BREAKEVEN ne coupent pas une série.</div>}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:histInfoCard==="streaks"?0:12}}>
                   {[
                     {l:"Actuelle",v:`${curS}×`,sub:curST==="W"?"Victoires":"Défaites",c:curST==="W"?"#4caf6e":"#e05a5a"},
                     {l:"Meilleure série",v:`${maxWS}×`,sub:"victoires consécutives",c:"#4caf6e"},
@@ -2365,8 +2401,14 @@ ${recentTrades}`;
                 </div>
               </div>
               <div style={{...cardS,padding:"16px"}}>
-                <div style={lbl}>Détection Surtrading</div>
-                <div style={{marginTop:12}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:histInfoCard==="ot"?8:0}}>
+                  <div style={lbl}>Détection Surtrading</div>
+                  <button onClick={()=>setHistInfoCard(histInfoCard==="ot"?null:"ot")} style={{width:16,height:16,borderRadius:"50%",border:`1px solid ${C.gray2}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>
+                    <span style={{fontSize:9,color:C.gray1,fontFamily:ff,fontWeight:600,lineHeight:1}}>i</span>
+                  </button>
+                </div>
+                {histInfoCard==="ot" && <div style={{fontSize:10,color:C.dim,fontFamily:ff,marginBottom:10,lineHeight:1.6}}>Calcule ta moyenne de trades par jour. Signale les jours où tu as tradé 1.5× plus que cette moyenne — souvent signe d'impatience ou de revenge trading. Le P&L de ces jours t'indique si ce surtrading était rentable ou non.</div>}
+                <div style={{marginTop:histInfoCard==="ot"?0:12}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,alignItems:"center"}}>
                     <span style={{fontSize:9,color:C.gray1,fontFamily:ff}}>Moy. trades / jour</span>
                     <span style={{fontSize:12,color:C.white,fontFamily:ff,fontWeight:600}}>{avgTPD.toFixed(1)}</span>
@@ -2389,9 +2431,17 @@ ${recentTrades}`;
             {/* ── MONTE CARLO ── */}
             <div style={{...cardS,padding:"16px",marginBottom:10}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-                <div>
-                  <div style={lbl}>Monte Carlo — 50 prochains trades</div>
-                  <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginTop:2}}>Simulation sur {MC} chemins basée sur tes stats réelles</div>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                    <div style={lbl}>Monte Carlo — 50 prochains trades</div>
+                    <button onClick={()=>setHistInfoCard(histInfoCard==="mc"?null:"mc")} style={{width:16,height:16,borderRadius:"50%",border:`1px solid ${C.gray2}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>
+                      <span style={{fontSize:9,color:C.gray1,fontFamily:ff,fontWeight:600,lineHeight:1}}>i</span>
+                    </button>
+                  </div>
+                  {histInfoCard==="mc"
+                    ? <div style={{fontSize:10,color:C.dim,fontFamily:ff,lineHeight:1.6,maxWidth:260}}>Simule 300 scénarios de tes 50 prochains trades en utilisant ton WR réel et tes gains/pertes moyens. P10 = résultat si tu as de la malchance (10% de chances de faire moins). P50 = résultat le plus probable. P90 = si tout va bien. Le % en haut à droite = probabilité d'être en profit après 50 trades.</div>
+                    : <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginTop:2}}>Simulation sur {MC} chemins basée sur tes stats réelles</div>
+                  }
                 </div>
                 <div style={{textAlign:"right"}}>
                   <div style={{fontSize:24,fontFamily:ff,fontWeight:300,color:mcWin>=60?"#4caf6e":mcWin>=40?"#d4c060":"#e05a5a",letterSpacing:"0.04em",lineHeight:1}}>{mcWin}%</div>
@@ -2438,18 +2488,26 @@ ${recentTrades}`;
             .sort((a,b) => b.pnl - a.pnl);
         };
         const sections = [
-          { title:"Stratégie", sub:"Par stratégie utilisée", data: calcBest(t => { const s = strategies.find(s=>s.id===t.strategyId); return s?.name||null; }) },
-          { title:"Session", sub:"Par session de trading", data: calcBest(t => t.session) },
-          { title:"Instrument", sub:"Par instrument tradé", data: calcBest(t => t.instrument) },
-          { title:"Émotion", sub:"Par état émotionnel", data: calcBest(t => t.emotion) },
+          { title:"Stratégie",   key:"sec_strat", sub:"Par stratégie utilisée",   info:"Classe tes stratégies par P&L total. Te montre quelle approche est la plus rentable et laquelle te coûte le plus.", data: calcBest(t => { const s = strategies.find(s=>s.id===t.strategyId); return s?.name||null; }) },
+          { title:"Session",     key:"sec_sess",  sub:"Par session de trading",   info:"Compare tes performances selon la session (London, New York…). Permet d'identifier à quelle heure tu trades le mieux et d'éviter les sessions déficitaires.", data: calcBest(t => t.session) },
+          { title:"Instrument",  key:"sec_inst",  sub:"Par instrument tradé",     info:"Classe tes instruments par P&L. Utile pour voir sur quoi tu as un vrai edge et sur quoi tu perds du temps ou de l'argent.", data: calcBest(t => t.instrument) },
+          { title:"Émotion",     key:"sec_emo",   sub:"Par état émotionnel",      info:"Classe tes émotions par P&L. Si une émotion négative ressort en haut = tu gères la pression. Si une émotion positive est en bas = méfie-toi de la surconfiance.", data: calcBest(t => t.emotion) },
         ];
         return (
           <div style={{marginBottom:20}}>
             {sections.map(sec => (
               <div key={sec.title} style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:14,boxShadow:"0 6px 32px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.1), 0 -2px 28px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.36)",padding:"16px",marginBottom:12}}>
-                <div style={{marginBottom:12}}>
-                  <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{sec.title}</div>
-                  <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{sec.sub}</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                  <div>
+                    <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{sec.title}</div>
+                    {histInfoCard===sec.key
+                      ? <div style={{fontSize:10,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",marginTop:4,lineHeight:1.6,maxWidth:380}}>{sec.info}</div>
+                      : <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{sec.sub}</div>
+                    }
+                  </div>
+                  <button onClick={()=>setHistInfoCard(histInfoCard===sec.key?null:sec.key)} style={{width:16,height:16,borderRadius:"50%",border:`1px solid ${C.gray2}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,marginLeft:8}}>
+                    <span style={{fontSize:9,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,lineHeight:1}}>i</span>
+                  </button>
                 </div>
                 {sec.data.length === 0 ? (
                   <div style={{fontSize:12,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif"}}>Aucune donnée</div>
