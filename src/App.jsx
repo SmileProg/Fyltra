@@ -1006,10 +1006,11 @@ function MT5Connect({ user, darkMode, onTradesImported }) {
   const [mt5Form, setMt5Form] = useState({ login:"", password:"", server:"", name:"", platform:"mt5" });
   const [showMt5Pwd, setShowMt5Pwd] = useState(false);
   const [mt5Account, setMt5Account] = useState(null);
-  const [mt5Loading, setMt5Loading] = useState(false);
-  const [mt5Syncing, setMt5Syncing] = useState(false);
-  const [mt5Status, setMt5Status] = useState("");
-  const [mt5Error, setMt5Error] = useState("");
+  const [mt5Loading,   setMt5Loading]   = useState(false);
+  const [mt5Syncing,   setMt5Syncing]   = useState(false);
+  const [mt5Status,    setMt5Status]    = useState("");
+  const [mt5Error,     setMt5Error]     = useState("");
+  const [mt5NotFound,  setMt5NotFound]  = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -1040,7 +1041,7 @@ function MT5Connect({ user, darkMode, onTradesImported }) {
 
   const syncTrades = async () => {
     if (!mt5Account) return;
-    setMt5Syncing(true); setMt5Error(""); setMt5Status("");
+    setMt5Syncing(true); setMt5Error(""); setMt5Status(""); setMt5NotFound(false);
     try {
       const res = await fetch("/api/sync-trades", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -1048,11 +1049,19 @@ function MT5Connect({ user, darkMode, onTradesImported }) {
       });
       const data = await res.json();
       if (res.status === 202) { setMt5Status(data.message); setMt5Syncing(false); return; }
+      if (res.status === 404 || (data.error || "").toLowerCase().includes("not found")) {
+        setMt5NotFound(true); setMt5Syncing(false); return;
+      }
       if (!res.ok) throw new Error(data.error || "Erreur sync");
       if (data.trades?.length > 0 && onTradesImported) onTradesImported(data.trades);
       setMt5Status(`${data.total} trades importés avec succès.`);
     } catch(e) { setMt5Error(e.message); }
     setMt5Syncing(false);
+  };
+
+  const reconnectMT5 = async () => {
+    await supabase.from("mt5_accounts").delete().eq("user_id", user.id);
+    setMt5Account(null); setMt5NotFound(false); setMt5Error(""); setMt5Status("");
   };
 
   const f = (k,v) => setMt5Form(p => ({...p, [k]:v}));
@@ -1071,10 +1080,20 @@ function MT5Connect({ user, darkMode, onTradesImported }) {
               <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.06em"}}>{mt5Account.broker_server} · #{mt5Account.login}</div>
             </div>
           </div>
-          <button onClick={syncTrades} disabled={mt5Syncing} style={{width:"100%",padding:"11px",borderRadius:8,border:"none",background:mt5Syncing?"#333":C.accent,color:mt5Syncing?"#888":darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:mt5Syncing?"not-allowed":"pointer",transition:"all 0.2s"}}>
-            {mt5Syncing ? "Synchronisation..." : "Synchroniser les trades →"}
-          </button>
-          <button onClick={()=>setMt5Account(null)} style={{width:"100%",marginTop:8,padding:"8px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.gray2,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>
+          {mt5NotFound ? (
+            <div style={{background:"rgba(224,90,90,0.08)",border:"1px solid rgba(224,90,90,0.25)",borderRadius:10,padding:"14px 16px",marginBottom:8}}>
+              <div style={{fontSize:13,color:"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:6}}>Compte introuvable</div>
+              <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.6,marginBottom:12}}>Ce compte n'existe plus chez MetaAPI (expiré ou supprimé). Reconnecte-le pour continuer la synchronisation.</div>
+              <button onClick={reconnectMT5} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"rgba(224,90,90,0.7)",color:"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",cursor:"pointer"}}>
+                Reconnecter le compte →
+              </button>
+            </div>
+          ) : (
+            <button onClick={syncTrades} disabled={mt5Syncing} style={{width:"100%",padding:"11px",borderRadius:8,border:"none",background:mt5Syncing?"#333":C.accent,color:mt5Syncing?"#888":darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:mt5Syncing?"not-allowed":"pointer",transition:"all 0.2s"}}>
+              {mt5Syncing ? "Synchronisation..." : "Synchroniser les trades →"}
+            </button>
+          )}
+          <button onClick={()=>{setMt5Account(null);setMt5NotFound(false);}} style={{width:"100%",marginTop:8,padding:"8px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.gray2,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>
             Changer de compte
           </button>
         </div>
