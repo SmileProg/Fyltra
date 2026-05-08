@@ -1001,7 +1001,7 @@ function AuthScreen() {
 }
 
 /* ─── MT5 CONNECT ────────────────────────────────────────────────── */
-function MT5Connect({ user, darkMode, onTradesImported }) {
+function MT5Connect({ user, darkMode, onTradesImported, onAccountConnected }) {
   const isDark = darkMode;
   const [mt5Form, setMt5Form] = useState({ login:"", password:"", server:"", name:"", platform:"mt5" });
   const [showMt5Pwd, setShowMt5Pwd] = useState(false);
@@ -1034,6 +1034,10 @@ function MT5Connect({ user, darkMode, onTradesImported }) {
         name: mt5Form.name || `Compte ${mt5Form.login}`, connected: true,
       }).select().single();
       if (saved) setMt5Account(saved);
+      if (onAccountConnected) {
+        const newPf = { id: Date.now(), type:"mt5", firm: mt5Form.server, name: mt5Form.name || `Compte ${mt5Form.login}`, capital:"0", metaapi_id: data.accountId, platform: mt5Form.platform, login: mt5Form.login, status:"active" };
+        onAccountConnected(newPf);
+      }
       setMt5Status("Compte connecté ! La synchronisation initiale peut prendre 2-3 minutes.");
     } catch(e) { setMt5Error(e.message); }
     setMt5Loading(false);
@@ -1281,11 +1285,7 @@ export default function App() {
   const [pfPctValues, setPfPctValues] = useState({target:"",maxLoss:"",dailyLoss:""});
   const [capital,     setCapital]     = useState(() => load(KEYS.capital, ""));
   const [propfirms,   setPropfirms]   = useState(() => load(KEYS.propfirms, []));
-  const [pfView,      setPfView]      = useState("list"); // list | add-type | add-propfirm | add-personal | add-mt5
-  const [mt5PfForm,   setMt5PfForm]   = useState({ login:"", password:"", server:"", name:"", capital:"", platform:"mt5" });
-  const [mt5PfLoading,setMt5PfLoading]= useState(false);
-  const [mt5PfError,  setMt5PfError]  = useState("");
-  const [showMt5PfPwd,setShowMt5PfPwd]= useState(false);
+  const [pfView,      setPfView]      = useState("list"); // list | add-type | add-propfirm | add-personal
   const [mt5SyncingPf,setMt5SyncingPf]= useState(null); // pf.id en cours de sync
   const [mt5SyncMsg,  setMt5SyncMsg]  = useState({});
   const [pfListTab,   setPfListTab]   = useState("active"); // active | archived
@@ -2899,7 +2899,7 @@ ${recentTrades}`;
   const propfirmContent = (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:22 }}>
-        <PageTitle sub="Mes Comptes" title={pfView==="list"?"Comptes":pfView==="add-type"?"Type de compte":pfView==="add-propfirm"?"Prop Firm":pfView==="add-mt5"?"MT4 / MT5":"Fond Propre"} />
+        <PageTitle sub="Mes Comptes" title={pfView==="list"?"Comptes":pfView==="add-type"?"Type de compte":pfView==="add-propfirm"?"Prop Firm":"Fond Propre"} />
         {pfView!=="list" && (
           <button onClick={()=>setPfView("list")} style={{ padding:"9px 16px", borderRadius:4, border:`1px solid ${C.border}`, background:"transparent", color:C.gray1, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", marginBottom:24 }}>← Retour</button>
         )}
@@ -2921,10 +2921,10 @@ ${recentTrades}`;
             <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:13,color:C.white,letterSpacing:"0.1em",textTransform:"uppercase"}}>Fond Propre</div>
             <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.5,textAlign:"center"}}>Compte personnel avec ton propre capital</div>
           </button>
-          <button onClick={()=>{setMt5PfForm({login:"",password:"",server:"",name:"",capital:"",platform:"mt5"});setMt5PfError("");setPfView("add-mt5");}} style={{padding:"32px 16px",borderRadius:10,border:`1px solid ${C.border}`,background:C.bg2,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:12,gridColumn:"1 / -1",transition:"all 0.2s"}}>
+          <button onClick={()=>{setPfView("list");setView("settings");}} style={{padding:"32px 16px",borderRadius:10,border:`1px solid ${C.border}`,background:C.bg2,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:12,gridColumn:"1 / -1",transition:"all 0.2s"}}>
             <div style={{fontSize:28,color:C.dim}}>⟳</div>
             <div style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:13,color:C.white,letterSpacing:"0.1em",textTransform:"uppercase"}}>MT4 / MT5</div>
-            <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.5,textAlign:"center"}}>Importe automatiquement tes trades depuis MetaTrader</div>
+            <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.5,textAlign:"center"}}>Connecte ton compte depuis Paramètres → le compte apparaît ici automatiquement</div>
           </button>
         </div>
       )}
@@ -3044,54 +3044,6 @@ ${recentTrades}`;
         </div>
       )}
 
-      {pfView==="add-mt5" && (() => {
-        const mf = (k,v) => setMt5PfForm(p=>({...p,[k]:v}));
-        const fs = {width:"100%",background:C.bg3,border:`1px solid ${C.border}`,borderRadius:8,padding:"11px 14px",color:C.white,fontSize:13,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,outline:"none"};
-        const connectMT5Pf = async () => {
-          if (!mt5PfForm.login || !mt5PfForm.password || !mt5PfForm.server) { setMt5PfError("Remplis login, mot de passe et serveur."); return; }
-          setMt5PfLoading(true); setMt5PfError("");
-          try {
-            const res = await fetch("/api/connect-mt5", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(mt5PfForm) });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Erreur connexion MetaAPI");
-            const newPf = { id: Date.now(), type:"mt5", firm: mt5PfForm.server, name: mt5PfForm.name || `Compte ${mt5PfForm.login}`, capital: mt5PfForm.capital || "0", metaapi_id: data.accountId, platform: mt5PfForm.platform, login: mt5PfForm.login, status:"active" };
-            setPropfirms(p => [...p, newPf]);
-            setPfView("list");
-          } catch(e) { setMt5PfError(e.message); }
-          setMt5PfLoading(false);
-        };
-        return (
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            <div style={{display:"flex",gap:6,marginBottom:4,background:C.bg3,borderRadius:8,padding:3}}>
-              {["mt5","mt4"].map(p=>(
-                <button key={p} onClick={()=>mf("platform",p)} style={{flex:1,padding:"7px",borderRadius:6,border:"none",background:mt5PfForm.platform===p?C.accent:"transparent",color:mt5PfForm.platform===p?(darkMode?"#111":"#fff"):C.gray1,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>
-                  {p.toUpperCase()}
-                </button>
-              ))}
-            </div>
-            <input placeholder="Numéro de compte (login)" value={mt5PfForm.login} onChange={e=>mf("login",e.target.value)} style={fs}/>
-            <div style={{position:"relative"}}>
-              <input type={showMt5PfPwd?"text":"password"} placeholder="Mot de passe investisseur" value={mt5PfForm.password} onChange={e=>mf("password",e.target.value)} style={{...fs,paddingRight:46}}/>
-              <button onClick={()=>setShowMt5PfPwd(v=>!v)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.gray1,padding:0}}>
-                {showMt5PfPwd
-                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                }
-              </button>
-            </div>
-            <input placeholder="Serveur broker (ex: ICMarkets-Live)" value={mt5PfForm.server} onChange={e=>mf("server",e.target.value)} style={fs}/>
-            <input placeholder="Nom du compte (optionnel)" value={mt5PfForm.name} onChange={e=>mf("name",e.target.value)} style={fs}/>
-            <input type="text" inputMode="numeric" placeholder={`Capital de départ (${currency})`} value={mt5PfForm.capital} onChange={e=>mf("capital",e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,""))} style={fs}/>
-            {mt5PfError && <div style={{fontSize:11,color:"#e05a5a",fontFamily:"'Josefin Sans',sans-serif"}}>{mt5PfError}</div>}
-            <button onClick={connectMT5Pf} disabled={mt5PfLoading} style={{width:"100%",padding:"13px",borderRadius:8,border:"none",background:mt5PfLoading?"rgba(255,255,255,0.06)":"radial-gradient(ellipse 90% 90% at 50% 38%,rgba(245,245,245,0.95) 0%,rgba(215,215,215,0.88) 55%,rgba(230,230,230,0.92) 100%)",color:mt5PfLoading?C.gray1:"#111",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:mt5PfLoading?"not-allowed":"pointer",transition:"all 0.2s"}}>
-              {mt5PfLoading ? "Connexion..." : "Connecter le compte →"}
-            </button>
-            <div style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center",lineHeight:1.6}}>
-              Utilise le mot de passe <strong style={{color:C.gray1}}>investisseur</strong> (lecture seule), pas le mot de passe principal. La synchronisation initiale peut prendre 2-3 minutes.
-            </div>
-          </div>
-        );
-      })()}
 
       {pfView==="list" && (!propfirms.length || pfListTab==="active") && propfirms.filter(p=>!p.status||p.status==="active").length===0 && propfirms.length===0 && (
         <div style={{textAlign:"center",padding:"60px 0"}}>
@@ -4628,7 +4580,7 @@ ${recentTrades}`;
       </div>
       {/* ── MT5 CONNECT ── */}
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
-        <MT5Connect user={user} darkMode={darkMode} onTradesImported={newTrades => setTrades(p => [...newTrades.filter(n => !p.find(e => e.id === n.id)), ...p])} />
+        <MT5Connect user={user} darkMode={darkMode} onTradesImported={newTrades => setTrades(p => [...newTrades.filter(n => !p.find(e => e.id === n.id)), ...p])} onAccountConnected={newPf => setPropfirms(p => [...p, newPf])} />
       </div>
 
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px"}}>
