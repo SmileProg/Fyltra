@@ -4532,7 +4532,7 @@ ${recentTrades}`;
       // Upsert my score if competing
       if (compete && user) {
         const displayName = anonymous
-          ? (profileForm.nickname || profileForm.firstName || "Anonyme")
+          ? "Anonyme"
           : (profileForm.nickname || profileForm.firstName || user.email?.split("@")[0] || "Trader");
         await supabase.from("leaderboard").upsert(
           { user_id: user.id, display_name: displayName, score: myScore, tier: myTier, updated_at: new Date().toISOString() },
