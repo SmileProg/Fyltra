@@ -992,6 +992,14 @@ function AuthModal({ onClose, navigate, initialMode = "login" }) {
               style={{ width:"100%", background:`linear-gradient(135deg,${gold},#c9aa82)`, color:"#000", border:"none", borderRadius:12, padding:"14px", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14, cursor:loading?"wait":"pointer", opacity:loading?0.7:1, transition:"all .22s", boxShadow:"0 0 28px rgba(232,205,169,0.2)" }}>
               {loading ? "..." : "Se connecter →"}
             </button>
+            <div style={{ textAlign:"center", marginTop:16 }}>
+              <span style={{ fontSize:13, color:"rgba(255,255,255,0.3)", fontFamily:"'Outfit',sans-serif" }}>Pas encore membre ?</span>
+              {" "}
+              <button onClick={() => { onClose(); setTimeout(() => document.getElementById("tarifs")?.scrollIntoView({ behavior:"smooth" }), 80); }}
+                style={{ background:"none", border:"none", cursor:"pointer", color:gold, fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, padding:0, textDecoration:"underline", textUnderlineOffset:3 }}>
+                Créer un compte →
+              </button>
+            </div>
           </>
         )}
       </div>
