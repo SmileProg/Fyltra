@@ -1307,7 +1307,8 @@ export default function App() {
   const [editingTrade,setEditingTrade]= useState(null);
   const [editPnlRaw,  setEditPnlRaw]  = useState("");
   const [confirmDeleteTradeId, setConfirmDeleteTradeId] = useState(null);
-  const [tradesAccFilter, setTradesAccFilter] = useState("all");
+  const [tradesAccFilter,  setTradesAccFilter]  = useState("all");
+  const [historyAccFilter, setHistoryAccFilter] = useState("all");
   // Calendar navigation — single combined state avoids stale-closure bugs
   const now0 = new Date();
   const [calNav,   setCalNav]   = useState({ month: now0.getMonth(), year: now0.getFullYear() });
@@ -2133,10 +2134,32 @@ ${recentTrades}`;
         );
       })()}
 
+      {/* ── Filtre par compte ── */}
+      {propfirms.length > 0 && (
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16 }}>
+          {[{ id:"all", label:"Tous" }, ...propfirms.map(p => ({ id:p.id, label:p.name || p.firm || "Compte" }))].map(opt => (
+            <button key={opt.id} onClick={() => setHistoryAccFilter(opt.id)} style={{
+              padding:"5px 14px", borderRadius:20, fontSize:10, cursor:"pointer",
+              fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase",
+              border:`1px solid ${historyAccFilter === opt.id ? C.accent : C.gray3}`,
+              background: historyAccFilter === opt.id ? "rgba(232,205,169,0.1)" : "transparent",
+              color: historyAccFilter === opt.id ? C.accent : C.gray1,
+              transition:"all 0.15s",
+            }}>{opt.label}</button>
+          ))}
+        </div>
+      )}
+
       {/* ══════════════════ ANALYTICS AVANCÉS ══════════════════ */}
-      {trades.length >= 3 && (() => {
+      {(() => {
+        const histFiltered = historyAccFilter === "all"
+          ? trades
+          : trades.filter(t => !t.accountIds || t.accountIds.length === 0 || t.accountIds.includes(historyAccFilter));
+        if (histFiltered.length < 3) return histFiltered.length === 0
+          ? <div style={{textAlign:"center",padding:"40px 0",color:C.gray2,fontSize:12,fontFamily:"'Josefin Sans',sans-serif"}}>Aucun trade pour ce compte.</div>
+          : null;
         const isDark = C.bg === "#0f0f0f";
-        const sorted = [...trades].sort(cmpTrades);
+        const sorted = [...histFiltered].sort(cmpTrades);
         const cardS = {background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),0 0 0 1px rgba(255,255,255,0.09),inset 0 1px 0 rgba(255,255,255,0.32)"};
         const lbl = {fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600};
         const ff = "'Josefin Sans',sans-serif";
@@ -2396,10 +2419,13 @@ ${recentTrades}`;
       {/* ══════════════════ FIN ANALYTICS ══════════════════ */}
 
       {(() => {
-        if (trades.length === 0) return null;
+        const histFiltered2 = historyAccFilter === "all"
+          ? trades
+          : trades.filter(t => !t.accountIds || t.accountIds.length === 0 || t.accountIds.includes(historyAccFilter));
+        if (histFiltered2.length === 0) return null;
         const calcBest = (groupFn) => {
           const groups = {};
-          trades.forEach(t => {
+          histFiltered2.forEach(t => {
             const k = groupFn(t);
             if (!k) return;
             if (!groups[k]) groups[k] = {pnl:0,wins:0,total:0};
