@@ -4732,21 +4732,21 @@ ${recentTrades}`;
           {showMenu && (
             <>
               <div onClick={closeMenu} style={{position:"fixed",inset:0,zIndex:298}}/>
-              <div style={{position:"fixed",top:70,right:16,zIndex:299,animation:`${menuClosing?"slideToRight":"slideFromRight"} 0.24s cubic-bezier(.4,0,.2,1)`,display:"flex",flexDirection:"column",gap:6,background:"rgba(14,14,14,0.96)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:20,padding:"10px",boxShadow:"0 16px 48px rgba(0,0,0,0.35)",border:"1px solid rgba(255,255,255,0.07)",minWidth:160}}>
-                {[{k:"trades",l:"Historique",i:"☰"},{k:"history",l:"Statistiques",i:"≡"},{k:"strategy",l:"Plan",i:"◈"},{k:"classement",l:"Classement",i:"⬡"},{k:"profil",l:"Profil",i:"◐"},{k:"settings",l:"Paramètres",i:"◎"}].map(item=>(
-                  <button key={item.k} onClick={()=>{setView(item.k);setShowMenu(false);}} style={{display:"flex",alignItems:"center",padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent",transition:"background 0.15s"}}>
-                    <span style={{fontSize:13,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.06em",color:"rgba(255,255,255,0.7)"}}>{item.l}</span>
-                  </button>
-                ))}
-                <div style={{height:1,background:"rgba(255,255,255,0.06)",margin:"2px 8px"}}/>
-                <button onClick={()=>{ closeMenu(); setShowSignOutConfirm(true); }} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent"}}>
-                  <span style={{fontSize:15,color:"rgba(229,100,100,0.7)",lineHeight:1,width:20,textAlign:"center"}}>⏻</span>
-                  <span style={{fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,color:"rgba(229,100,100,0.7)",letterSpacing:"0.06em"}}>Déconnexion</span>
+              <div style={{position:"fixed",top:70,right:16,zIndex:299,animation:`${menuClosing?"slideToRight":"slideFromRight"} 0.24s cubic-bezier(.4,0,.2,1)`,display:"flex",flexDirection:"column",gap:4,background:"linear-gradient(180deg,rgba(60,60,60,0.97) 0%,rgba(18,18,18,0.99) 55%,rgba(8,8,8,1) 100%)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:24,padding:"10px",boxShadow:"0 6px 20px rgba(0,0,0,0.5),0 20px 50px rgba(0,0,0,0.4),0 0 60px rgba(255,255,255,0.11),0 0 0 1px rgba(255,255,255,0.13),inset 0 1px 0 rgba(255,255,255,0.38),inset 0 -2px 0 rgba(0,0,0,0.8)",border:"1px solid rgba(255,255,255,0.1)",minWidth:180}}>
+                {[{k:"profil",l:"Profil"},{k:"strategy",l:"Plan"},{k:"history",l:"Statistiques"},{k:"trades",l:"Historique"},{k:"classement",l:"Classement"},{k:"settings",l:"Paramètres"}].map(item=>{
+                  const active = view === item.k;
+                  return (
+                    <button key={item.k} onClick={()=>{setView(item.k);closeMenu();}} style={{display:"flex",alignItems:"center",width:"100%",padding:active?"10px 18px":"10px 14px",borderRadius:16,border:"none",cursor:"pointer",background:active?"radial-gradient(ellipse 110% 100% at 50% 35%,rgba(252,252,252,0.93) 0%,rgba(225,225,225,0.85) 55%,rgba(200,200,200,0.75) 100%)":"transparent",transition:"all 0.25s cubic-bezier(.4,0,.2,1)",boxShadow:active?"0 0 26px 8px rgba(255,255,255,0.22),0 0 50px 16px rgba(255,255,255,0.09),0 6px 20px rgba(0,0,0,0.5),0 2px 6px rgba(0,0,0,0.3)":"none"}}>
+                      <span style={{fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:active?700:300,letterSpacing:"0.1em",textTransform:"uppercase",color:active?"#222":"rgba(255,255,255,0.55)",transition:"color 0.25s",whiteSpace:"nowrap"}}>{item.l}</span>
+                    </button>
+                  );
+                })}
+                <div style={{height:1,background:"rgba(255,255,255,0.08)",margin:"4px 6px"}}/>
+                <button onClick={()=>{closeMenu();setShowSignOutConfirm(true);}} style={{display:"flex",alignItems:"center",width:"100%",padding:"10px 14px",borderRadius:16,border:"1px solid rgba(229,100,100,0.2)",cursor:"pointer",background:"rgba(229,100,100,0.06)",transition:"all 0.2s"}}>
+                  <span style={{fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(229,100,100,0.8)",whiteSpace:"nowrap"}}>Déconnexion</span>
                 </button>
-                <div style={{height:1,background:"rgba(255,255,255,0.06)",margin:"2px 8px"}}/>
-                <button onClick={closeMenu} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",borderRadius:12,border:"none",cursor:"pointer",background:"transparent"}}>
-                  <span style={{fontSize:17,color:"rgba(255,255,255,0.3)",lineHeight:1,width:20,textAlign:"center"}}>×</span>
-                  <span style={{fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,color:"rgba(255,255,255,0.3)",letterSpacing:"0.06em"}}>Fermer</span>
+                <button onClick={closeMenu} style={{display:"flex",alignItems:"center",width:"100%",padding:"10px 14px",borderRadius:16,border:"none",cursor:"pointer",background:"transparent",transition:"all 0.2s"}}>
+                  <span style={{fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(255,255,255,0.25)",whiteSpace:"nowrap"}}>Fermer</span>
                 </button>
               </div>
             </>
