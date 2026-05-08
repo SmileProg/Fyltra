@@ -45,9 +45,12 @@ module.exports = async function handler(req, res) {
     }
 
     // 3. Convertir les deals MetaAPI → format Fyltra
-    const trades = (histData.deals || [])
+    // La réponse peut être un tableau direct ou un objet { deals: [...] }
+    const rawDeals = Array.isArray(histData) ? histData : (histData.deals || histData.historyDeals || []);
+
+    const trades = rawDeals
       .filter(d => d.type === "DEAL_TYPE_BUY" || d.type === "DEAL_TYPE_SELL")
-      .filter(d => d.entryType === "DEAL_ENTRY_OUT" || d.entryType === "DEAL_ENTRY_INOUT")
+      .filter(d => d.entryType === "DEAL_ENTRY_OUT" || d.entryType === "DEAL_ENTRY_INOUT" || d.entryType === "DEAL_ENTRY_OUT_BY")
       .map(d => ({
         date: d.time ? d.time.slice(0, 10) : new Date().toISOString().slice(0, 10),
         instrument: d.symbol || "",
@@ -63,7 +66,7 @@ module.exports = async function handler(req, res) {
         tradeMode: "swing",
       }));
 
-    return res.status(200).json({ trades, total: trades.length });
+    return res.status(200).json({ trades, total: trades.length, _debug: { rawCount: rawDeals.length, types: [...new Set(rawDeals.map(d=>d.type))], entryTypes: [...new Set(rawDeals.map(d=>d.entryType))] } });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
