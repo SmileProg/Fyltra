@@ -17,16 +17,20 @@ module.exports = async function handler(req, res) {
     const stateRes = await fetch(`https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts/${accountId}`, {
       headers: { "auth-token": TOKEN },
     });
-    const stateData = await stateRes.json();
+    const stateText = await stateRes.text();
+    let stateData;
+    try { stateData = JSON.parse(stateText); } catch { return res.status(502).json({ error: `MetaAPI provisioning error: ${stateText.slice(0,120)}` }); }
     if (!stateRes.ok) return res.status(stateRes.status).json({ error: stateData.message || "Compte introuvable" });
     if (stateData.state !== "DEPLOYED") return res.status(202).json({ status: stateData.state, message: "Compte en cours de connexion, réessaie dans quelques minutes." });
 
     // Récupérer l'historique des deals
     const histRes = await fetch(
-      `https://metaapi.cloud/users/current/accounts/${accountId}/history-deals/time/${from.toISOString()}/${to.toISOString()}`,
+      `https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts/${accountId}/history-deals/time/${from.toISOString()}/${to.toISOString()}`,
       { headers: { "auth-token": TOKEN } }
     );
-    const histData = await histRes.json();
+    const histText = await histRes.text();
+    let histData;
+    try { histData = JSON.parse(histText); } catch { return res.status(502).json({ error: `MetaAPI history endpoint error: ${histText.slice(0,120)}` }); }
     if (!histRes.ok) return res.status(histRes.status).json({ error: histData.message || "Erreur récupération historique" });
 
     // Convertir les deals MetaAPI en format Fyltra
