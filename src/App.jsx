@@ -4580,7 +4580,12 @@ ${recentTrades}`;
       </div>
       {/* ── MT5 CONNECT ── */}
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
-        <MT5Connect user={user} darkMode={darkMode} onTradesImported={newTrades => setTrades(p => [...newTrades.filter(n => !p.find(e => e.id === n.id)), ...p])} onAccountConnected={newPf => setPropfirms(p => [...p, newPf])} />
+        <MT5Connect user={user} darkMode={darkMode} onTradesImported={newTrades => setTrades(p => [...newTrades.filter(n => !p.find(e => e.id === n.id)), ...p])} onAccountConnected={newPf => {
+          const updated = [...propfirms, newPf];
+          setPropfirms(updated);
+          save(KEYS.propfirms, updated);
+          if (user) saveUserSettings({ propfirms: updated });
+        }} />
       </div>
 
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px"}}>
