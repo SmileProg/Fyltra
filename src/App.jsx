@@ -5107,9 +5107,9 @@ ${recentTrades}`;
           <div style={{ marginLeft:220, flex:1, display:"flex", flexDirection:"column" }}>
             <div style={{ padding:"20px 36px 18px", borderBottom:`1px solid ${C.border}`, background:C.bg, position:"sticky", top:0, zIndex:40, backdropFilter:"blur(12px)", display:"flex", alignItems:"flex-end", justifyContent:"space-between" }}>
               <div>
-                <div style={{ fontSize:11, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", marginBottom:2, fontFamily:"'Josefin Sans',sans-serif" }}>{FULL_NAV.find(n => n.key === view)?.label}</div>
+                <div style={{ fontSize:11, color:C.dim, letterSpacing:"0.25em", textTransform:"uppercase", marginBottom:2, fontFamily:"'Josefin Sans',sans-serif" }}>{FULL_NAV_KEYS.find(n => n.key === view)?.lk ? L.nav[FULL_NAV_KEYS.find(n => n.key === view).lk] : ""}</div>
                 <div style={{ fontFamily:"'Josefin Sans',sans-serif", fontSize:26, fontWeight:700, color:C.white, letterSpacing:"-0.025em" }}>
-                  {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : "Mes Comptes") : view === "add" ? "Nouveau Trade" : view === "history" ? "Statistiques" : view === "trades" ? "Historique" : view === "strategy" ? "Plan de Trading" : view === "classement" ? "Classement" : view === "profil" ? "Profil" : view === "tools" ? "Outils" : "Analyse IA"}
+                  {view === "propfirm" ? (selectedPf ? selectedPf.firm + (selectedPf.name ? " · " + selectedPf.name : "") : L.pages.accts.list) : view === "add" ? L.pages.add.title : view === "history" ? L.pages.stats.title : view === "trades" ? L.pages.trades.title : view === "strategy" ? L.pages.plan.title : view === "classement" ? L.pages.rank.title : view === "profil" ? L.pages.prof.title : view === "tools" ? L.pages.tools.title : L.pages.ai.title}
                 </div>
               </div>
               <button onClick={()=>setDarkMode(d=>!d)} title={darkMode?"Mode clair":"Mode sombre"} style={{background:darkMode?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",border:`1px solid ${C.border}`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.gray1,flexShrink:0,transition:"all 0.2s",marginBottom:4}}>
