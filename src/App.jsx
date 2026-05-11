@@ -71,6 +71,9 @@ const APP_T = {
       gain:(v,c)=>`✓ Gain : +${v} ${c}`, loss:(v,c)=>`✗ Perte : −${v} ${c}`,
       firstTrade:"+ Premier trade", strategy:"Stratégie", entryExit:"Prix entrée/sortie",
       positive:"Positive", negative:"Négative",
+      stratName:"Nom de la stratégie", stratDesc:"Description générale", stratRules:"Règles strictes", stratUsed:"Stratégie utilisée",
+      firstName:"Prénom", lastName:"Nom",
+      inactivityDays:"Jours max d'inactivité", from:"À partir du",
     },
     btn: {
       save:"Sauvegarder", saved:"✓ Sauvegardé", saving:"···", error:"✗ Erreur",
@@ -78,13 +81,75 @@ const APP_T = {
       seeHistory:"☰ Voir l'historique des trades →",
       all:"Tous", active:"Actifs", archived:"Archivés",
       cancel:"Annuler", delete:"Supprimer", confirm:"Confirmer",
-      noTradesYet:"Aucun trade",
+      noTradesYet:"Aucun trade", noTradesMonth:"{L.btn.noTradesMonth}",
+      enabled:"Activée", disabled:"Désactivée",
+      customize:"⊞ Personnaliser", done:"✓ Terminé",
+      analyzing:"◌  Analyse en cours...", eod:"◆  Debriefing fin de journée",
     },
     sett: {
       currency:"Devise", language:"Langue", theme:"Thème", colors:"Couleurs",
       dayEnd:"Fin de journée", dayEndDesc:"Les trades passés après cet horaire sont rattachés au lendemain.",
       bg:"Fond", cards:"Cartes", textColor:"Couleur du texte",
       auto:"Auto", white:"Blanc", black:"Noir",
+      appearance:"Apparence", dark:"Mode sombre", light:"Mode clair",
+      compete:"Participer au classement", competeDesc:"Ton score Fyltra apparaît dans le classement global. Tu peux te retirer à tout moment.",
+      anonymous:"Mode anonyme", anonymousDesc:"Seul ton surnom (ou prénom si pas de surnom) est visible. Ton email reste privé.",
+    },
+    stats: {
+      advanced:"Métriques Avancées",
+      expectancy:"Espérance / Trade", expectancySub:"Gain moyen espéré par trade",
+      maxDD:"Drawdown Max", profitFactor:"Facteur de Profit", profitFactorSub:"Gains bruts / Pertes brutes",
+      kelly:"Critère de Kelly", kellySub:"Taille de position optimale",
+      consistency:"Consistance", sharpe:"Ratio de Sharpe", sharpeSub:"Rendement / volatilité journalière",
+      emoMatrix:"Matrice Émotionnelle", emoMatrixSub:"Performance par état d'esprit",
+      emoHeaders:["Émotion","Nb","Réussite","P&L"],
+      current:"Actuelle", bestStreak:"Meilleure série", worstStreak:"Pire série",
+      wins:"Victoires", losses:"Défaites", winStreak:"victoires consécutives", lossStreak:"défaites consécutives",
+      median:"Médian (P50)", medianDesc:"Résultat le plus probable",
+      secStrat:"Stratégie", secStratSub:"Par stratégie utilisée",
+      secSess:"Session", secSessSub:"Par session de trading",
+      secInst:"Instrument", secInstSub:"Par instrument tradé",
+      secEmo:"Émotion", secEmoSub:"Par état émotionnel",
+      calTitle:"Calendrier P&L",
+    },
+    acct: {
+      noTradesToday:"Aucun trade aujourd'hui", noTradesAccount:"Aucun trade pour ce compte.",
+      emotions:"Émotions", global:"Global", today:"Aujourd'hui",
+      tradeSettings:"Réglages de trade", fixedValues:"Valeurs fixes appliquées", noFixedFields:"Aucun champ activé dans les paramètres",
+    },
+    rank: {
+      emotions:"Émotions", consistency:"Régularité",
+      noTraders:"Aucun trader en compétition pour l'instant.\nSois le premier !",
+    },
+    quickNav:[
+      {k:"profil",l:"Profil"},{k:"strategy",l:"Plan"},{k:"history",l:"Statistiques"},
+      {k:"trades",l:"Historique"},{k:"classement",l:"Classement"},{k:"settings",l:"Paramètres"},
+    ],
+    onboarding:[
+      { n:"01", title:"Journal structuré", sub:"Enregistre chaque trade — émotion, session, instrument, résultat. Sans friction, sans oubli.", icon:"◎" },
+      { n:"02", title:"Pattern Detection", sub:"Détecte automatiquement tes forces et faiblesses par jour, session, émotion. Avec les chiffres exacts.", icon:"◈" },
+      { n:"03", title:"Coaching IA", sub:"Ton coach analyse tes données et génère 3 règles concrètes pour demain. Tes patterns, pas des généralités.", icon:"◆" },
+      { n:"04", title:"Prop Firms", sub:"Suivi multi-compte avec daily loss, consistance et inactivité. Une jauge par règle, en temps réel.", icon:"◉" },
+    ],
+    auth: {
+      expiredSub:"Ton abonnement a expiré. Choisis un nouveau plan pour accéder à Fyltra.",
+      verifyError:"Erreur de vérification. Réessaie.",
+      accountCreated:"Compte créé ! Vérifie ton email pour confirmer.",
+      pwdMin:"Le mot de passe doit faire au moins 6 caractères.",
+      sameEmail:"C'est déjà ton email actuel.",
+      notConnected:"Non connecté",
+      network:"Erreur réseau",
+    },
+    csv: {
+      noTrades:"Aucun trade détecté. Vérifie le format.",
+      success:(n)=>`Import réussi — ${n} trades ajoutés !`,
+      mt5Hint:"MT5 : Toolbox → History → clic droit → Export CSV | MT4 : Terminal → Account History → clic droit → Save as Report",
+      tradovateHint:"Tradovate : Accounts → icône paramètres → Orders → Download CSV",
+    },
+    profile: {
+      cancelSub:"Résilier mon abonnement", cancelLoading:"Résiliation...", cancelYes:"Oui, résilier",
+      cancelled:"Ton abonnement a été résilié. L'accès sera coupé à la fin de la période en cours.",
+      contact:"Nous contacter · contact@fyltra.app",
     },
   },
   en: {
@@ -113,6 +178,9 @@ const APP_T = {
       gain:(v,c)=>`✓ Gain: +${v} ${c}`, loss:(v,c)=>`✗ Loss: −${v} ${c}`,
       firstTrade:"+ First trade", strategy:"Strategy", entryExit:"Entry/Exit price",
       positive:"Positive", negative:"Negative",
+      stratName:"Strategy name", stratDesc:"General description", stratRules:"Strict rules", stratUsed:"Strategy used",
+      firstName:"First name", lastName:"Last name",
+      inactivityDays:"Max inactivity days", from:"From",
     },
     btn: {
       save:"Save", saved:"✓ Saved", saving:"···", error:"✗ Error",
@@ -120,13 +188,75 @@ const APP_T = {
       seeHistory:"☰ View trade history →",
       all:"All", active:"Active", archived:"Archived",
       cancel:"Cancel", delete:"Delete", confirm:"Confirm",
-      noTradesYet:"No trades",
+      noTradesYet:"No trades", noTradesMonth:"No trades this month",
+      enabled:"Enabled", disabled:"Disabled",
+      customize:"⊞ Customize", done:"✓ Done",
+      analyzing:"◌  Analyzing...", eod:"◆  End of day debrief",
     },
     sett: {
       currency:"Currency", language:"Language", theme:"Theme", colors:"Colors",
       dayEnd:"Day end", dayEndDesc:"Trades past this time are assigned to the next day.",
       bg:"Background", cards:"Cards", textColor:"Text color",
       auto:"Auto", white:"White", black:"Black",
+      appearance:"Appearance", dark:"Dark mode", light:"Light mode",
+      compete:"Join the leaderboard", competeDesc:"Your Fyltra score appears in the global ranking. You can opt out at any time.",
+      anonymous:"Anonymous mode", anonymousDesc:"Only your nickname (or first name) is visible. Your email stays private.",
+    },
+    stats: {
+      advanced:"Advanced Metrics",
+      expectancy:"Expectancy / Trade", expectancySub:"Average expected gain per trade",
+      maxDD:"Max Drawdown", profitFactor:"Profit Factor", profitFactorSub:"Gross gains / Gross losses",
+      kelly:"Kelly Criterion", kellySub:"Optimal position size",
+      consistency:"Consistency", sharpe:"Sharpe Ratio", sharpeSub:"Return / daily volatility",
+      emoMatrix:"Emotion Matrix", emoMatrixSub:"Performance by mindset",
+      emoHeaders:["Emotion","Nb","Win rate","P&L"],
+      current:"Current", bestStreak:"Best streak", worstStreak:"Worst streak",
+      wins:"Wins", losses:"Losses", winStreak:"consecutive wins", lossStreak:"consecutive losses",
+      median:"Median (P50)", medianDesc:"Most likely result",
+      secStrat:"Strategy", secStratSub:"By strategy used",
+      secSess:"Session", secSessSub:"By trading session",
+      secInst:"Instrument", secInstSub:"By instrument traded",
+      secEmo:"Emotion", secEmoSub:"By emotional state",
+      calTitle:"P&L Calendar",
+    },
+    acct: {
+      noTradesToday:"No trades today", noTradesAccount:"No trades for this account.",
+      emotions:"Emotions", global:"Global", today:"Today",
+      tradeSettings:"Trade settings", fixedValues:"Fixed values applied", noFixedFields:"No field enabled in settings",
+    },
+    rank: {
+      emotions:"Emotions", consistency:"Consistency",
+      noTraders:"No traders competing yet.\nBe the first!",
+    },
+    quickNav:[
+      {k:"profil",l:"Profile"},{k:"strategy",l:"Plan"},{k:"history",l:"Statistics"},
+      {k:"trades",l:"History"},{k:"classement",l:"Rankings"},{k:"settings",l:"Settings"},
+    ],
+    onboarding:[
+      { n:"01", title:"Structured Journal", sub:"Log every trade — emotion, session, instrument, result. No friction, no missed entries.", icon:"◎" },
+      { n:"02", title:"Pattern Detection", sub:"Automatically detect your strengths and weaknesses by day, session, emotion. With exact numbers.", icon:"◈" },
+      { n:"03", title:"AI Coaching", sub:"Your coach analyses your data and generates 3 concrete rules for tomorrow. Your patterns, not generic advice.", icon:"◆" },
+      { n:"04", title:"Prop Firms", sub:"Multi-account tracking with daily loss, consistency and inactivity. A gauge per rule, in real time.", icon:"◉" },
+    ],
+    auth: {
+      expiredSub:"Your subscription has expired. Choose a new plan to access Fyltra.",
+      verifyError:"Verification error. Please try again.",
+      accountCreated:"Account created! Check your email to confirm.",
+      pwdMin:"Password must be at least 6 characters.",
+      sameEmail:"That is already your current email.",
+      notConnected:"Not connected",
+      network:"Network error",
+    },
+    csv: {
+      noTrades:"No trades detected. Check the file format.",
+      success:(n)=>`Import successful — ${n} trades added!`,
+      mt5Hint:"MT5: Toolbox → History → right-click → Export CSV | MT4: Terminal → Account History → right-click → Save as Report",
+      tradovateHint:"Tradovate: Accounts → settings icon → Orders → Download CSV",
+    },
+    profile: {
+      cancelSub:"Cancel my subscription", cancelLoading:"Cancelling...", cancelYes:"Yes, cancel",
+      cancelled:"Your subscription has been cancelled. Access will end at the close of the current period.",
+      contact:"Contact us · contact@fyltra.app",
     },
   },
 };
@@ -418,7 +548,7 @@ function Calendar({ filtered, calMonth, calYear, onPrev, onNext, onDayClick, cur
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-        <div style={{ fontSize:10, color:C.dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600 }}>Calendrier P&L</div>
+        <div style={{ fontSize:10, color:C.dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600 }}>{L.stats.calTitle}</div>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <button onClick={onPrev} style={{ background:"none", border:"none", cursor:"pointer", color:C.gray1, fontSize:16, lineHeight:1, padding:"0 2px" }}>‹</button>
           <div style={{ fontSize:12, color:C.white, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.08em", minWidth:80, textAlign:"center" }}>{L.monthsShort[m]} {yr}</div>
@@ -795,12 +925,7 @@ function AuthScreen() {
   const CARD_BDR = `1px solid ${BDR}`;
   const CARD_SHD = "0 0 0 1px rgba(255,255,255,0.05), 0 12px 48px rgba(0,0,0,0.6)";
 
-  const features = [
-    { n:"01", title:"Journal structuré", sub:"Enregistre chaque trade — émotion, session, instrument, résultat. Sans friction, sans oubli.", icon:"◎" },
-    { n:"02", title:"Pattern Detection", sub:"Détecte automatiquement tes forces et faiblesses par jour, session, émotion. Avec les chiffres exacts.", icon:"◈" },
-    { n:"03", title:"Coaching IA", sub:"Ton coach analyse tes données et génère 3 règles concrètes pour demain. Tes patterns, pas des généralités.", icon:"◆" },
-    { n:"04", title:"Prop Firms", sub:"Suivi multi-compte avec daily loss, consistance et inactivité. Une jauge par règle, en temps réel.", icon:"◉" },
-  ];
+  const features = L.onboarding;
 
   const SPARKS = [
     {top:"18%",left:"8%",delay:"0s",size:3},  {top:"32%",left:"92%",delay:"0.7s",size:2},
@@ -1850,7 +1975,7 @@ ${recentTrades}`;
       <div style={{ display:"grid", gridTemplateColumns:desktop ? "repeat(4,1fr)" : "1fr 1fr", gap:10, marginBottom:20 }}>
         <StatCard label="Win Rate"  value={`${winRate}%`}                              color={winRate >= 50 ? C.accent : C.gray1} small={desktop} />
         <StatCard label="P&L Total" value={`${pnlSum >= 0 ? "+" : ""}${fmtMoney(pnlSum)}${currency}`} color={pnlSum >= 0 ? C.accent : C.gray1} small={desktop} />
-        <StatCard label="RR Moyen"  value={`${avgRR}:1`}                               color={C.dim}   small={desktop} />
+        <StatCard label={lang==="en"?"Avg RR":"RR Moyen"}  value={`${avgRR}:1`}                               color={C.dim}   small={desktop} />
         <StatCard label="Bilan" value={`${wins}W / ${total - wins}L`} color={C.accent} small={desktop} />
       </div>
 
@@ -1871,7 +1996,7 @@ ${recentTrades}`;
               </div>
             )}
             <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={160} cur={currency}/>
-            {filtered.length < 2 && <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>Aucun trade ce mois</div>}
+            {filtered.length < 2 && <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>{L.btn.noTradesMonth}</div>}
           </div>
           <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:10, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:"16px 14px" }}>
             <Calendar filtered={calFiltered} calMonth={calMonth} calYear={calYear} onPrev={prevMonth} onNext={nextMonth} dayEndTime={dayEndTime} />
@@ -1893,7 +2018,7 @@ ${recentTrades}`;
                   ))}
                 </div>
               )}
-              {filtered.length > 1 ? <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={150} cur={currency}/> : <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>Aucun trade ce mois</div>}
+              {filtered.length > 1 ? <PnlChart filtered={chartAccountId==="all" ? filtered : filtered.filter(t => !t.accountIds || t.accountIds.length===0 || t.accountIds.includes(chartAccountId))} capital={capital} pnlSum={pnlSum} height={150} cur={currency}/> : <div style={{ textAlign:"center", padding:"32px 0", color:C.gray2, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.1em" }}>{L.btn.noTradesMonth}</div>}
             </div>
           <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:10, boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)", padding:"16px 14px", marginBottom:14 }}>
               <Calendar filtered={calFiltered} calMonth={calMonth} calYear={calYear} onPrev={prevMonth} onNext={nextMonth} dayEndTime={dayEndTime} />
@@ -2010,13 +2135,13 @@ ${recentTrades}`;
       </div>
       {tradeFixedMode==="fixe" && (
         <div style={{marginBottom:14,padding:"12px 14px",borderRadius:8,background:C.bg2,border:`1px solid ${C.border}`}}>
-          <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",marginBottom:8}}>Valeurs fixes appliquées</div>
+          <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",marginBottom:8}}>{L.acct.fixedValues}</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
             {savedTS.tpFixed.enabled&&savedTS.tpFixed.value&&<div style={{fontSize:11,fontFamily:"'Josefin Sans',sans-serif"}}><span style={{color:C.dim}}>WIN : </span><strong style={{color:"#2a6e3a"}}>+{savedTS.tpFixed.value}{currency}</strong></div>}
             {savedTS.slFixed.enabled&&savedTS.slFixed.value&&<div style={{fontSize:11,fontFamily:"'Josefin Sans',sans-serif"}}><span style={{color:C.dim}}>LOSS : </span><strong style={{color:"#c0392b"}}>-{savedTS.slFixed.value}{currency}</strong></div>}
             {savedTS.rrFixed.enabled&&savedTS.rrFixed.value&&<div style={{fontSize:11,fontFamily:"'Josefin Sans',sans-serif"}}><span style={{color:C.dim}}>R/R : </span><strong style={{color:C.white}}>{savedTS.rrFixed.value}:1</strong></div>}
-            {savedTS.sizeFixed.enabled&&savedTS.sizeFixed.value&&<div style={{fontSize:11,fontFamily:"'Josefin Sans',sans-serif"}}><span style={{color:C.dim}}>Taille : </span><strong style={{color:C.white}}>{savedTS.sizeFixed.value} {savedTS.sizeFixed.unit}</strong></div>}
-            {!savedTS.tpFixed.enabled&&!savedTS.slFixed.enabled&&!savedTS.rrFixed.enabled&&!savedTS.sizeFixed.enabled&&<span style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif"}}>Aucun champ activé dans les paramètres</span>}
+            {savedTS.sizeFixed.enabled&&savedTS.sizeFixed.value&&<div style={{fontSize:11,fontFamily:"'Josefin Sans',sans-serif"}}><span style={{color:C.dim}}>{L.form.size} : </span><strong style={{color:C.white}}>{savedTS.sizeFixed.value} {savedTS.sizeFixed.unit}</strong></div>}
+            {!savedTS.tpFixed.enabled&&!savedTS.slFixed.enabled&&!savedTS.rrFixed.enabled&&!savedTS.sizeFixed.enabled&&<span style={{fontSize:10,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif"}}>{L.acct.noFixedFields}</span>}
           </div>
         </div>
       )}
@@ -2128,7 +2253,7 @@ ${recentTrades}`;
       )}
 
       {strategies.length > 0 ? (
-        <Field label="Stratégie utilisée">
+        <Field label={L.form.stratUsed}>
           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
             {strategies.map(s => {
               const sel = form.strategyId === s.id;
@@ -2274,7 +2399,7 @@ ${recentTrades}`;
           ? trades
           : trades.filter(t => !t.accountIds || t.accountIds.length === 0 || t.accountIds.includes(historyAccFilter));
         if (histFiltered.length < 3) return histFiltered.length === 0
-          ? <div style={{textAlign:"center",padding:"40px 0",color:C.gray2,fontSize:12,fontFamily:"'Josefin Sans',sans-serif"}}>Aucun trade pour ce compte.</div>
+          ? <div style={{textAlign:"center",padding:"40px 0",color:C.gray2,fontSize:12,fontFamily:"'Josefin Sans',sans-serif"}}>{L.acct.noTradesAccount}</div>
           : null;
         const isDark = C.bg === "#0f0f0f";
         const sorted = [...histFiltered].sort(cmpTrades);
@@ -2394,15 +2519,15 @@ ${recentTrades}`;
           <div style={{marginBottom:8}}>
 
             {/* ── MÉTRIQUES CLÉS ── */}
-            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.2em",fontFamily:ff,fontWeight:600,marginBottom:8}}>Métriques Avancées</div>
+            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.2em",fontFamily:ff,fontWeight:600,marginBottom:8}}>{L.stats.advanced}</div>
             <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)",gap:8,marginBottom:10}}>
               {[
-                {l:"Espérance / Trade",v:`${expectancy>=0?"+":""}${fmtMoney(expectancy)}${currency}`,c:expectancy>=0?"#4caf6e":"#e05a5a",sub:"Gain moyen espéré par trade",info:"Ce que tu gagnes ou perds en moyenne par trade. Formule : (WR × gain moyen) − (taux perte × perte moyenne). Positif = stratégie rentable à long terme."},
-                {l:"Drawdown Max",v:`${maxDD.toFixed(1)}%`,c:maxDD<10?"#4caf6e":maxDD<25?"#d4c060":"#e05a5a",sub:`Actuel : ${currentDD.toFixed(1)}%`,info:"La plus grosse baisse depuis un pic, en %. Ex : tu atteignais +500€ puis tu tombais à +200€ → DD = 60%. Le DD actuel est calculé par rapport au dernier sommet atteint."},
-                {l:"Facteur de Profit",v:pf>=99?"∞":pf.toFixed(2),c:pf>=1.5?"#4caf6e":pf>=1?"#d4c060":"#e05a5a",sub:"Gains bruts / Pertes brutes",info:"Total des gains divisé par total des pertes. En dessous de 1 tu perds plus que tu gagnes. 1.5+ est un bon signe. ∞ signifie aucune perte enregistrée."},
-                {l:"Critère de Kelly",v:`${Math.max(0,kelly).toFixed(1)}%`,c:kelly>0?"#4caf6e":"#e05a5a",sub:"Taille de position optimale",info:"Le % de ton capital à risquer par trade selon tes stats réelles (WR et ratio gain/perte). Sert à maximiser la croissance à long terme sans sur-exposer le capital."},
-                {l:"Consistance",v:`${consistency}%`,c:consistency>=60?"#4caf6e":consistency>=40?"#d4c060":"#e05a5a",sub:`${wVals.filter(v=>v>0).length}/${wVals.length} semaines`,info:"Pourcentage de semaines qui se terminent en positif. 60%+ = trading régulier et fiable. Une faible consistance peut indiquer des résultats trop aléatoires."},
-                {l:"Ratio de Sharpe",v:sharpe.toFixed(2),c:sharpe>=1?"#4caf6e":sharpe>=0?"#d4c060":"#e05a5a",sub:"Rendement / volatilité journalière",info:"Rendement moyen journalier divisé par la volatilité de tes jours. Plus c'est élevé, plus tu gagnes de façon régulière. ≥1 = excellent, entre 0 et 1 = correct, <0 = trop de jours perdants."},
+                {l:L.stats.expectancy,v:`${expectancy>=0?"+":""}${fmtMoney(expectancy)}${currency}`,c:expectancy>=0?"#4caf6e":"#e05a5a",sub:L.stats.expectancySub,info:lang==="en"?"Average gain or loss per trade. Formula: (WR × avg win) − (loss rate × avg loss). Positive = profitable strategy long term.":"Ce que tu gagnes ou perds en moyenne par trade. Formule : (WR × gain moyen) − (taux perte × perte moyenne). Positif = stratégie rentable à long terme."},
+                {l:L.stats.maxDD,v:`${maxDD.toFixed(1)}%`,c:maxDD<10?"#4caf6e":maxDD<25?"#d4c060":"#e05a5a",sub:`${lang==="en"?"Current":"Actuel"} : ${currentDD.toFixed(1)}%`,info:lang==="en"?"Largest drop from a peak, in %. Current DD is measured from the last equity high.":"La plus grosse baisse depuis un pic, en %. Le DD actuel est calculé par rapport au dernier sommet atteint."},
+                {l:L.stats.profitFactor,v:pf>=99?"∞":pf.toFixed(2),c:pf>=1.5?"#4caf6e":pf>=1?"#d4c060":"#e05a5a",sub:L.stats.profitFactorSub,info:lang==="en"?"Total gains divided by total losses. Below 1 you lose more than you win. 1.5+ is a good sign.":"Total des gains divisé par total des pertes. En dessous de 1 tu perds plus que tu gagnes. 1.5+ est un bon signe."},
+                {l:L.stats.kelly,v:`${Math.max(0,kelly).toFixed(1)}%`,c:kelly>0?"#4caf6e":"#e05a5a",sub:L.stats.kellySub,info:lang==="en"?"% of capital to risk per trade based on your real stats (WR and win/loss ratio).":"Le % de ton capital à risquer par trade selon tes stats réelles (WR et ratio gain/perte)."},
+                {l:L.stats.consistency,v:`${consistency}%`,c:consistency>=60?"#4caf6e":consistency>=40?"#d4c060":"#e05a5a",sub:`${wVals.filter(v=>v>0).length}/${wVals.length} ${lang==="en"?"weeks":"semaines"}`,info:lang==="en"?"Percentage of weeks ending positive. 60%+ = consistent and reliable trading.":"Pourcentage de semaines qui se terminent en positif. 60%+ = trading régulier et fiable."},
+                {l:L.stats.sharpe,v:sharpe.toFixed(2),c:sharpe>=1?"#4caf6e":sharpe>=0?"#d4c060":"#e05a5a",sub:L.stats.sharpeSub,info:lang==="en"?"Average daily return divided by daily volatility. ≥1 = excellent, 0–1 = good, <0 = too many losing days.":"Rendement moyen journalier divisé par la volatilité de tes jours. ≥1 = excellent, entre 0 et 1 = correct, <0 = trop de jours perdants."},
               ].map(m=>{
                 const open = histInfoCard === m.l;
                 return (
@@ -2463,17 +2588,17 @@ ${recentTrades}`;
             {emoData.length>0 && (
               <div style={{...cardS,padding:"16px",marginBottom:10}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
-                  <div style={lbl}>Matrice Émotionnelle</div>
+                  <div style={lbl}>{L.stats.emoMatrix}</div>
                   <button onClick={()=>setHistInfoCard(histInfoCard==="emo"?null:"emo")} style={{width:16,height:16,borderRadius:"50%",border:`1px solid ${C.gray2}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>
                     <span style={{fontSize:9,color:C.gray1,fontFamily:ff,fontWeight:600,lineHeight:1}}>i</span>
                   </button>
                 </div>
                 {histInfoCard==="emo"
                   ? <div style={{fontSize:10,color:C.dim,fontFamily:ff,marginBottom:14,lineHeight:1.6}}>Pour chaque émotion enregistrée : nombre de trades, win rate et P&L total. Permet de voir si tu trades mieux dans certains états. Un WR élevé avec une émotion négative = tu gères la pression. Un WR faible avec une émotion positive = attention à la surconfiance.</div>
-                  : <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>Performance par état d'esprit</div>
+                  : <div style={{fontSize:9,color:C.gray2,fontFamily:ff,marginBottom:14,marginTop:2}}>{L.stats.emoMatrixSub}</div>
                 }
                 <div style={{display:"grid",gridTemplateColumns:"1fr 48px 48px 72px",gap:"10px 8px",alignItems:"center"}}>
-                  {["Émotion","Nb","Réussite","P&L"].map(h=>(
+                  {L.stats.emoHeaders.map(h=>(
                     <div key={h} style={{fontSize:8,color:C.dim,fontFamily:ff,letterSpacing:"0.1em",textTransform:"uppercase",textAlign:h==="Émotion"?"left":"center"}}>{h}</div>
                   ))}
                   {emoData.map(e=>(
@@ -2505,9 +2630,9 @@ ${recentTrades}`;
                 {histInfoCard==="streaks" && <div style={{fontSize:10,color:C.dim,fontFamily:ff,marginBottom:10,lineHeight:1.6}}>Série actuelle = les victoires ou défaites consécutives en cours. Meilleure et pire série = records historiques. Les BREAKEVEN ne coupent pas une série.</div>}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:histInfoCard==="streaks"?0:12}}>
                   {[
-                    {l:"Actuelle",v:`${curS}×`,sub:curST==="W"?"Victoires":"Défaites",c:curST==="W"?"#4caf6e":"#e05a5a"},
-                    {l:"Meilleure série",v:`${maxWS}×`,sub:"victoires consécutives",c:"#4caf6e"},
-                    {l:"Pire série",v:`${maxLS}×`,sub:"défaites consécutives",c:"#e05a5a"},
+                    {l:L.stats.current,v:`${curS}×`,sub:curST==="W"?L.stats.wins:L.stats.losses,c:curST==="W"?"#4caf6e":"#e05a5a"},
+                    {l:L.stats.bestStreak,v:`${maxWS}×`,sub:L.stats.winStreak,c:"#4caf6e"},
+                    {l:L.stats.worstStreak,v:`${maxLS}×`,sub:L.stats.lossStreak,c:"#e05a5a"},
                   ].map(s=>(
                     <div key={s.l} style={{textAlign:"center",background:isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",borderRadius:8,padding:"10px 6px"}}>
                       <div style={{fontSize:7,color:C.dim,fontFamily:ff,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>{s.l}</div>
@@ -2568,7 +2693,7 @@ ${recentTrades}`;
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
                 {[
                   {l:"Pessimiste (P10)",v:mcP10,desc:"1 chance sur 10 de faire moins"},
-                  {l:"Médian (P50)",v:mcP50,desc:"Résultat le plus probable"},
+                  {l:L.stats.median,v:mcP50,desc:L.stats.medianDesc},
                   {l:"Optimiste (P90)",v:mcP90,desc:"1 chance sur 10 de faire mieux"},
                 ].map(s=>(
                   <div key={s.l} style={{background:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",borderRadius:8,padding:"12px 10px",textAlign:"center"}}>
@@ -2605,10 +2730,10 @@ ${recentTrades}`;
             .sort((a,b) => b.pnl - a.pnl);
         };
         const sections = [
-          { title:"Stratégie",   key:"sec_strat", sub:"Par stratégie utilisée",   info:"Classe tes stratégies par P&L total. Te montre quelle approche est la plus rentable et laquelle te coûte le plus.", data: calcBest(t => { const s = strategies.find(s=>s.id===t.strategyId); return s?.name||null; }) },
-          { title:"Session",     key:"sec_sess",  sub:"Par session de trading",   info:"Compare tes performances selon la session (London, New York…). Permet d'identifier à quelle heure tu trades le mieux et d'éviter les sessions déficitaires.", data: calcBest(t => t.session) },
-          { title:"Instrument",  key:"sec_inst",  sub:"Par instrument tradé",     info:"Classe tes instruments par P&L. Utile pour voir sur quoi tu as un vrai edge et sur quoi tu perds du temps ou de l'argent.", data: calcBest(t => t.instrument) },
-          { title:"Émotion",     key:"sec_emo",   sub:"Par état émotionnel",      info:"Classe tes émotions par P&L. Si une émotion négative ressort en haut = tu gères la pression. Si une émotion positive est en bas = méfie-toi de la surconfiance.", data: calcBest(t => t.emotion) },
+          { title:L.stats.secStrat, key:"sec_strat", sub:L.stats.secStratSub, info:lang==="en"?"Ranks strategies by total P&L. Shows which approach is most profitable.":"Classe tes stratégies par P&L total.", data: calcBest(t => { const s = strategies.find(s=>s.id===t.strategyId); return s?.name||null; }) },
+          { title:L.stats.secSess,  key:"sec_sess",  sub:L.stats.secSessSub,  info:lang==="en"?"Compare performance by session (London, New York…). Identify when you trade best.":"Compare tes performances selon la session (London, New York…).", data: calcBest(t => t.session) },
+          { title:L.stats.secInst,  key:"sec_inst",  sub:L.stats.secInstSub,  info:lang==="en"?"Ranks instruments by P&L. See where you have a real edge.":"Classe tes instruments par P&L.", data: calcBest(t => t.instrument) },
+          { title:L.stats.secEmo,   key:"sec_emo",   sub:L.stats.secEmoSub,   info:lang==="en"?"Ranks emotions by P&L. If a negative emotion ranks high, you handle pressure well.":"Classe tes émotions par P&L. Si une émotion négative ressort en haut = tu gères la pression.", data: calcBest(t => t.emotion) },
         ];
         return (
           <div style={{marginBottom:20}}>
@@ -2688,7 +2813,7 @@ ${recentTrades}`;
         return filtered.length === 0 ? (
         <div style={{ textAlign:"center", padding:"60px 0" }}>
           <div style={{ fontSize:44, marginBottom:10, color:C.gray2 }}>◎</div>
-          <div style={{ fontFamily:"'Josefin Sans',sans-serif", fontSize:14, fontWeight:300, color:C.gray1, letterSpacing:"0.08em" }}>Aucun trade enregistré</div>
+          <div style={{ fontFamily:"'Josefin Sans',sans-serif", fontSize:14, fontWeight:300, color:C.gray1, letterSpacing:"0.08em" }}>{L.btn.noTradesYet}</div>
         </div>
       ) : [...filtered].sort((a, b) => b.date.localeCompare(a.date)).map(t => {
         const pnl = t.pnl || 0; const isWin = t.result === "WIN"; const isLoss = t.result === "LOSS"; const isEditing = editingTrade?.id === t.id;
@@ -2824,10 +2949,10 @@ ${recentTrades}`;
       )}
 
       {/* Strategy name */}
-      <Field label="Nom de la stratégie">
+      <Field label={L.form.stratName}>
         <input type="text" value={strat.name||""} onChange={e=>updateStrat(strat.id,{name:e.target.value})} placeholder="" style={iStyle}/>
       </Field>
-      <Field label="Description générale">
+      <Field label={L.form.stratDesc}>
         <textarea rows={3} placeholder="ex: ICT sur MNQ, entrée OB retest M5, NY session..." value={strat.description||""} onChange={e=>updateStrat(strat.id,{description:e.target.value})} style={{...iStyle,resize:"vertical",lineHeight:1.6}}/>
       </Field>
       <div style={{ marginBottom:16 }}>
@@ -2845,7 +2970,7 @@ ${recentTrades}`;
           </button>
         </div>
       </div>
-      <Field label="Règles strictes">
+      <Field label={L.form.stratRules}>
         <textarea rows={3} placeholder={"- Max 1 trade/jour\n- Stop après 1 win\n- Pas de trade sans bias"} value={strat.rules||""} onChange={e=>updateStrat(strat.id,{rules:e.target.value})} style={{...iStyle,resize:"vertical",lineHeight:1.9}}/>
       </Field>
       <Field label="Notes personnelles">
@@ -2857,7 +2982,7 @@ ${recentTrades}`;
         </button>
       )}
       <button onClick={saveStrategy} style={{width:"100%",padding:"14px",borderRadius:4,border:`1px solid ${C.borderGold}`,background:"rgba(0,0,0,0.04)",color:C.dim,fontSize:12,fontWeight:600,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.2em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.3s"}}>
-        {stratSaved ? "✓  Sauvegardé" : "Sauvegarder  →"}
+        {stratSaved ? L.btn.saved : `${L.btn.save}  →`}
       </button>
     </div>
   );
@@ -3061,7 +3186,7 @@ ${recentTrades}`;
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
             <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>Daily Loss Limit</div>
             <button onClick={()=>pfSet("hasDailyLoss",!pfForm.hasDailyLoss)} style={{padding:"5px 12px",borderRadius:20,border:`1px solid ${C.border}`,background:pfForm.hasDailyLoss?C.accent:"transparent",color:pfForm.hasDailyLoss?"#fff":C.gray1,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase"}}>
-              {pfForm.hasDailyLoss?"Activée":"Désactivée"}
+              {pfForm.hasDailyLoss?L.btn.enabled:L.btn.disabled}
             </button>
           </div>
           {pfForm.hasDailyLoss && (
@@ -3073,7 +3198,7 @@ ${recentTrades}`;
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,marginTop:4}}>
             <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>Règle de Consistance</div>
             <button onClick={()=>pfSet("hasConsistency",!pfForm.hasConsistency)} style={{padding:"5px 12px",borderRadius:20,border:`1px solid ${C.border}`,background:pfForm.hasConsistency?C.accent:"transparent",color:pfForm.hasConsistency?"#fff":C.gray1,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase"}}>
-              {pfForm.hasConsistency?"Activée":"Désactivée"}
+              {pfForm.hasConsistency?L.btn.enabled:L.btn.disabled}
             </button>
           </div>
           {pfForm.hasConsistency && (
@@ -3087,16 +3212,16 @@ ${recentTrades}`;
               <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2,letterSpacing:"0.04em"}}>Nb max de jours sans trade</div>
             </div>
             <button onClick={()=>pfSet("hasInactivity",!pfForm.hasInactivity)} style={{padding:"5px 12px",borderRadius:20,border:`1px solid ${C.border}`,background:pfForm.hasInactivity?C.accent:"transparent",color:pfForm.hasInactivity?"#fff":C.gray1,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase"}}>
-              {pfForm.hasInactivity?"Activée":"Désactivée"}
+              {pfForm.hasInactivity?L.btn.enabled:L.btn.disabled}
             </button>
           </div>
           {pfForm.hasInactivity && (
-            <Field label="Jours max d'inactivité">
+            <Field label={L.form.inactivityDays}>
               <input type="text" inputMode="numeric" placeholder="ex: 5" value={pfForm.inactivityDays} onChange={e=>pfSet("inactivityDays",e.target.value.replace(/[^0-9]/g,""))} style={iStyle}/>
             </Field>
           )}
           {pfForm.hasInactivity && (
-            <Field label="À partir du">
+            <Field label={L.form.from}>
               <input type="date" value={pfForm.inactivityFrom} onChange={e=>pfSet("inactivityFrom",e.target.value)} style={iStyle}/>
             </Field>
           )}
@@ -3120,7 +3245,7 @@ ${recentTrades}`;
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
             <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>Daily Loss Limit</div>
             <button onClick={()=>pfSet("hasDailyLoss",!pfForm.hasDailyLoss)} style={{padding:"5px 12px",borderRadius:20,border:`1px solid ${C.border}`,background:pfForm.hasDailyLoss?C.accent:"transparent",color:pfForm.hasDailyLoss?"#fff":C.gray1,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase"}}>
-              {pfForm.hasDailyLoss?"Activée":"Désactivée"}
+              {pfForm.hasDailyLoss?L.btn.enabled:L.btn.disabled}
             </button>
           </div>
           {pfForm.hasDailyLoss && (
@@ -3747,22 +3872,22 @@ ${recentTrades}`;
           const todayGrossL=Math.abs(statsTrades.filter(t=>t.result==="LOSS").reduce((s,t)=>s+(t.pnl||0),0));
           return (
             <div style={{marginBottom:12}}>
-              <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>Statistiques · {acctView==="global"?"Global":"Aujourd'hui"}</div>
+              <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>{L.nav.stats} · {acctView==="global"?L.acct.global:L.acct.today}</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
                 <MiniCard label="Profit Factor" value={todayPF} color={parseFloat(todayPF)>=1||todayPF==="∞"?"#2a6e3a":"#c0392b"} li={0}/>
-                <MiniCard label="RR Moyen" value={todayRR==="—"?"—":todayRR+":1"} color={C.dim} li={1}/>
-                <MiniCard label="Nb Trades" value={todayTotal||"—"} color={C.white} li={2}/>
+                <MiniCard label={lang==="en"?"Avg RR":"RR Moyen"} value={todayRR==="—"?"—":todayRR+":1"} color={C.dim} li={1}/>
+                <MiniCard label={lang==="en"?"Nb Trades":"Nb Trades"} value={todayTotal||"—"} color={C.white} li={2}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                <MiniCard label="Gains bruts" value={todayGrossW>0?`+${fmtMoney(todayGrossW)}${currency}`:"—"} color="#2a6e3a"/>
-                <MiniCard label="Pertes brutes" value={todayGrossL>0?`-${fmtMoney(todayGrossL)}${currency}`:"—"} color="#c0392b"/>
+                <MiniCard label={lang==="en"?"Gross gains":"Gains bruts"} value={todayGrossW>0?`+${fmtMoney(todayGrossW)}${currency}`:"—"} color="#2a6e3a"/>
+                <MiniCard label={lang==="en"?"Gross losses":"Pertes brutes"} value={todayGrossL>0?`-${fmtMoney(todayGrossL)}${currency}`:"—"} color="#c0392b"/>
               </div>
             </div>
           );
         })()}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
           <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:14,boxShadow:"0 6px 32px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.1), 0 -2px 28px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.36)",padding:!isMobile?"30px 24px":"14px",display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4,alignSelf:"flex-start"}}>Winrate · {acctView==="global"?"Global":"Aujourd'hui"}</div>
+            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4,alignSelf:"flex-start"}}>{lang==="en"?"Win Rate":"Winrate"} · {acctView==="global"?L.acct.global:L.acct.today}</div>
             {(() => { const tw=statsTrades.filter(t=>t.result==="WIN").length; const tl=statsTrades.filter(t=>t.result==="LOSS").length; const tt=statsTrades.length; return tt>0 ? (((wins, losses, total, size=130) => {
               const r=46, cx=size/2, cy=size*0.52, sw=13, PI=Math.PI;
               const wFrac=total>0?wins/total:0;
@@ -3791,7 +3916,7 @@ ${recentTrades}`;
                   <text x={size-8} y={labY} textAnchor="end" fontSize={10} fontWeight="600" fill="#c0392b" fontFamily="'Josefin Sans',sans-serif">{losses}L</text>
                 </svg>
               );
-            })(tw,tl,tt,140)) : <div style={{padding:"20px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Aucun trade{acctView==="today"?" aujourd'hui":""}</div>; })()}
+            })(tw,tl,tt,140)) : <div style={{padding:"20px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>{acctView==="today"?L.acct.noTradesToday:L.btn.noTradesYet}</div>; })()}
           </div>
           {(()=>{
             const srcTrades = acctView==="global"?acctTrades:todayTrades;
@@ -3824,7 +3949,7 @@ ${recentTrades}`;
             };
             return (
               <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"16px 16px 12px"}}>
-                <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:2}}>Direction · {acctView==="global"?"Global":"Aujourd'hui"}</div>
+                <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:2}}>{L.form.direction} · {acctView==="global"?L.acct.global:L.acct.today}</div>
                 <div style={{fontSize:9,color:C.gray2,fontFamily:"'Josefin Sans',sans-serif",marginBottom:10}}>{total} trade{total!==1?"s":""} au total</div>
                 <ResponsiveContainer width="100%" height={130}>
                   <BarChart data={chartData} margin={{top:22,right:12,left:12,bottom:0}} barCategoryGap="30%">
@@ -3856,7 +3981,7 @@ ${recentTrades}`;
         </div>
         {(() => { const todaySessions = SESSIONS.map(s=>{const st=(acctView==="global"?acctTrades:todayTrades).filter(t=>t.session===s);const wr=st.length?Math.round(st.filter(t=>t.result==="WIN").length/st.length*100):0;return{name:s,count:st.length,wr,pnl:st.reduce((a,t)=>a+(t.pnl||0),0)};}).filter(s=>s.count>0); return todaySessions.length>0 && (
           <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
-            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Sessions · {acctView==="global"?"Global":"Aujourd'hui"}</div>
+            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>{L.form.session}s · {acctView==="global"?L.acct.global:L.acct.today}</div>
             {todaySessions.map(s=>(
               <div key={s.name} style={{marginBottom:10}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
@@ -3873,7 +3998,7 @@ ${recentTrades}`;
         })()}
         {(() => { const todayInstr = (() => { const byI={}; (acctView==="global"?acctTrades:todayTrades).forEach(t=>{ if(!byI[t.instrument]) byI[t.instrument]={count:0,wins:0,pnl:0}; byI[t.instrument].count++; if(t.result==="WIN") byI[t.instrument].wins++; byI[t.instrument].pnl+=t.pnl||0; }); return Object.entries(byI).map(([name,v])=>({name,count:v.count,wr:Math.round(v.wins/v.count*100),pnl:v.pnl})); })(); return todayInstr.length>0 && (
           <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
-            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Instruments · {acctView==="global"?"Global":"Aujourd'hui"}</div>
+            <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>{L.form.instrument}s · {acctView==="global"?L.acct.global:L.acct.today}</div>
             {todayInstr.map(i=>(
               <div key={i.name} style={{marginBottom:10}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
@@ -3897,7 +4022,7 @@ ${recentTrades}`;
           }).filter(e=>e.count>0);
           return todayEmotions.length>0 ? (
             <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:!isMobile?"22px 20px":"14px 16px",marginBottom:!isMobile?16:12}}>
-              <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>Émotions · {acctView==="global"?"Global":"Aujourd'hui"}</div>
+              <div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:12}}>{L.acct.emotions} · {acctView==="global"?L.acct.global:L.acct.today}</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 {todayEmotions.map(e=>(
                   <div key={e.name} style={{background:C.bg3,borderRadius:6,padding:"10px 12px"}}>
@@ -3931,8 +4056,8 @@ ${recentTrades}`;
 
     const sectionTrades = (
       <div style={{marginBottom:12}}>
-        <div style={{fontSize:9,color:C.dim,letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Trades · {acctView==="global"?"Global":"Aujourd'hui"}</div>
-        {(acctView==="global"?acctTrades:todayTrades).length===0?<div style={{padding:"12px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>Aucun trade aujourd'hui</div>:[...(acctView==="global"?acctTrades:todayTrades)].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>{
+        <div style={{fontSize:9,color:C.dim,letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:10}}>Trades · {acctView==="global"?L.acct.global:L.acct.today}</div>
+        {(acctView==="global"?acctTrades:todayTrades).length===0?<div style={{padding:"12px 0",color:C.gray2,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",textAlign:"center"}}>{L.acct.noTradesToday}</div>:[...(acctView==="global"?acctTrades:todayTrades)].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>{
           const pnl=t.pnl||0;
           return (
             <div key={t.id} style={{background:C.bg2,border:`1px solid ${C.border}`,borderLeft:`3px solid ${t.result==="WIN"?"#2a6e3a":t.result==="LOSS"?"#c0392b":C.gray3}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -3966,7 +4091,7 @@ ${recentTrades}`;
           <div style={{marginLeft:"auto",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <button onClick={()=>setAcctCustomizing(v=>!v)} style={{background:acctCustomizing?(darkMode?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.08)"):"none",border:`1px solid ${acctCustomizing?C.gray1:C.border}`,borderRadius:6,padding:"5px 10px",color:acctCustomizing?C.white:C.gray2,cursor:"pointer",fontSize:9,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.12em",textTransform:"uppercase",transition:"all 0.18s"}}>
-                {acctCustomizing?"✓ Terminé":"⊞ Personnaliser"}
+                {acctCustomizing?L.btn.done:L.btn.customize}
               </button>
             </div>
             <div style={{textAlign:"right"}}>
@@ -3978,7 +4103,7 @@ ${recentTrades}`;
 
         {/* ── GLOBAL / TODAY TOGGLE ── */}
         <div style={{display:"flex",gap:6,marginBottom:16,background:darkMode?"linear-gradient(180deg,rgba(85,85,85,0.98) 0%,rgba(28,28,28,0.99) 100%)":"linear-gradient(180deg,rgba(60,60,60,0.95) 0%,rgba(18,18,18,0.97) 100%)",borderRadius:14,padding:4,border:darkMode?"1px solid rgba(255,255,255,0.18)":"1px solid rgba(255,255,255,0.14)",boxShadow:darkMode?"0 12px 40px rgba(0,0,0,0.75), 0 4px 10px rgba(0,0,0,0.5), 0 0 50px rgba(255,255,255,0.1), 0 0 0 1px rgba(255,255,255,0.12), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.75)":"0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -2px 0 rgba(0,0,0,0.55)"}}>
-          {[{k:"today",l:"Aujourd'hui"},{k:"global",l:"Global"}].map(opt=>(
+          {[{k:"today",l:L.acct.today},{k:"global",l:L.acct.global}].map(opt=>(
             <button key={opt.k} onClick={()=>setAcctView(opt.k)} style={{flex:1,padding:"9px",borderRadius:10,border:"none",background:acctView===opt.k?"radial-gradient(ellipse 90% 90% at 50% 50%, rgba(252,252,252,0.96) 0%, rgba(218,218,218,0.88) 55%, rgba(235,235,235,0.92) 100%)":"transparent",color:acctView===opt.k?"#111":"rgba(255,255,255,0.55)",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:acctView===opt.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.22s cubic-bezier(.4,0,.2,1)",boxShadow:acctView===opt.k?"0 6px 20px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.12)":"none",transform:"translateY(0)"}}>{opt.l}</button>
           ))}
         </div>
@@ -4025,7 +4150,7 @@ ${recentTrades}`;
 
         {/* ── EOD + ACTIONS ── */}
         <button onClick={()=>{setEodText("");runEOD(pf);}} disabled={eodLoading} style={{width:"100%",padding:"13px",borderRadius:8,border:`1px solid ${C.borderGold}`,background:eodLoading?"transparent":"rgba(0,0,0,0.04)",color:eodLoading?C.gray2:C.dim,fontSize:12,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",cursor:eodLoading?"not-allowed":"pointer",marginBottom:8,transition:"all 0.3s"}}>
-          {eodLoading?"◌  Analyse en cours...":"◆  Debriefing fin de journée"}
+          {eodLoading?L.btn.analyzing:L.btn.eod}
         </button>
         {eodText && <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:20,fontSize:12,lineHeight:1.8,color:C.white,whiteSpace:"pre-wrap",fontFamily:"'Josefin Sans',sans-serif",fontWeight:300,letterSpacing:"0.03em",marginBottom:10}}>{eodText}</div>}
 
@@ -4122,7 +4247,7 @@ ${recentTrades}`;
     if(!csvText.trim()){ setCsvError("Colle ton CSV ci-dessus."); return; }
     const result = csvPlatform==="tradovate" ? parseTradovateCSV(csvText) : parseMT5CSV(csvText);
     if(result.error){ setCsvError(result.error); return; }
-    if(!result.trades||result.trades.length===0){ setCsvError("Aucun trade détecté. Vérifie le format."); return; }
+    if(!result.trades||result.trades.length===0){ setCsvError(L.csv.noTrades); return; }
     setCsvResult(result);
   };
 
@@ -4130,7 +4255,7 @@ ${recentTrades}`;
     if(!csvResult) return;
     setTrades(p => [...csvResult.trades, ...p]);
     setCsvText(""); setCsvResult(null);
-    setCsvError("Import réussi — " + csvResult.trades.length + " trades ajoutés !");
+    setCsvError(L.csv.success(csvResult.trades.length));
     setTimeout(()=>setCsvError(""),3000);
   };
 
@@ -4204,7 +4329,7 @@ ${recentTrades}`;
             </div>
           </Field>
           <div style={{marginBottom:8,padding:"10px 12px",borderRadius:6,background:"rgba(0,0,0,0.03)",border:`1px solid ${C.border}`,fontSize:11,color:C.dim,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.6}}>
-            {csvPlatform==="mt5" ? "MT5 : Toolbox → History → clic droit → Export CSV | MT4 : Terminal → Account History → clic droit → Save as Report" : "Tradovate : Accounts → icône paramètres → Orders → Download CSV"}
+            {csvPlatform==="mt5" ? L.csv.mt5Hint : L.csv.tradovateHint}
           </div>
           <Field label="Contenu CSV">
             <textarea rows={8} placeholder="Colle ici le contenu de ton fichier CSV..." value={csvText} onChange={e=>setCsvText(e.target.value)} style={{...iStyle,resize:"vertical",lineHeight:1.5,fontSize:12}}/>
@@ -4348,7 +4473,7 @@ ${recentTrades}`;
         <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),0 0 0 1px rgba(255,255,255,0.09),inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
           <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:16}}>Informations personnelles</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-            {[["Prénom","firstName"],["Nom","lastName"]].map(([label,key])=>(
+            {[[L.form.firstName,"firstName"],[L.form.lastName,"lastName"]].map(([label,key])=>(
               <div key={key}>
                 <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:5}}>{label}</div>
                 <input value={profileForm[key]} onChange={e=>setProfileForm(f=>({...f,[key]:e.target.value}))} style={pField} placeholder={label} />
@@ -4440,8 +4565,8 @@ ${recentTrades}`;
           <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:16}}>Classement global</div>
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
             {[
-              { state: compete, setter: setCompete, key: "compete", label: "Participer au classement", desc: "Ton score Fyltra apparaît dans le classement global. Tu peux te retirer à tout moment." },
-              { state: anonymous, setter: setAnonymous, key: "anonymous", label: "Mode anonyme", desc: "Seul ton surnom (ou prénom si pas de surnom) est visible. Ton email reste privé.", disabled: !compete },
+              { state: compete, setter: setCompete, key: "compete", label: L.sett.compete, desc: L.sett.competeDesc },
+              { state: anonymous, setter: setAnonymous, key: "anonymous", label: L.sett.anonymous, desc: L.sett.anonymousDesc, disabled: !compete },
             ].map(({ state, setter, key, label, desc, disabled }) => (
               <div key={key} style={{display:"flex",alignItems:"flex-start",gap:12,opacity:disabled?0.4:1,transition:"opacity 0.2s"}}>
                 <button onClick={async()=>{
@@ -4488,18 +4613,18 @@ ${recentTrades}`;
                     <div style={{fontSize:13,color:C.white,fontFamily:"'Josefin Sans',sans-serif",marginBottom:12,lineHeight:1.5}}>Confirmer la résiliation ? Ton accès restera actif jusqu'au {fmtDate(subData.renewsAt)}, puis sera coupé.</div>
                     <div style={{display:"flex",gap:8}}>
                       <button onClick={cancelSub} disabled={cancelLoading} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:"rgba(192,57,43,0.8)",color:"#fff",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:cancelLoading?"not-allowed":"pointer"}}>
-                        {cancelLoading?"Résiliation...":"Oui, résilier"}
+                        {cancelLoading?L.profile.cancelLoading:L.profile.cancelYes}
                       </button>
                       <button onClick={()=>setCancelConfirm(false)} style={{flex:1,padding:"10px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",fontSize:12,cursor:"pointer"}}>Annuler</button>
                     </div>
                   </div>
                 ) : (
                   <button onClick={()=>setCancelConfirm(true)} style={{padding:"10px 20px",borderRadius:8,border:"1px solid rgba(192,57,43,0.3)",background:"rgba(192,57,43,0.06)",color:"rgba(192,57,43,0.8)",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,fontSize:12,cursor:"pointer",transition:"all 0.2s"}}>
-                    Résilier mon abonnement
+                    {L.profile.cancelSub}
                   </button>
                 )
               )}
-              {subData.cancelled && <div style={{fontSize:12,color:"rgba(192,57,43,0.7)",fontFamily:"'Josefin Sans',sans-serif"}}>Ton abonnement a été résilié. L'accès sera coupé à la fin de la période en cours.</div>}
+              {subData.cancelled && <div style={{fontSize:12,color:"rgba(192,57,43,0.7)",fontFamily:"'Josefin Sans',sans-serif"}}>{L.profile.cancelled}</div>}
             </>
           ) : null}
         </div>
@@ -4509,7 +4634,7 @@ ${recentTrades}`;
           <a href="mailto:contact@fyltra.app" style={{fontSize:12,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",textDecoration:"none",letterSpacing:"0.05em",transition:"color .2s"}}
             onMouseEnter={e=>e.currentTarget.style.color=C.white}
             onMouseLeave={e=>e.currentTarget.style.color=C.gray1}>
-            Nous contacter · contact@fyltra.app
+            {L.profile.contact}
           </a>
         </div>
       </div>
@@ -4543,8 +4668,8 @@ ${recentTrades}`;
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
-            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Apparence</div>
-            <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{darkMode?"Mode sombre":"Mode clair"}</div>
+            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>{L.sett.appearance}</div>
+            <div style={{fontSize:13,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{darkMode?L.sett.dark:L.sett.light}</div>
           </div>
           <button onClick={()=>setDarkMode(d=>!d)} style={{width:52,height:28,borderRadius:14,border:"none",background:darkMode?"#f0ede8":"#ccc",cursor:"pointer",position:"relative",transition:"background 0.3s",flexShrink:0}}>
             <div style={{position:"absolute",top:3,left:darkMode?26:3,width:22,height:22,borderRadius:11,background:darkMode?"#111":"#fff",transition:"left 0.25s",boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
@@ -4630,7 +4755,7 @@ ${recentTrades}`;
 
       {/* ── TRADE SETTINGS ── */}
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
-        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>Réglages de trade</div>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:8}}>{L.acct.tradeSettings}</div>
         <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginBottom:16,letterSpacing:"0.04em",lineHeight:1.7}}>Activez les champs à appliquer en mode <strong style={{color:C.white}}>Fixe</strong> dans l'onglet Trade.</div>
         {[
           {k:"tpFixed", label:"TP fixe", placeholder:"ex: 150"},
@@ -4668,7 +4793,7 @@ ${recentTrades}`;
           )}
         </div>
         <button onClick={saveTS} style={{width:"100%",padding:"12px",borderRadius:6,border:`1px solid ${C.border}`,background:tsSaved?C.accent:"transparent",color:tsSaved?(darkMode?"#111":"#fff"):C.dim,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.18em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.3s"}}>
-          {tsSaved?"✓ Sauvegardé":"Sauvegarder →"}
+          {tsSaved?L.btn.saved:`${L.btn.save} →`}
         </button>
       </div>
       {/* ── MT5 CONNECT ── */}
@@ -4806,8 +4931,8 @@ ${recentTrades}`;
                 { label: "Win Rate",    max: 200 },
                 { label: "Journal",     max: 200 },
                 { label: "Sharpe",      max: 150 },
-                { label: "Émotions",    max: 100 },
-                { label: "Régularité",  max: 100 },
+                { label: L.rank.emotions,    max: 100 },
+                { label: L.rank.consistency, max: 100 },
               ].map(({ label, max }) => (
                 <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ fontSize: 9, color: C.gray1, fontFamily: "'Josefin Sans',sans-serif", textTransform: "uppercase", letterSpacing: "0.1em", minWidth: 72, textAlign: "right" }}>{label}</div>
@@ -4849,7 +4974,7 @@ ${recentTrades}`;
             <div style={{ padding: "32px", textAlign: "center", color: C.gray1, fontSize: 12, fontFamily: "'Josefin Sans',sans-serif" }}>Chargement...</div>
           ) : !lbData || lbData.length === 0 ? (
             <div style={{ padding: "32px", textAlign: "center", color: C.gray1, fontSize: 12, fontFamily: "'Josefin Sans',sans-serif", lineHeight: 1.6 }}>
-              Aucun trader en compétition pour l'instant.<br/>Sois le premier !
+              {L.rank.noTraders.split("\n")[0]}<br/>{L.rank.noTraders.split("\n")[1]}
             </div>
           ) : (
             <>
@@ -4961,7 +5086,7 @@ ${recentTrades}`;
             <>
               <div onClick={closeMenu} style={{position:"fixed",inset:0,zIndex:298}}/>
               <div style={{position:"fixed",top:70,right:16,zIndex:299,animation:`${menuClosing?"slideToRight":"slideFromRight"} 0.24s cubic-bezier(.4,0,.2,1)`,display:"flex",flexDirection:"column",gap:4,background:"linear-gradient(180deg,rgba(60,60,60,0.97) 0%,rgba(18,18,18,0.99) 55%,rgba(8,8,8,1) 100%)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:24,padding:"10px",boxShadow:"0 6px 20px rgba(0,0,0,0.5),0 20px 50px rgba(0,0,0,0.4),0 0 60px rgba(255,255,255,0.11),0 0 0 1px rgba(255,255,255,0.13),inset 0 1px 0 rgba(255,255,255,0.38),inset 0 -2px 0 rgba(0,0,0,0.8)",border:"1px solid rgba(255,255,255,0.1)",minWidth:180}}>
-                {[{k:"profil",l:"Profil"},{k:"strategy",l:"Plan"},{k:"history",l:"Statistiques"},{k:"trades",l:"Historique"},{k:"classement",l:"Classement"},{k:"settings",l:"Paramètres"}].map(item=>{
+                {L.quickNav.map(item=>{
                   const active = view === item.k;
                   return (
                     <button key={item.k} onClick={()=>{setView(item.k);closeMenu();}} style={{display:"flex",alignItems:"center",width:"100%",padding:active?"10px 18px":"10px 14px",borderRadius:16,border:"none",cursor:"pointer",background:active?"radial-gradient(ellipse 110% 100% at 50% 35%,rgba(252,252,252,0.93) 0%,rgba(225,225,225,0.85) 55%,rgba(200,200,200,0.75) 100%)":"transparent",transition:"all 0.25s cubic-bezier(.4,0,.2,1)",boxShadow:active?"0 0 26px 8px rgba(255,255,255,0.22),0 0 50px 16px rgba(255,255,255,0.09),0 6px 20px rgba(0,0,0,0.5),0 2px 6px rgba(0,0,0,0.3)":"none"}}>
