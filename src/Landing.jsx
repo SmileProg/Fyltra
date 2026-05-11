@@ -255,7 +255,7 @@ function ContainerScroll({ titleComponent, children, C }) {
 }
 
 /* ─── Dashboard Mockup ───────────────────────────────────────────── */
-function DashboardMockup() {
+function DashboardMockup({ lang = "fr" }) {
   const BG   = "#0f0f0f";
   const BG2  = "#1a1a1a";
   const BG3  = "#242424";
@@ -264,22 +264,21 @@ function DashboardMockup() {
   const DIM2 = "rgba(240,237,232,0.2)";
   const BDR  = "rgba(255,255,255,0.08)";
   const ACC  = "#e8cda9";
+  const td   = T[lang].dash;
 
   const PILL = { background:"linear-gradient(180deg,rgba(60,60,60,0.97) 0%,rgba(18,18,18,0.99) 55%,rgba(8,8,8,1) 100%)", borderRadius:18, padding:"8px", display:"flex", flexDirection:"column", gap:3, boxShadow:"0 6px 20px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.12),inset 0 1px 0 rgba(255,255,255,0.32),inset 0 -2px 0 rgba(0,0,0,0.8)" };
 
-  const navItems = [
-    {icon:"◉",label:"Compte",active:true},
-    {icon:"＋",label:"Trade",active:false},
-    {icon:"≡",label:"Statistiques",active:false},
-    {icon:"◈",label:"Plan",active:false},
-  ];
+  const navItems = td.nav.map((label, i) => ({
+    icon: ["◉","＋","≡","◈"][i], label, active: i === 0,
+  }));
 
+  const emo = td.emotions;
   const trades = [
-    {pair:"NQ",    dir:"LONG",  emo:"Confiant", sess:"London",   pnl:"+312$", r:"+2.4R", ok:true },
-    {pair:"XAUUSD",dir:"SHORT", emo:"Neutre",   sess:"New York", pnl:"+241$", r:"+1.8R", ok:true },
-    {pair:"MNQ",   dir:"LONG",  emo:"Anxieux",  sess:"London",   pnl:"-134$", r:"-1.0R", ok:false},
-    {pair:"EUR/USD",dir:"LONG", emo:"Confiant", sess:"Overlap",  pnl:"+417$", r:"+3.1R", ok:true },
-    {pair:"BTC",   dir:"SHORT", emo:"Patient",  sess:"Asia",     pnl:"+122$", r:"+0.9R", ok:true },
+    {pair:"NQ",    dir:"LONG",  emo:emo.Confiant, sess:"London",   pnl:"+312$", r:"+2.4R", ok:true },
+    {pair:"XAUUSD",dir:"SHORT", emo:emo.Neutre,   sess:"New York", pnl:"+241$", r:"+1.8R", ok:true },
+    {pair:"MNQ",   dir:"LONG",  emo:emo.Anxieux,  sess:"London",   pnl:"-134$", r:"-1.0R", ok:false},
+    {pair:"EUR/USD",dir:"LONG", emo:emo.Confiant, sess:"Overlap",  pnl:"+417$", r:"+3.1R", ok:true },
+    {pair:"BTC",   dir:"SHORT", emo:emo.Patient,  sess:"Asia",     pnl:"+122$", r:"+0.9R", ok:true },
   ];
 
   const pts = [[0,92],[55,80],[110,74],[165,62],[220,68],[275,52],[330,42],[385,34],[440,22],[495,30],[550,12],[600,6]];
@@ -351,8 +350,8 @@ function DashboardMockup() {
         <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
           {/* header */}
           <div style={{ padding:"10px 16px 0", flexShrink:0 }}>
-            <div style={{ fontSize:8, color:DIM2, letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:2 }}>Tableau de bord</div>
-            <div style={{ fontSize:14, fontWeight:700, color:TXT, letterSpacing:"-0.01em" }}>Performance</div>
+            <div style={{ fontSize:8, color:DIM2, letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:2 }}>{td.header}</div>
+            <div style={{ fontSize:14, fontWeight:700, color:TXT, letterSpacing:"-0.01em" }}>{td.perf}</div>
           </div>
 
           {/* scroll area */}
@@ -360,12 +359,7 @@ function DashboardMockup() {
 
             {/* stat cards */}
             <div className="l-stat-row" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, flexShrink:0 }}>
-              {[
-                {l:"P&L Total",  v:"+$4 217", sub:"+18.3%", color:"#4ade80"},
-                {l:"Win Rate",   v:"68%",     sub:"34 / 50",color:"#4ade80"},
-                {l:"RR Moyen",   v:"2.4:1",   sub:"bon",    color:DIM},
-                {l:"Bilan",      v:"34W/16L", sub:"ce mois",color:TXT},
-              ].map(s=>(
+              {td.stats.map(s=>(
                 <div key={s.l} style={{ background:BG3, border:`1px solid ${BDR}`, borderRadius:8, padding:"9px 10px", boxShadow:"0 4px 16px rgba(0,0,0,0.45),0 0 0 1px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.22)" }}>
                   <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:3 }}>{s.l}</div>
                   <div style={{ fontSize:13, fontWeight:700, color:s.color, lineHeight:1 }}>{s.v}</div>
@@ -378,7 +372,7 @@ function DashboardMockup() {
             <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr", gap:10, flexShrink:0 }}>
               {/* equity curve */}
               <div style={{ background:BG2, border:`1px solid ${BDR}`, borderRadius:10, padding:"12px", boxShadow:"0 4px 20px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.18)" }}>
-                <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:8 }}>Évolution P&L</div>
+                <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:8 }}>{td.pnl}</div>
                 <svg width="100%" height="72" viewBox="0 0 600 100" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1">
@@ -395,14 +389,14 @@ function DashboardMockup() {
               {/* calendar */}
               <div style={{ background:BG2, border:`1px solid ${BDR}`, borderRadius:10, padding:"10px 12px", boxShadow:"0 4px 20px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.18)" }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7 }}>
-                  <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.14em" }}>Avril 2025</div>
+                  <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.14em" }}>{td.calTitle}</div>
                   <div style={{ display:"flex", gap:6 }}>
                     <span style={{ fontSize:9, color:DIM2, cursor:"default" }}>‹</span>
                     <span style={{ fontSize:9, color:DIM2, cursor:"default" }}>›</span>
                   </div>
                 </div>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2 }}>
-                  {["L","M","M","J","V","S","D"].map(d=><div key={d} style={{ fontSize:6, color:DIM2, textAlign:"center", paddingBottom:2 }}>{d}</div>)}
+                  {td.calDays.map((d,i)=><div key={i} style={{ fontSize:6, color:DIM2, textAlign:"center", paddingBottom:2 }}>{d}</div>)}
                   {/* 2 empty cells (Tue start) */}
                   <div/><div/>
                   {calDays.map(({d,v})=>(
@@ -416,7 +410,7 @@ function DashboardMockup() {
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, flexShrink:0 }}>
               {/* sessions */}
               <div style={{ background:BG2, border:`1px solid ${BDR}`, borderRadius:10, padding:"12px", boxShadow:"0 4px 20px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.18)" }}>
-                <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:9 }}>Performance par session</div>
+                <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:9 }}>{td.sessTitle}</div>
                 {sessions.map(s=>(
                   <div key={s.name} style={{ marginBottom:8 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
@@ -432,7 +426,7 @@ function DashboardMockup() {
 
               {/* trades */}
               <div style={{ background:BG2, border:`1px solid ${BDR}`, borderRadius:10, padding:"12px", boxShadow:"0 4px 20px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.18)" }}>
-                <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:9 }}>Derniers trades</div>
+                <div style={{ fontSize:7, color:DIM2, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:9 }}>{td.tradesTitle}</div>
                 {trades.map((t,i)=>(
                   <div key={i} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingBottom:6, marginBottom:6, borderBottom:`1px solid ${i<trades.length-1?BDR:"transparent"}` }}>
                     <div style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -455,8 +449,8 @@ function DashboardMockup() {
             <div style={{ background:`rgba(232,205,169,0.05)`, border:`1px solid rgba(232,205,169,0.14)`, borderRadius:10, padding:"10px 14px", display:"flex", alignItems:"flex-start", gap:10, flexShrink:0 }}>
               <span style={{ fontSize:12, color:ACC, lineHeight:1, marginTop:1 }}>◆</span>
               <div>
-                <div style={{ fontSize:8, color:ACC, fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:3 }}>◆ IA Coach</div>
-                <div style={{ fontSize:9, color:DIM, lineHeight:1.55 }}>London + Confiant → <strong style={{color:TXT}}>78% WR</strong>. Évite le <strong style={{color:"#f87171"}}>Vendredi</strong> (P&L cumulé: -$312). Si Anxieux, passe ton tour.</div>
+                <div style={{ fontSize:8, color:ACC, fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:3 }}>{td.iaBadge}</div>
+                <div style={{ fontSize:9, color:DIM, lineHeight:1.55 }}>{td.iaCoach.prefix}<strong style={{color:TXT}}>{td.iaCoach.mood}</strong>{td.iaCoach.wr}{td.iaCoach.avoid}<strong style={{color:"#f87171"}}>{td.iaCoach.day}</strong>{td.iaCoach.rest}</div>
               </div>
             </div>
 
@@ -524,7 +518,7 @@ function TileCard({ icon, title, shadow }) {
   );
 }
 
-function ZoomParallaxFeatures({ C }) {
+function ZoomParallaxFeatures({ C, lang = "fr" }) {
   const containerRef = useRef();
   const tileRefs     = useRef([]);
   const centerRef    = useRef();
@@ -533,16 +527,18 @@ function ZoomParallaxFeatures({ C }) {
 
   const isDark = C.bg === "#060608";
   const shadow = { isDark, border: C.border, text: C.text };
+  const tz = T[lang].zoom;
 
-  const tiles = [
-    { title:"Prop Firm",                bx:"-27vw", by:"-10vh", rot:-5, dx:-14, dy:-8  },
-    { title:"Sync temps réel",          bx:"-27vw", by:"10vh",  rot:3,  dx:-14, dy:8   },
-    { title:"Stats profondes",          bx:"25vw",  by:"-10vh", rot:-3, dx:14,  dy:-8  },
-    { title:"Plan de trading",          bx:"25vw",  by:"10vh",  rot:4,  dx:14,  dy:8   },
-    { title:"IA Coach",                 bx:"-1vw",  by:"-28vh", rot:2,  dx:0,   dy:-16 },
-    { title:"Pour tout type de trader", bx:"-1vw",  by:"28vh",  rot:-2, dx:0,   dy:16  },
-    { title:"Fonds propre",             bx:"25vw",  by:"22vh",  rot:3,  dx:14,  dy:12  },
+  const tilePositions = [
+    { bx:"-27vw", by:"-10vh", rot:-5, dx:-14, dy:-8  },
+    { bx:"-27vw", by:"10vh",  rot:3,  dx:-14, dy:8   },
+    { bx:"25vw",  by:"-10vh", rot:-3, dx:14,  dy:-8  },
+    { bx:"25vw",  by:"10vh",  rot:4,  dx:14,  dy:8   },
+    { bx:"-1vw",  by:"-28vh", rot:2,  dx:0,   dy:-16 },
+    { bx:"-1vw",  by:"28vh",  rot:-2, dx:0,   dy:16  },
+    { bx:"25vw",  by:"22vh",  rot:3,  dx:14,  dy:12  },
   ];
+  const tiles = tz.tiles.map((title, i) => ({ title, ...tilePositions[i] }));
 
   useEffect(() => {
     let pending = false;
@@ -611,8 +607,8 @@ function ZoomParallaxFeatures({ C }) {
         }}>
           <div ref={labelRef} style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"22px", opacity:1, pointerEvents:"none" }}>
             <div style={{ fontWeight:700, fontSize:13, color:C.text, letterSpacing:"-0.01em", lineHeight:1.4, textAlign:"center" }}>
-              Tout ce qu'il faut pour trader{" "}
-              <span style={{ background:"linear-gradient(135deg,#e8cda9,#c9aa82)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>avec précision.</span>
+              {tz.centerLabel}{" "}
+              <span style={{ background:"linear-gradient(135deg,#e8cda9,#c9aa82)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>{tz.centerSpan}</span>
             </div>
           </div>
 
@@ -621,14 +617,14 @@ function ZoomParallaxFeatures({ C }) {
             <div style={{ position:"relative", zIndex:1 }}>
               <div style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"6px 14px", borderRadius:100, background:"rgba(232,205,169,0.08)", border:"1px solid rgba(232,205,169,0.22)", marginBottom:22 }}>
                 <span style={{ width:6, height:6, borderRadius:"50%", background:"rgba(232,205,169,0.7)", flexShrink:0, display:"inline-block" }}/>
-                <span style={{ fontSize:10, color:"rgba(232,205,169,0.75)", letterSpacing:"0.18em", textTransform:"uppercase", fontFamily:"'JetBrains Mono',monospace" }}>Conçu pour tout type de trader</span>
+                <span style={{ fontSize:10, color:"rgba(232,205,169,0.75)", letterSpacing:"0.18em", textTransform:"uppercase", fontFamily:"'JetBrains Mono',monospace" }}>{tz.badge}</span>
               </div>
               <h2 style={{ fontFamily:"'Outfit',sans-serif", fontWeight:900, fontSize:"clamp(24px,3.8vw,52px)", color:C.text, lineHeight:1.1, letterSpacing:"-0.03em", marginBottom:20 }}>
-                Tout ce qu'il faut<br/>pour trader<br/>
-                <span style={{ background:"linear-gradient(135deg,#e8cda9,#c9aa82)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>avec précision.</span>
+                {tz.h2a}<br/>{tz.h2b}<br/>
+                <span style={{ background:"linear-gradient(135deg,#e8cda9,#c9aa82)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>{tz.h2c}</span>
               </h2>
               <p style={{ fontSize:"clamp(13px,1.2vw,16px)", color:C.textDim, lineHeight:1.65, maxWidth:500, marginBottom:36 }}>
-                Journal structuré, IA Coach, multi-comptes — une seule plateforme pour analyser, progresser et trader mieux.
+                {tz.desc}
               </p>
               <button
                 onClick={() => document.getElementById("pour-tous-les-traders")?.scrollIntoView({ behavior:"smooth" })}
@@ -636,7 +632,7 @@ function ZoomParallaxFeatures({ C }) {
                 onMouseEnter={ev=>{ ev.currentTarget.style.background="rgba(232,205,169,0.2)"; ev.currentTarget.style.boxShadow="0 0 24px rgba(232,205,169,0.18)"; }}
                 onMouseLeave={ev=>{ ev.currentTarget.style.background="rgba(232,205,169,0.12)"; ev.currentTarget.style.boxShadow="none"; }}
               >
-                Voir les fonctionnalités →
+                {tz.cta}
               </button>
             </div>
           </div>
@@ -647,54 +643,19 @@ function ZoomParallaxFeatures({ C }) {
 }
 
 /* ─── Gallery4 (carousel screenshots) ───────────────────────────── */
-function ScrollCards({ C }) {
+function ScrollCards({ C, lang = "fr" }) {
   const [current, setCurrent] = useState(0);
   const dragStart = useRef(null);
 
   const GOLD     = "#e8cda9";
   const GOLDDIM  = "rgba(232,205,169,0.18)";
+  const tc       = T[lang].cards;
 
   /* card width: responsive */
   const cardW = typeof window !== "undefined" ? Math.min(360, window.innerWidth * 0.8) : 360;
   const GAP   = 20;
 
-  const items = [
-    {
-      id: "journal",
-      tag: "Journal de trading", tagRgb: "74,222,128",
-      title: "Chaque trade, documenté.",
-      desc: "Résultat, session, émotion, instrument. Tout est là, trié et filtrable en un clic.",
-      image: "/screenshots/journal.png",
-    },
-    {
-      id: "dashboard",
-      tag: "Tableau de bord", tagRgb: "232,205,169",
-      title: "Votre performance en temps réel.",
-      desc: "P&L cumulé, win rate, facteur de profit, equity curve — votre santé trading d'un coup d'œil.",
-      image: "/screenshots/dashboard.png",
-    },
-    {
-      id: "ia",
-      tag: "IA Coach", tagRgb: "167,139,250",
-      title: "Votre analyste personnel.",
-      desc: "Patterns réels, règles actionnables — tirés directement de vos propres données.",
-      image: "/screenshots/ia.png",
-    },
-    {
-      id: "comptes",
-      tag: "Multi-comptes & Prop Firms", tagRgb: "232,205,169",
-      title: "Tous vos comptes, une seule vue.",
-      desc: "Prop firms, fonds propres — chacun avec ses règles, drawdown max et equity séparée.",
-      image: "/screenshots/comptes.png",
-    },
-    {
-      id: "stats",
-      tag: "Statistiques", tagRgb: "74,222,128",
-      title: "Vos données sans filtre.",
-      desc: "Win rate par session, P&L par émotion, profit factor par instrument. Brut et exploitable.",
-      image: "/screenshots/stats.png",
-    },
-  ];
+  const items = tc.items;
 
   const goTo = i => setCurrent(Math.max(0, Math.min(items.length - 1, i)));
 
@@ -730,14 +691,14 @@ function ScrollCards({ C }) {
       <div style={{ padding:"0 clamp(24px,5vw,88px)", marginBottom:48, display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:24 }}>
         <div style={{ maxWidth:560 }}>
           <div style={{ display:"inline-block", background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:100, padding:"5px 16px", marginBottom:18 }}>
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDim, letterSpacing:"0.2em", textTransform:"uppercase" }}>Pour tous les traders</span>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDim, letterSpacing:"0.2em", textTransform:"uppercase" }}>{tc.badge}</span>
           </div>
           <h2 style={{ fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:"clamp(26px,3.5vw,46px)", color:C.text, letterSpacing:"-0.03em", lineHeight:1.1, margin:"0 0 14px" }}>
-            Tout ce dont vous avez besoin,{" "}
-            <span style={{ color:GOLD }}>au même endroit.</span>
+            {tc.headline}{" "}
+            <span style={{ color:GOLD }}>{tc.headlineSpan}</span>
           </h2>
           <p style={{ fontSize:15, color:C.textDim, lineHeight:1.65, margin:0 }}>
-            Journal, statistiques, IA Coach, gestion de prop firms — une seule app pour progresser vraiment.
+            {tc.desc}
           </p>
         </div>
         <div style={{ display:"flex", gap:8 }}>
@@ -840,8 +801,122 @@ const SunIcon = () => (
   </svg>
 );
 
+/* ─── Translations ───────────────────────────────────────────────── */
+const T = {
+  fr: {
+    nav: { links:[["#features","Features"],["#tarifs","Tarifs"]], signIn:"Se connecter" },
+    hero: "Votre carnet de santé trading.",
+    textReveal: "Votre trading mérite de la structure. Chaque trade raconte une histoire. Fyltra transforme vos données en intelligence pour que vous deveniez le trader que vous méritez d'être.",
+    zoom: {
+      tiles:["Prop Firm","Sync temps réel","Stats profondes","Plan de trading","IA Coach","Pour tout type de trader","Fonds propre"],
+      centerLabel:"Tout ce qu'il faut pour trader", centerSpan:"avec précision.",
+      badge:"Conçu pour tout type de trader",
+      h2a:"Tout ce qu'il faut", h2b:"pour trader", h2c:"avec précision.",
+      desc:"Journal structuré, IA Coach, multi-comptes — une seule plateforme pour analyser, progresser et trader mieux.",
+      cta:"Voir les fonctionnalités →",
+    },
+    cards: {
+      badge:"Pour tous les traders",
+      headline:"Tout ce dont vous avez besoin,", headlineSpan:"au même endroit.",
+      desc:"Journal, statistiques, IA Coach, gestion de prop firms — une seule app pour progresser vraiment.",
+      items:[
+        { id:"journal",    tag:"Journal de trading",        tagRgb:"74,222,128",  title:"Chaque trade, documenté.",        desc:"Résultat, session, émotion, instrument. Tout est là, trié et filtrable en un clic.",                           image:"/screenshots/journal.png" },
+        { id:"dashboard",  tag:"Tableau de bord",           tagRgb:"232,205,169", title:"Votre performance en temps réel.", desc:"P&L cumulé, win rate, facteur de profit, equity curve — votre santé trading d'un coup d'œil.",              image:"/screenshots/dashboard.png" },
+        { id:"ia",         tag:"IA Coach",                  tagRgb:"167,139,250", title:"Votre analyste personnel.",        desc:"Patterns réels, règles actionnables — tirés directement de vos propres données.",                            image:"/screenshots/ia.png" },
+        { id:"comptes",    tag:"Multi-comptes & Prop Firms",tagRgb:"232,205,169", title:"Tous vos comptes, une seule vue.", desc:"Prop firms, fonds propres — chacun avec ses règles, drawdown max et equity séparée.",                        image:"/screenshots/comptes.png" },
+        { id:"stats",      tag:"Statistiques",              tagRgb:"74,222,128",  title:"Vos données sans filtre.",         desc:"Win rate par session, P&L par émotion, profit factor par instrument. Brut et exploitable.",                   image:"/screenshots/stats.png" },
+      ],
+    },
+    quote: { text:"Les meilleurs traders ne sont pas ceux qui ont les meilleures entrées. Ce sont ceux qui", highlight:"se connaissent le mieux." },
+    pricing: {
+      badge:"Tarifs", h2:"Simple.", h2span:"Transparent.",
+      earlyBadge:"50 Premiers Traders", perMonth:"PAR MOIS · MENSUEL", locked:"Prix verrouillé à vie ✓",
+      features:["Dashboard & statistiques avancées","IA Coach — analyse des patterns","Multi-comptes & Prop Firm","Sync temps réel","Plan de trading intégré","Résiliable à tout moment"],
+      earlyBtn:"Rejoindre — Early Bird →", proLabel:"Pro Trader", proBtn:"Commencer maintenant →", loading:"Chargement...",
+    },
+    cta: { h2a:"Votre journal.", h2b:"Votre progression.", sub:"À partir de $19.99 / mois · Résiliable à tout moment.", btn:"Voir les tarifs →" },
+    footer: { openApp:"Accéder à l'app →", legal:[["Mentions légales","/mentions-legales"],["CGV","/cgv"],["Confidentialité","/confidentialite"]] },
+    auth: {
+      title:"Bon retour 👋", sub:"Connecte-toi à ton journal de trading.",
+      pwd:"Mot de passe", show:"Voir", hide:"Cacher",
+      forgot:"Mot de passe oublié ?", forgotDesc:"Entre ton email pour recevoir un lien de réinitialisation.",
+      sendLink:"Envoyer le lien", back:"← Retour", backLogin:"← Retour à la connexion",
+      sentTitle:"Lien envoyé !", sentDesc:"Vérifie ta boîte mail et clique sur le lien pour réinitialiser ton mot de passe.",
+      signIn:"Se connecter →", notMember:"Pas encore membre ?", createAcc:"Créer un compte →",
+      accessTitle:"Accès réservé aux membres", accessDesc:"Cet email n'a pas de licence active. Choisis un plan pour accéder.",
+      seePricing:"Voir les tarifs →",
+      errEmail:"Entre ton email.", errFields:"Remplis tous les champs.", errVerif:"Erreur de vérification. Réessaie.",
+      successCreate:"Compte créé ! Vérifie ton email pour confirmer.", loading:"...",
+    },
+    dash: {
+      nav:["Compte","Trade","Statistiques","Plan"], header:"Tableau de bord", perf:"Performance",
+      stats:[{l:"P&L Total",v:"+$4 217",sub:"+18.3%",color:"#4ade80"},{l:"Win Rate",v:"68%",sub:"34 / 50",color:"#4ade80"},{l:"RR Moyen",v:"2.4:1",sub:"bon",color:"rgba(240,237,232,0.45)"},{l:"Bilan",v:"34W/16L",sub:"ce mois",color:"#f0ede8"}],
+      pnl:"Évolution P&L", calTitle:"Avril 2025", calDays:["L","M","M","J","V","S","D"],
+      sessTitle:"Performance par session", tradesTitle:"Derniers trades",
+      emotions:{Confiant:"Confiant",Neutre:"Neutre",Anxieux:"Anxieux",Patient:"Patient"},
+      iaCoach:{ prefix:"London + ", mood:"Confiant", wr:" → 78% WR. ", avoid:"Évite le ", day:"Vendredi", rest:" (P&L cumulé: -$312). Si Anxieux, passe ton tour." },
+      iaBadge:"◆ IA Coach",
+    },
+  },
+  en: {
+    nav: { links:[["#features","Features"],["#tarifs","Pricing"]], signIn:"Sign in" },
+    hero: "Your trading health journal.",
+    textReveal: "Your trading deserves structure. Every trade tells a story. Fyltra turns your data into intelligence so you become the trader you're meant to be.",
+    zoom: {
+      tiles:["Prop Firm","Real-time sync","Deep analytics","Trading plan","AI Coach","For every trader","Own funds"],
+      centerLabel:"Everything you need to trade", centerSpan:"with precision.",
+      badge:"Built for every type of trader",
+      h2a:"Everything you need", h2b:"to trade", h2c:"with precision.",
+      desc:"Structured journal, AI Coach, multi-accounts — one platform to analyze, improve and trade better.",
+      cta:"Explore features →",
+    },
+    cards: {
+      badge:"For every trader",
+      headline:"Everything you need,", headlineSpan:"in one place.",
+      desc:"Journal, stats, AI Coach, prop firm management — one app to truly improve.",
+      items:[
+        { id:"journal",    tag:"Trading Journal",            tagRgb:"74,222,128",  title:"Every trade, documented.",        desc:"P&L, session, emotion, instrument. All there, sorted and filterable in one click.",                          image:"/screenshots/journal.png" },
+        { id:"dashboard",  tag:"Dashboard",                  tagRgb:"232,205,169", title:"Your performance in real time.",   desc:"Cumulative P&L, win rate, profit factor, equity curve — your trading health at a glance.",                  image:"/screenshots/dashboard.png" },
+        { id:"ia",         tag:"AI Coach",                   tagRgb:"167,139,250", title:"Your personal analyst.",           desc:"Real patterns, actionable rules — drawn directly from your own data.",                                       image:"/screenshots/ia.png" },
+        { id:"comptes",    tag:"Multi-accounts & Prop Firms",tagRgb:"232,205,169", title:"All your accounts, one view.",     desc:"Prop firms, own funds — each with their own rules, max drawdown and separate equity.",                        image:"/screenshots/comptes.png" },
+        { id:"stats",      tag:"Statistics",                 tagRgb:"74,222,128",  title:"Your data, unfiltered.",           desc:"Win rate by session, P&L by emotion, profit factor by instrument. Raw and actionable.",                       image:"/screenshots/stats.png" },
+      ],
+    },
+    quote: { text:"The best traders aren't the ones with the best entries. They're the ones who", highlight:"know themselves best." },
+    pricing: {
+      badge:"Pricing", h2:"Simple.", h2span:"Transparent.",
+      earlyBadge:"50 First Traders", perMonth:"PER MONTH · MONTHLY", locked:"Lifetime locked price ✓",
+      features:["Dashboard & advanced statistics","AI Coach — pattern analysis","Multi-accounts & Prop Firm","Real-time sync","Integrated trading plan","Cancel anytime"],
+      earlyBtn:"Join — Early Bird →", proLabel:"Pro Trader", proBtn:"Get started →", loading:"Loading...",
+    },
+    cta: { h2a:"Your journal.", h2b:"Your progress.", sub:"Starting at $19.99 / month · Cancel anytime.", btn:"View pricing →" },
+    footer: { openApp:"Open app →", legal:[["Legal Notice","/mentions-legales"],["Terms","/cgv"],["Privacy","/confidentialite"]] },
+    auth: {
+      title:"Welcome back 👋", sub:"Sign in to your trading journal.",
+      pwd:"Password", show:"Show", hide:"Hide",
+      forgot:"Forgot password?", forgotDesc:"Enter your email to receive a reset link.",
+      sendLink:"Send link", back:"← Back", backLogin:"← Back to sign in",
+      sentTitle:"Link sent!", sentDesc:"Check your inbox and click the link to reset your password.",
+      signIn:"Sign in →", notMember:"Not a member yet?", createAcc:"Create an account →",
+      accessTitle:"Members only", accessDesc:"This email has no active license. Choose a plan to get access.",
+      seePricing:"View pricing →",
+      errEmail:"Enter your email.", errFields:"Fill in all fields.", errVerif:"Verification error. Try again.",
+      successCreate:"Account created! Check your email to confirm.", loading:"...",
+    },
+    dash: {
+      nav:["Account","Trade","Statistics","Plan"], header:"Dashboard", perf:"Performance",
+      stats:[{l:"Total P&L",v:"+$4,217",sub:"+18.3%",color:"#4ade80"},{l:"Win Rate",v:"68%",sub:"34 / 50",color:"#4ade80"},{l:"Avg RR",v:"2.4:1",sub:"good",color:"rgba(240,237,232,0.45)"},{l:"Summary",v:"34W/16L",sub:"this month",color:"#f0ede8"}],
+      pnl:"P&L Evolution", calTitle:"April 2025", calDays:["M","T","W","T","F","S","S"],
+      sessTitle:"Performance by session", tradesTitle:"Last trades",
+      emotions:{Confiant:"Confident",Neutre:"Neutral",Anxieux:"Anxious",Patient:"Patient"},
+      iaCoach:{ prefix:"London + ", mood:"Confident", wr:" → 78% WR. ", avoid:"Avoid ", day:"Friday", rest:" (Cumulative P&L: -$312). If Anxious, skip." },
+      iaBadge:"◆ AI Coach",
+    },
+  },
+};
+
 /* ─── AuthModal ──────────────────────────────────────────────────── */
-function AuthModal({ onClose, navigate, initialMode = "login" }) {
+function AuthModal({ onClose, navigate, initialMode = "login", lang = "fr" }) {
   const [mode, setMode]         = useState(initialMode);
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -861,8 +936,9 @@ function AuthModal({ onClose, navigate, initialMode = "login" }) {
 
   const [paywall, setPaywall] = useState(false);
 
+  const ta = T[lang].auth;
   const sendReset = async () => {
-    if (!email) { setError("Entre ton email."); return; }
+    if (!email) { setError(ta.errEmail); return; }
     setLoading(true); setError("");
     const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: "https://fyltra.app/app" });
     if (resetErr) { setError(resetErr.message); } else { setResetSent(true); }
@@ -870,7 +946,7 @@ function AuthModal({ onClose, navigate, initialMode = "login" }) {
   };
 
   const submit = async () => {
-    if (!email || !password) { setError("Remplis tous les champs."); return; }
+    if (!email || !password) { setError(ta.errFields); return; }
     setLoading(true); setError(""); setSuccess(""); setPaywall(false);
 
     const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
@@ -882,13 +958,13 @@ function AuthModal({ onClose, navigate, initialMode = "login" }) {
         const { authorized } = await check.json();
         if (!authorized) { setPaywall(true); setLoading(false); return; }
       } catch {
-        setError("Erreur de vérification. Réessaie.");
+        setError(ta.errVerif);
         setLoading(false);
         return;
       }
       const { error: signUpErr } = await supabase.auth.signUp({ email, password });
       if (signUpErr) setError(signUpErr.message);
-      else setSuccess("Compte créé ! Vérifie ton email pour confirmer.");
+      else setSuccess(ta.successCreate);
     } else {
       setError(loginErr.message);
     }
@@ -921,25 +997,25 @@ function AuthModal({ onClose, navigate, initialMode = "login" }) {
         </div>
 
         <h2 style={{ fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:24, color:"#fff", marginBottom:6, letterSpacing:"-0.02em" }}>
-          Bon retour 👋
+          {ta.title}
         </h2>
         <p style={{ fontSize:13, color:"rgba(255,255,255,0.35)", marginBottom:28 }}>
-          Connecte-toi à ton journal de trading.
+          {ta.sub}
         </p>
 
         {forgotMode ? (
           resetSent ? (
             <div style={{ textAlign:"center", padding:"16px 0" }}>
               <div style={{ fontSize:32, marginBottom:12 }}>✉️</div>
-              <div style={{ fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:"#fff", marginBottom:8 }}>Lien envoyé !</div>
-              <div style={{ fontSize:13, color:"rgba(255,255,255,0.4)", lineHeight:1.6 }}>Vérifie ta boîte mail et clique sur le lien pour réinitialiser ton mot de passe.</div>
+              <div style={{ fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:"#fff", marginBottom:8 }}>{ta.sentTitle}</div>
+              <div style={{ fontSize:13, color:"rgba(255,255,255,0.4)", lineHeight:1.6 }}>{ta.sentDesc}</div>
               <button onClick={()=>{ setForgotMode(false); setResetSent(false); setError(""); }} style={{ marginTop:20, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"12px 24px", color:"rgba(255,255,255,0.5)", fontFamily:"'Outfit',sans-serif", fontWeight:600, fontSize:13, cursor:"pointer" }}>
-                ← Retour
+                {ta.back}
               </button>
             </div>
           ) : (
             <>
-              <p style={{ fontSize:13, color:"rgba(255,255,255,0.35)", marginBottom:20 }}>Entre ton email pour recevoir un lien de réinitialisation.</p>
+              <p style={{ fontSize:13, color:"rgba(255,255,255,0.35)", marginBottom:20 }}>{ta.forgotDesc}</p>
               <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendReset()}
                 style={{...fieldStyle, marginBottom:14}}
                 onFocus={e=>e.target.style.borderColor="rgba(232,205,169,0.4)"}
@@ -947,10 +1023,10 @@ function AuthModal({ onClose, navigate, initialMode = "login" }) {
               {error && <div style={{ background:"rgba(255,80,80,0.1)", border:"1px solid rgba(255,80,80,0.2)", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#ff8080", marginBottom:14 }}>{error}</div>}
               <button onClick={sendReset} disabled={loading}
                 style={{ width:"100%", background:`linear-gradient(135deg,${gold},#c9aa82)`, color:"#000", border:"none", borderRadius:12, padding:"14px", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14, cursor:loading?"wait":"pointer", opacity:loading?0.7:1, transition:"all .22s", marginBottom:12 }}>
-                {loading ? "..." : "Envoyer le lien"}
+                {loading ? ta.loading : ta.sendLink}
               </button>
               <button onClick={()=>{ setForgotMode(false); setError(""); }} style={{ width:"100%", background:"none", border:"none", color:"rgba(255,255,255,0.35)", fontFamily:"'Outfit',sans-serif", fontSize:13, cursor:"pointer", textAlign:"center" }}>
-                ← Retour à la connexion
+                {ta.backLogin}
               </button>
             </>
           )
@@ -962,42 +1038,42 @@ function AuthModal({ onClose, navigate, initialMode = "login" }) {
                 style={fieldStyle} onFocus={e=>e.target.style.borderColor="rgba(232,205,169,0.4)"}
                 onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.1)"}/>
               <div style={{ position:"relative" }}>
-                <input type={showPwd?"text":"password"} placeholder="Mot de passe" value={password}
+                <input type={showPwd?"text":"password"} placeholder={ta.pwd} value={password}
                   onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}
                   style={{...fieldStyle, paddingRight:46}}
                   onFocus={e=>e.target.style.borderColor="rgba(232,205,169,0.4)"}
                   onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.1)"}/>
                 <button onClick={()=>setShowPwd(p=>!p)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", fontSize:12, padding:4 }}>
-                  {showPwd?"Cacher":"Voir"}
+                  {showPwd ? ta.hide : ta.show}
                 </button>
               </div>
             </div>
             <div style={{ textAlign:"right", marginBottom:16 }}>
               <button onClick={()=>{ setForgotMode(true); setError(""); setSuccess(""); }} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.45)", fontFamily:"'Outfit',sans-serif", fontSize:12, cursor:"pointer", padding:0, textDecoration:"underline", textUnderlineOffset:3 }}>
-                Mot de passe oublié ?
+                {ta.forgot}
               </button>
             </div>
             {error   && <div style={{ background:"rgba(255,80,80,0.1)", border:"1px solid rgba(255,80,80,0.2)", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#ff8080", marginBottom:14 }}>{error}</div>}
             {paywall && (
               <div style={{ background:"rgba(232,205,169,0.07)", border:"1px solid rgba(232,205,169,0.22)", borderRadius:8, padding:"12px 14px", marginBottom:14 }}>
-                <div style={{ fontSize:13, color:"#e8cda9", fontWeight:700, marginBottom:6 }}>Accès réservé aux membres</div>
-                <div style={{ fontSize:12, color:"rgba(232,205,169,0.6)", marginBottom:12, lineHeight:1.5 }}>Cet email n'a pas de licence active. Choisis un plan pour accéder.</div>
+                <div style={{ fontSize:13, color:"#e8cda9", fontWeight:700, marginBottom:6 }}>{ta.accessTitle}</div>
+                <div style={{ fontSize:12, color:"rgba(232,205,169,0.6)", marginBottom:12, lineHeight:1.5 }}>{ta.accessDesc}</div>
                 <a href="#tarifs" onClick={onClose} style={{ display:"inline-block", background:"linear-gradient(135deg,#e8cda9,#c9aa82)", color:"#000", borderRadius:8, padding:"8px 18px", fontSize:12, fontWeight:700, textDecoration:"none" }}>
-                  Voir les tarifs →
+                  {ta.seePricing}
                 </a>
               </div>
             )}
             {success && <div style={{ background:"rgba(80,200,100,0.1)", border:"1px solid rgba(80,200,100,0.2)", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#80e090", marginBottom:14 }}>{success}</div>}
             <button onClick={submit} disabled={loading}
               style={{ width:"100%", background:`linear-gradient(135deg,${gold},#c9aa82)`, color:"#000", border:"none", borderRadius:12, padding:"14px", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14, cursor:loading?"wait":"pointer", opacity:loading?0.7:1, transition:"all .22s", boxShadow:"0 0 28px rgba(232,205,169,0.2)" }}>
-              {loading ? "..." : "Se connecter →"}
+              {loading ? ta.loading : ta.signIn}
             </button>
             <div style={{ textAlign:"center", marginTop:16 }}>
-              <span style={{ fontSize:13, color:"rgba(255,255,255,0.3)", fontFamily:"'Outfit',sans-serif" }}>Pas encore membre ?</span>
+              <span style={{ fontSize:13, color:"rgba(255,255,255,0.3)", fontFamily:"'Outfit',sans-serif" }}>{ta.notMember}</span>
               {" "}
               <button onClick={() => { onClose(); setTimeout(() => document.getElementById("tarifs")?.scrollIntoView({ behavior:"smooth" }), 80); }}
                 style={{ background:"none", border:"none", cursor:"pointer", color:gold, fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, padding:0, textDecoration:"underline", textUnderlineOffset:3 }}>
-                Créer un compte →
+                {ta.createAcc}
               </button>
             </div>
           </>
@@ -1014,6 +1090,9 @@ export default function Landing() {
   const [mouse, setMouse] = useState({ x:-999, y:-999 });
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState("login");
+  const [lang, setLang] = useState(() => {
+    try { return localStorage.getItem("fyltra-lang") || "fr"; } catch { return "fr"; }
+  });
   const [darkMode, setDarkMode] = useState(() => {
     try { return localStorage.getItem("fyltra-theme") !== "light"; } catch { return true; }
   });
@@ -1024,6 +1103,10 @@ export default function Landing() {
     try { localStorage.setItem("fyltra-theme", darkMode ? "dark" : "light"); } catch {}
     document.body.style.background = C.bg;
   }, [darkMode, C.bg]);
+
+  useEffect(() => {
+    try { localStorage.setItem("fyltra-lang", lang); } catch {}
+  }, [lang]);
 
   // Handle Supabase PKCE code exchange when landing page receives a redirect
   useEffect(() => {
@@ -1047,7 +1130,7 @@ export default function Landing() {
     <div onMouseMove={e => setMouse({ x:e.clientX, y:e.clientY })} style={{ fontFamily:"'Outfit',sans-serif", background:C.bg, color:C.text, minHeight:"100vh", transition:"background .4s,color .4s" }}>
       <style>{FONTS}</style>
       <style>{`:root { --l-bg:${C.bg}; --l-border:${C.border}; }`}</style>
-      {showAuth && <AuthModal onClose={()=>setShowAuth(false)} navigate={navigate} initialMode={authMode}/>}
+      {showAuth && <AuthModal onClose={()=>setShowAuth(false)} navigate={navigate} initialMode={authMode} lang={lang}/>}
 
       {/* cursor glow */}
       <div style={{ position:"fixed", left:mouse.x-220, top:mouse.y-220, width:440, height:440, borderRadius:"50%", background:`radial-gradient(circle,rgba(232,205,169,0.05) 0%,transparent 70%)`, pointerEvents:"none", zIndex:9999, transition:"left .08s,top .08s" }}/>
@@ -1059,7 +1142,7 @@ export default function Landing() {
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           <div className="l-nav-links" style={{ display:"flex", gap:4 }}>
-            {[["#features","Features"],["#tarifs","Tarifs"]].map(([href,label]) => (
+            {T[lang].nav.links.map(([href,label]) => (
               <a key={href} href={href} style={{ padding:"7px 16px", fontSize:13, fontWeight:500, color:C.textDim, textDecoration:"none", borderRadius:8, transition:"all .2s" }}
                 onMouseEnter={e=>{ e.currentTarget.style.color=C.text; e.currentTarget.style.background=C.cardBg; }}
                 onMouseLeave={e=>{ e.currentTarget.style.color=C.textDim; e.currentTarget.style.background="transparent"; }}>
@@ -1067,6 +1150,13 @@ export default function Landing() {
               </a>
             ))}
           </div>
+
+          {/* lang toggle */}
+          <button onClick={() => setLang(l => l === "fr" ? "en" : "fr")} style={{ width:36, height:36, borderRadius:10, background:C.cardBg, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", color:C.text, cursor:"pointer", transition:"all .22s", marginLeft:4, fontFamily:"'JetBrains Mono',monospace", fontSize:10, fontWeight:700, letterSpacing:"0.05em" }}
+            onMouseEnter={e=>{ e.currentTarget.style.background=C.cardBgH; e.currentTarget.style.borderColor=`rgba(232,205,169,0.35)`; }}
+            onMouseLeave={e=>{ e.currentTarget.style.background=C.cardBg; e.currentTarget.style.borderColor=C.border; }}>
+            {lang === "fr" ? "EN" : "FR"}
+          </button>
 
           {/* theme toggle */}
           <button onClick={() => setDarkMode(d=>!d)} style={{ width:36, height:36, borderRadius:10, background:C.cardBg, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", color:C.text, cursor:"pointer", transition:"all .22s", marginLeft:4 }}
@@ -1078,7 +1168,7 @@ export default function Landing() {
           <button onClick={() => { setAuthMode("login"); setShowAuth(true); }} style={{ marginLeft:4, background:"rgba(232,205,169,0.12)", border:"1px solid rgba(232,205,169,0.3)", borderRadius:10, padding:"9px 20px", fontFamily:"'Outfit',sans-serif", fontWeight:600, fontSize:13, color:gold, cursor:"pointer", transition:"all .22s" }}
             onMouseEnter={e=>{ e.currentTarget.style.background="rgba(232,205,169,0.22)"; e.currentTarget.style.boxShadow="0 0 20px rgba(232,205,169,0.2)"; }}
             onMouseLeave={e=>{ e.currentTarget.style.background="rgba(232,205,169,0.12)"; e.currentTarget.style.boxShadow="none"; }}>
-            Se connecter
+            {T[lang].nav.signIn}
           </button>
         </div>
       </nav>
@@ -1087,21 +1177,21 @@ export default function Landing() {
       <ContainerScroll C={C}
         titleComponent={
           <h1 className="l-hero-title" style={{ fontWeight:900, fontSize:"clamp(36px,7vw,96px)", lineHeight:1.08, letterSpacing:"-0.04em", background:`linear-gradient(160deg,${C.text} 40%,${darkMode?"rgba(255,255,255,0.45)":"rgba(0,0,0,0.35)"} 100%)`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", textAlign:"center", transition:"background 0.4s" }}>
-            Votre carnet de santé trading.
+            {T[lang].hero}
           </h1>
         }
       >
-        <DashboardMockup C={C} />
+        <DashboardMockup lang={lang} />
       </ContainerScroll>
 
       {/* ─── TEXT REVEAL ─── */}
-      <TextRevealByWord C={C} text="Votre trading mérite de la structure. Chaque trade raconte une histoire. Fyltra transforme vos données en intelligence pour que vous deveniez le trader que vous méritez d'être." />
+      <TextRevealByWord C={C} text={T[lang].textReveal} />
 
       {/* ─── FEATURES ZOOM PARALLAX ─── */}
-      <ZoomParallaxFeatures C={C} />
+      <ZoomParallaxFeatures C={C} lang={lang} />
 
       {/* ─── SCROLL CARDS ─── */}
-      <ScrollCards C={C} />
+      <ScrollCards C={C} lang={lang} />
 
       {/* ─── QUOTE ─── */}
       <section className="l-section" style={{ padding:"120px 5vw", textAlign:"center" }}>
@@ -1109,8 +1199,8 @@ export default function Landing() {
           <R>
             <div style={{ fontSize:36, color:"rgba(232,205,169,0.35)", marginBottom:20 }}>"</div>
             <blockquote style={{ fontWeight:600, fontSize:"clamp(18px,3vw,34px)", lineHeight:1.45, letterSpacing:"-0.02em", color:C.text }}>
-              Les meilleurs traders ne sont pas ceux qui ont les meilleures entrées. Ce sont ceux qui{" "}
-              <span style={{ background:"linear-gradient(135deg,#e8cda9,#e8cda9)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>se connaissent le mieux.</span>
+              {T[lang].quote.text}{" "}
+              <span style={{ background:"linear-gradient(135deg,#e8cda9,#e8cda9)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>{T[lang].quote.highlight}</span>
             </blockquote>
           </R>
         </div>
@@ -1122,18 +1212,18 @@ export default function Landing() {
           <R>
             <div style={{ textAlign:"center", marginBottom:60 }}>
               <div style={{ display:"inline-block", background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:100, padding:"5px 16px", marginBottom:18 }}>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDim, letterSpacing:"0.2em", textTransform:"uppercase" }}>Tarifs</span>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textDim, letterSpacing:"0.2em", textTransform:"uppercase" }}>{T[lang].pricing.badge}</span>
               </div>
               <h2 style={{ fontWeight:800, fontSize:"clamp(28px,4vw,50px)", letterSpacing:"-0.025em", color:C.text }}>
-                Simple.{" "}
-                <span style={{ background:"linear-gradient(135deg,#e8cda9,#c9aa82)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Transparent.</span>
+                {T[lang].pricing.h2}{" "}
+                <span style={{ background:"linear-gradient(135deg,#e8cda9,#c9aa82)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>{T[lang].pricing.h2span}</span>
               </h2>
             </div>
           </R>
           <R delay={0.1}>
             <div className="l-price-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:0 }}>
-              <PriceLeft C={C} />
-              <PriceRight C={C} />
+              <PriceLeft C={C} lang={lang} />
+              <PriceRight C={C} lang={lang} />
             </div>
           </R>
         </div>
@@ -1146,15 +1236,15 @@ export default function Landing() {
         <R>
           <div style={{ position:"relative", zIndex:1 }}>
             <h2 style={{ fontWeight:800, fontSize:"clamp(32px,6vw,80px)", lineHeight:1.05, letterSpacing:"-0.03em", marginBottom:16, color:C.text }}>
-              Votre journal.<br/>
-              <span style={{ background:"linear-gradient(135deg,#e8cda9 0%,#e8cda9 50%,#c9aa82 100%)", backgroundSize:"200% 200%", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", animation:"lGrad 4s ease infinite" }}>Votre progression.</span>
+              {T[lang].cta.h2a}<br/>
+              <span style={{ background:"linear-gradient(135deg,#e8cda9 0%,#e8cda9 50%,#c9aa82 100%)", backgroundSize:"200% 200%", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", animation:"lGrad 4s ease infinite" }}>{T[lang].cta.h2b}</span>
             </h2>
-            <p style={{ fontSize:14, color:C.textDim, marginBottom:44 }}>À partir de $19.99 / mois · Résiliable à tout moment.</p>
+            <p style={{ fontSize:14, color:C.textDim, marginBottom:44 }}>{T[lang].cta.sub}</p>
             <div className="l-cta-btns" style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
               <a href="#tarifs" style={{ background:"linear-gradient(135deg,#e8cda9,#c9aa82)", color:"#000", border:"none", borderRadius:14, padding:"17px 50px", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, cursor:"pointer", boxShadow:"0 0 40px rgba(232,205,169,0.28),0 4px 20px rgba(0,0,0,0.2)", transition:"all .25s cubic-bezier(.16,1,.3,1)", textDecoration:"none", display:"inline-block" }}
                 onMouseEnter={e=>{ e.currentTarget.style.transform="translateY(-3px) scale(1.03)"; e.currentTarget.style.boxShadow="0 0 60px rgba(232,205,169,0.5),0 8px 28px rgba(0,0,0,0.3)"; }}
                 onMouseLeave={e=>{ e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 0 40px rgba(232,205,169,0.28),0 4px 20px rgba(0,0,0,0.2)"; }}>
-                Voir les tarifs →
+                {T[lang].cta.btn}
               </a>
             </div>
           </div>
@@ -1171,7 +1261,7 @@ export default function Landing() {
           <a href="mailto:contact@fyltra.app" style={{ fontFamily:"'Outfit',sans-serif", fontWeight:500, fontSize:12, color:C.textDimmer, textDecoration:"none", transition:"color .2s" }}
             onMouseEnter={e=>e.currentTarget.style.color=C.text}
             onMouseLeave={e=>e.currentTarget.style.color=C.textDimmer}>Contact</a>
-          {[["Mentions légales","/mentions-legales"],["CGV","/cgv"],["Confidentialité","/confidentialite"]].map(([label, href]) => (
+          {T[lang].footer.legal.map(([label, href]) => (
             <a key={href} href={href} style={{ fontFamily:"'Outfit',sans-serif", fontWeight:500, fontSize:12, color:C.textDimmer, textDecoration:"none", transition:"color .2s" }}
               onMouseEnter={e=>e.currentTarget.style.color=C.text}
               onMouseLeave={e=>e.currentTarget.style.color=C.textDimmer}>{label}</a>
@@ -1179,7 +1269,7 @@ export default function Landing() {
           <button onClick={() => { setAuthMode("login"); setShowAuth(true); }} style={{ background:"none", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:500, fontSize:12, color:C.textDimmer, cursor:"pointer", transition:"color .2s" }}
             onMouseEnter={e=>e.currentTarget.style.color=C.text}
             onMouseLeave={e=>e.currentTarget.style.color=C.textDimmer}>
-            Accéder à l'app →
+            {T[lang].footer.openApp}
           </button>
         </div>
       </footer>
@@ -1188,14 +1278,6 @@ export default function Landing() {
 }
 
 /* ─── Price Left Card — Early Bird ──────────────────────────────── */
-const PRICE_FEATURES = [
-  "Dashboard & statistiques avancées",
-  "IA Coach — analyse des patterns",
-  "Multi-comptes & Prop Firm",
-  "Sync temps réel",
-  "Plan de trading intégré",
-  "Résiliable à tout moment",
-];
 
 async function goCheckout(plan, setLoading) {
   setLoading(true);
@@ -1218,10 +1300,11 @@ async function goCheckout(plan, setLoading) {
   }
 }
 
-function PriceLeft({ C }) {
+function PriceLeft({ C, lang = "fr" }) {
   const [h, setH] = useState(false);
   const [loading, setLoading] = useState(false);
   const isDark = C.bg === "#060608";
+  const tp = T[lang].pricing;
   return (
     <div className="l-price-left" onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{
       padding:"44px 40px 48px",
@@ -1243,7 +1326,7 @@ function PriceLeft({ C }) {
       {/* badge */}
       <div style={{ display:"inline-flex", alignItems:"center", gap:6, background:"linear-gradient(135deg,#e8cda9,#c9aa82)", borderRadius:100, padding:"4px 12px 4px 8px", marginBottom:28 }}>
         <span style={{ fontSize:11 }}>⚡</span>
-        <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#1a1208", fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase" }}>50 Premiers Traders</span>
+        <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#1a1208", fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase" }}>{tp.earlyBadge}</span>
       </div>
 
       <div style={{ display:"flex", alignItems:"flex-start", gap:3, marginBottom:2 }}>
@@ -1251,14 +1334,14 @@ function PriceLeft({ C }) {
         <span style={{ fontWeight:800, fontSize:88, lineHeight:1, letterSpacing:"-0.04em", background:"linear-gradient(160deg,#e8cda9 30%,#c9aa82 100%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>19</span>
         <span style={{ fontSize:28, color:"rgba(232,205,169,0.7)", marginTop:22, fontWeight:400 }}>.99</span>
       </div>
-      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"rgba(232,205,169,0.5)", letterSpacing:"0.18em", textTransform:"uppercase", marginBottom:6 }}>PAR MOIS · MENSUEL</div>
+      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"rgba(232,205,169,0.5)", letterSpacing:"0.18em", textTransform:"uppercase", marginBottom:6 }}>{tp.perMonth}</div>
       <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"rgba(232,205,169,0.75)", letterSpacing:"0.1em", marginBottom:36, padding:"6px 10px", background:"rgba(232,205,169,0.07)", borderRadius:6, display:"inline-block" }}>
-        Prix verrouillé à vie ✓
+        {tp.locked}
       </div>
 
       {/* features */}
       <div style={{ display:"flex", flexDirection:"column", gap:11, marginBottom:36 }}>
-        {PRICE_FEATURES.map((f,i) => (
+        {tp.features.map((f,i) => (
           <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ width:16, height:16, borderRadius:"50%", background:"linear-gradient(135deg,rgba(232,205,169,0.25),rgba(232,205,169,0.1))", border:"1px solid rgba(232,205,169,0.35)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
               <div style={{ width:5, height:5, borderRadius:"50%", background:"#e8cda9" }}/>
@@ -1272,17 +1355,18 @@ function PriceLeft({ C }) {
         style={{ width:"100%", background:"linear-gradient(135deg,#e8cda9,#c9aa82)", color:"#1a1208", border:"none", borderRadius:12, padding:"15px", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14, cursor:loading?"not-allowed":"pointer", boxShadow:"0 0 36px rgba(232,205,169,0.25)", transition:"all .22s cubic-bezier(.16,1,.3,1)", letterSpacing:"-0.01em", opacity:loading?0.7:1 }}
         onMouseEnter={e=>{ if(!loading){ e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 0 56px rgba(232,205,169,0.45)"; }}}
         onMouseLeave={e=>{ e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 0 36px rgba(232,205,169,0.25)"; }}>
-        {loading ? "Chargement..." : "Rejoindre — Early Bird →"}
+        {loading ? tp.loading : tp.earlyBtn}
       </button>
     </div>
   );
 }
 
 /* ─── Price Right Card — Pro Trader ─────────────────────────────── */
-function PriceRight({ C }) {
+function PriceRight({ C, lang = "fr" }) {
   const [h, setH] = useState(false);
   const [loading, setLoading] = useState(false);
   const isDark = C.bg === "#060608";
+  const tp = T[lang].pricing;
   return (
     <div className="l-price-right" onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{
       padding:"44px 40px 48px",
@@ -1296,21 +1380,21 @@ function PriceRight({ C }) {
       overflow:"hidden",
       transition:"all .4s cubic-bezier(.16,1,.3,1)",
     }}>
-      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textDimmer, letterSpacing:"0.3em", textTransform:"uppercase", display:"block", marginBottom:28, paddingTop:2 }}>Pro Trader</div>
+      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textDimmer, letterSpacing:"0.3em", textTransform:"uppercase", display:"block", marginBottom:28, paddingTop:2 }}>{tp.proLabel}</div>
 
       <div style={{ display:"flex", alignItems:"flex-start", gap:3, marginBottom:2 }}>
         <span style={{ fontSize:18, color:C.textDim, marginTop:14, fontWeight:300 }}>$</span>
         <span style={{ fontWeight:800, fontSize:88, lineHeight:1, letterSpacing:"-0.04em", color:C.text }}>24</span>
         <span style={{ fontSize:28, color:C.textDim, marginTop:22, fontWeight:400 }}>.99</span>
       </div>
-      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textDimmer, letterSpacing:"0.18em", textTransform:"uppercase", marginBottom:6 }}>PAR MOIS · MENSUEL</div>
+      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textDimmer, letterSpacing:"0.18em", textTransform:"uppercase", marginBottom:6 }}>{tp.perMonth}</div>
       <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textDimmer, letterSpacing:"0.1em", marginBottom:36, padding:"6px 10px", background:"transparent", borderRadius:6, display:"inline-block", opacity:0 }}>
         placeholder
       </div>
 
       {/* features */}
       <div style={{ display:"flex", flexDirection:"column", gap:11, marginBottom:36 }}>
-        {PRICE_FEATURES.map((f,i) => (
+        {tp.features.map((f,i) => (
           <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ width:16, height:16, borderRadius:"50%", background:"transparent", border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
               <div style={{ width:5, height:5, borderRadius:"50%", background:C.textDim }}/>
@@ -1324,7 +1408,7 @@ function PriceRight({ C }) {
         style={{ width:"100%", background:"transparent", color:C.text, border:`1px solid ${C.border}`, borderRadius:12, padding:"15px", fontFamily:"'Outfit',sans-serif", fontWeight:600, fontSize:14, cursor:loading?"not-allowed":"pointer", transition:"all .22s cubic-bezier(.16,1,.3,1)", letterSpacing:"-0.01em", opacity:loading?0.7:1 }}
         onMouseEnter={e=>{ if(!loading){ e.currentTarget.style.background=isDark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)"; e.currentTarget.style.borderColor=C.textDim; }}}
         onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; e.currentTarget.style.borderColor=C.border; }}>
-        {loading ? "Chargement..." : "Commencer maintenant →"}
+        {loading ? tp.loading : tp.proBtn}
       </button>
     </div>
   );
