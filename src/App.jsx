@@ -1357,7 +1357,6 @@ export default function App() {
   const [customBg2,       setCustomBg2]       = useState(() => localStorage.getItem("fyltra_cbg2") || "");
   const [customTextWhite, setCustomTextWhite] = useState(() => { const v = localStorage.getItem("fyltra_ctxt"); return v === null ? null : v === "1"; });
   C = darkMode ? {...DARK_THEME} : {...LIGHT_THEME};
-  L = APP_T[lang] || APP_T.fr;
   if (customBg)  { C.bg = customBg; }
   if (customBg2) { C.bg2 = customBg2; C.bg3 = customBg2; }
   if (customTextWhite === true)  { C.white="#f0ede8"; C.dim="#aaa"; C.gray1="#888"; C.gray2="#555"; C.gray3="#333"; C.accent="#f0ede8"; C.border="rgba(255,255,255,0.08)"; C.borderGold="rgba(255,255,255,0.12)"; }
@@ -1366,6 +1365,7 @@ export default function App() {
   const [acctView, setAcctView] = useState("today");
   const [tabKey, setTabKey] = useState(0); // "today" | "global"
   const [lang, setLang] = useState(() => localStorage.getItem("fyltra_lang")||"fr");
+  L = APP_T[lang] || APP_T.fr;
   const [menuClosing, setMenuClosing] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null); // {date, trades, pnl}
   const [dayClosing, setDayClosing] = useState(false);
