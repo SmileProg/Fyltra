@@ -20,11 +20,12 @@ const SESSIONS = ["Asia","London","New York","Overlap"];
 const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const MONTHS_SH = ["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc"];
 const KEYS = { trades:"fyltra_trades_v1", instruments:"fyltra_instr_v1", strategies:"fyltra_strategies_v1", capital:"fyltra_cap_v1", propfirms:"fyltra_propfirms_v1" };
-const NAV = [
-  { key:"propfirm",  icon:"◉",  label:"Compte" },
-  { key:"add",       icon:"＋", label:"Trade" },
-  { key:"ai",        icon:"◆",  label:"IA" },
+const NAV_KEYS = [
+  { key:"propfirm",  icon:"◉",  lk:"account" },
+  { key:"add",       icon:"＋", lk:"trade" },
+  { key:"ai",        icon:"◆",  lk:"ai" },
 ];
+const NAV = () => NAV_KEYS.map(n => ({ ...n, label: L.nav[n.lk] }));
 
 /* ─── Colors ─────────────────────────────────────────────────────── */
 const LIGHT_THEME = {
@@ -41,6 +42,96 @@ const DARK_THEME = {
 };
 // C is set dynamically in App — default to light for components defined outside App
 let C = LIGHT_THEME;
+
+/* ─── Translations ───────────────────────────────────────────────── */
+const APP_T = {
+  fr: {
+    nav: { account:"Compte", trade:"Trade", history:"Historique", stats:"Statistiques", plan:"Plan", ranking:"Classement", profile:"Profil", settings:"Paramètres", ai:"IA" },
+    emotions: { Confiant:"Confiant", Neutre:"Neutre", Anxieux:"Anxieux", Euphorique:"Euphorique", Frustré:"Frustré", Patient:"Patient" },
+    months:      ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
+    monthsShort: ["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc"],
+    pages: {
+      dash:   { sub:"Tableau de bord", t0:"Aucun trade",     t1:"Performance" },
+      add:    { sub:"Enregistrer",     title:"Nouveau Trade" },
+      stats:  { sub:"Classements",     title:"Statistiques" },
+      trades: { sub:"Historique",      title:"Mes Trades" },
+      plan:   { sub:"Mes Stratégies",  title:"Plan de Trading" },
+      ai:     { sub:"Intelligence",    title:"Analyse IA" },
+      accts:  { sub:"Mes Comptes",     list:"Comptes", addType:"Type de compte", addPf:"Prop Firm", addPers:"Fond Propre" },
+      tools:  { sub:"Outils",          title:"Boîte à outils" },
+      prof:   { sub:"Mon Compte",      title:"Profil" },
+      sett:   { sub:"Paramètres",      title:"Réglages" },
+      rank:   { sub:"Compétition",     title:"Classement" },
+    },
+    form: {
+      date:"Date", instrument:"Instrument", direction:"Direction", result:"Résultat",
+      session:"Session", emotion:"État émotionnel", notes:"Notes", size:"Taille",
+      accounts:"Compte(s) concerné(s)", entry:"Prix d'entrée", exit:"Prix de sortie", rr:"Risk / Reward",
+      pnlLoss:"montant perte", pnlWin:"montant gain", pnlBe:"breakeven",
+      gain:(v,c)=>`✓ Gain : +${v} ${c}`, loss:(v,c)=>`✗ Perte : −${v} ${c}`,
+      firstTrade:"+ Premier trade", strategy:"Stratégie", entryExit:"Prix entrée/sortie",
+      positive:"Positive", negative:"Négative",
+    },
+    btn: {
+      save:"Sauvegarder", saved:"✓ Sauvegardé", saving:"···", error:"✗ Erreur",
+      record:"Enregistrer", recorded:"Enregistré !", reset:"Réinitialiser",
+      seeHistory:"☰ Voir l'historique des trades →",
+      all:"Tous", active:"Actifs", archived:"Archivés",
+      cancel:"Annuler", delete:"Supprimer", confirm:"Confirmer",
+      noTradesYet:"Aucun trade",
+    },
+    sett: {
+      currency:"Devise", language:"Langue", theme:"Thème", colors:"Couleurs",
+      dayEnd:"Fin de journée", dayEndDesc:"Les trades passés après cet horaire sont rattachés au lendemain.",
+      bg:"Fond", cards:"Cartes", textColor:"Couleur du texte",
+      auto:"Auto", white:"Blanc", black:"Noir",
+    },
+  },
+  en: {
+    nav: { account:"Account", trade:"Trade", history:"History", stats:"Statistics", plan:"Plan", ranking:"Rankings", profile:"Profile", settings:"Settings", ai:"AI" },
+    emotions: { Confiant:"Confident", Neutre:"Neutral", Anxieux:"Anxious", Euphorique:"Euphoric", Frustré:"Frustrated", Patient:"Patient" },
+    months:      ["January","February","March","April","May","June","July","August","September","October","November","December"],
+    monthsShort: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    pages: {
+      dash:   { sub:"Dashboard",       t0:"No trades",      t1:"Performance" },
+      add:    { sub:"Record",          title:"New Trade" },
+      stats:  { sub:"Rankings",        title:"Statistics" },
+      trades: { sub:"History",         title:"My Trades" },
+      plan:   { sub:"My Strategies",   title:"Trading Plan" },
+      ai:     { sub:"Intelligence",    title:"AI Analysis" },
+      accts:  { sub:"My Accounts",     list:"Accounts", addType:"Account type", addPf:"Prop Firm", addPers:"Own Funds" },
+      tools:  { sub:"Tools",           title:"Toolbox" },
+      prof:   { sub:"My Account",      title:"Profile" },
+      sett:   { sub:"Settings",        title:"Settings" },
+      rank:   { sub:"Competition",     title:"Rankings" },
+    },
+    form: {
+      date:"Date", instrument:"Instrument", direction:"Direction", result:"Result",
+      session:"Session", emotion:"Emotion", notes:"Notes", size:"Size",
+      accounts:"Account(s)", entry:"Entry price", exit:"Exit price", rr:"Risk / Reward",
+      pnlLoss:"loss amount", pnlWin:"gain amount", pnlBe:"breakeven",
+      gain:(v,c)=>`✓ Gain: +${v} ${c}`, loss:(v,c)=>`✗ Loss: −${v} ${c}`,
+      firstTrade:"+ First trade", strategy:"Strategy", entryExit:"Entry/Exit price",
+      positive:"Positive", negative:"Negative",
+    },
+    btn: {
+      save:"Save", saved:"✓ Saved", saving:"···", error:"✗ Error",
+      record:"Save", recorded:"Saved!", reset:"Reset",
+      seeHistory:"☰ View trade history →",
+      all:"All", active:"Active", archived:"Archived",
+      cancel:"Cancel", delete:"Delete", confirm:"Confirm",
+      noTradesYet:"No trades",
+    },
+    sett: {
+      currency:"Currency", language:"Language", theme:"Theme", colors:"Colors",
+      dayEnd:"Day end", dayEndDesc:"Trades past this time are assigned to the next day.",
+      bg:"Background", cards:"Cards", textColor:"Text color",
+      auto:"Auto", white:"White", black:"Black",
+    },
+  },
+};
+// L is set dynamically in App (same pattern as C)
+let L = APP_T.fr;
 
 /* ─── Fonts / Global CSS ─────────────────────────────────────────── */
 const FONTS = `
@@ -201,7 +292,7 @@ function PillNav({ view, setView, darkMode }) {
   const [hovered, setHovered] = useState(null);
   return (
     <div style={{ position:"fixed", bottom:24, left:"50%", transform:"translateX(-50%)", zIndex:200, display:"flex", alignItems:"center", background:"linear-gradient(180deg, rgba(60,60,60,0.97) 0%, rgba(18,18,18,0.99) 55%, rgba(8,8,8,1) 100%)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderRadius:50, padding:"6px 8px", gap:2, boxShadow:"0 6px 20px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.4), 0 0 60px rgba(255,255,255,0.11), 0 0 0 1px rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -2px 0 rgba(0,0,0,0.8)", border:"1px solid rgba(255,255,255,0.1)" }}>
-      {NAV.map(item => {
+      {NAV().map(item => {
         const active = view === item.key;
         const isHovered = hovered === item.key && !active;
         return (
@@ -215,16 +306,16 @@ function PillNav({ view, setView, darkMode }) {
 }
 
 /* ─── Desktop Sidebar ────────────────────────────────────────────── */
-const FULL_NAV = [
-  { key:"propfirm",   icon:"◉",  label:"Compte" },
-  { key:"add",        icon:"＋", label:"Trade" },
-  { key:"trades",     icon:"☰",  label:"Historique" },
-  { key:"history",    icon:"≡",  label:"Statistiques" },
-  { key:"strategy",   icon:"◈",  label:"Plan" },
-  { key:"classement", icon:"⬡",  label:"Classement" },
-  { key:"ai",         icon:"◆",  label:"IA" },
-  { key:"profil",     icon:"◐",  label:"Profil" },
-  { key:"settings",   icon:"◎",  label:"Paramètres" },
+const FULL_NAV_KEYS = [
+  { key:"propfirm",   icon:"◉",  lk:"account" },
+  { key:"add",        icon:"＋", lk:"trade" },
+  { key:"trades",     icon:"☰",  lk:"history" },
+  { key:"history",    icon:"≡",  lk:"stats" },
+  { key:"strategy",   icon:"◈",  lk:"plan" },
+  { key:"classement", icon:"⬡",  lk:"ranking" },
+  { key:"ai",         icon:"◆",  lk:"ai" },
+  { key:"profil",     icon:"◐",  lk:"profile" },
+  { key:"settings",   icon:"◎",  lk:"settings" },
 ];
 function Sidebar({ view, setView, darkMode, onSignOut, nickname, firstName }) {
   const [hovered, setHovered] = useState(null);
@@ -268,22 +359,22 @@ function Sidebar({ view, setView, darkMode, onSignOut, nickname, firstName }) {
       {/* Main nav pill */}
       <div style={{ padding:"16px 12px 10px", flex:1 }}>
         <div style={pillStyle}>
-          {[{key:"propfirm",icon:"◉",label:"Compte"},{key:"add",icon:"＋",label:"Trade"},{key:"trades",icon:"☰",label:"Historique"},{key:"history",icon:"≡",label:"Statistiques"},{key:"strategy",icon:"◈",label:"Plan"},{key:"classement",icon:"⬡",label:"Classement"}].map(item => <NavBtn key={item.key} item={item} />)}
+          {FULL_NAV_KEYS.slice(0,6).map(n => <NavBtn key={n.key} item={{...n, label:L.nav[n.lk]}} />)}
         </div>
       </div>
 
       {/* IA pill */}
       <div style={{ padding:"0 12px 10px" }}>
         <div style={pillStyle}>
-          <NavBtn item={{key:"ai",icon:"◆",label:"IA"}} />
+          <NavBtn item={{key:"ai",icon:"◆",label:L.nav.ai}} />
         </div>
       </div>
 
       {/* Settings pill */}
       <div style={{ padding:"0 12px 16px" }}>
         <div style={pillStyle}>
-          <NavBtn item={{key:"profil",icon:"◐",label:"Profil"}} />
-          <NavBtn item={{key:"settings",icon:"◎",label:"Paramètres"}} />
+          <NavBtn item={{key:"profil",icon:"◐",label:L.nav.profile}} />
+          <NavBtn item={{key:"settings",icon:"◎",label:L.nav.settings}} />
         </div>
       </div>
 
@@ -330,7 +421,7 @@ function Calendar({ filtered, calMonth, calYear, onPrev, onNext, onDayClick, cur
         <div style={{ fontSize:10, color:C.dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600 }}>Calendrier P&L</div>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <button onClick={onPrev} style={{ background:"none", border:"none", cursor:"pointer", color:C.gray1, fontSize:16, lineHeight:1, padding:"0 2px" }}>‹</button>
-          <div style={{ fontSize:12, color:C.white, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.08em", minWidth:80, textAlign:"center" }}>{MONTHS_SH[m]} {yr}</div>
+          <div style={{ fontSize:12, color:C.white, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.08em", minWidth:80, textAlign:"center" }}>{L.monthsShort[m]} {yr}</div>
           <button onClick={onNext} style={{ background:"none", border:"none", cursor:"pointer", color:C.gray1, fontSize:16, lineHeight:1, padding:"0 2px" }}>›</button>
         </div>
       </div>
@@ -1266,6 +1357,7 @@ export default function App() {
   const [customBg2,       setCustomBg2]       = useState(() => localStorage.getItem("fyltra_cbg2") || "");
   const [customTextWhite, setCustomTextWhite] = useState(() => { const v = localStorage.getItem("fyltra_ctxt"); return v === null ? null : v === "1"; });
   C = darkMode ? {...DARK_THEME} : {...LIGHT_THEME};
+  L = APP_T[lang] || APP_T.fr;
   if (customBg)  { C.bg = customBg; }
   if (customBg2) { C.bg2 = customBg2; C.bg3 = customBg2; }
   if (customTextWhite === true)  { C.white="#f0ede8"; C.dim="#aaa"; C.gray1="#888"; C.gray2="#555"; C.gray3="#333"; C.accent="#f0ede8"; C.border="rgba(255,255,255,0.08)"; C.borderGold="rgba(255,255,255,0.12)"; }
@@ -1754,7 +1846,7 @@ ${recentTrades}`;
   // ── Dashboard JSX ──
   const dashboardContent = (desktop) => (
     <div>
-      {!desktop && <PageTitle sub="Tableau de bord" title={total === 0 ? "Aucun trade" : "Performance"} />}
+      {!desktop && <PageTitle sub={L.pages.dash.sub} title={total === 0 ? L.pages.dash.t0 : L.pages.dash.t1} />}
       <div style={{ display:"grid", gridTemplateColumns:desktop ? "repeat(4,1fr)" : "1fr 1fr", gap:10, marginBottom:20 }}>
         <StatCard label="Win Rate"  value={`${winRate}%`}                              color={winRate >= 50 ? C.accent : C.gray1} small={desktop} />
         <StatCard label="P&L Total" value={`${pnlSum >= 0 ? "+" : ""}${fmtMoney(pnlSum)}${currency}`} color={pnlSum >= 0 ? C.accent : C.gray1} small={desktop} />
@@ -1830,7 +1922,7 @@ ${recentTrades}`;
         <div style={{ textAlign:"center", padding:"48px 0" }}>
           <div style={{ fontSize:44, marginBottom:12, color:C.gray2 }}>◎</div>
           <div style={{ fontFamily:"'Josefin Sans',sans-serif", fontSize:16, fontWeight:300, color:C.gray1, marginBottom:14, letterSpacing:"0.06em" }}>Commencez à enregistrer vos trades</div>
-          <button onClick={() => setView("add")} style={{ background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)", border:"none", borderRadius:12, padding:"11px 24px", color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer" }}>+ Premier trade</button>
+          <button onClick={() => setView("add")} style={{ background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)", border:"none", borderRadius:12, padding:"11px 24px", color:darkMode?"#111":"#fff", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer" }}>{L.btn.firstTrade}</button>
         </div>
       )}
     </div>
@@ -1839,7 +1931,7 @@ ${recentTrades}`;
   // ── Add Trade JSX ──
   const addTradeContent = (
     <div>
-      <PageTitle sub="Enregistrer" title="Nouveau Trade" />
+      <PageTitle sub={L.pages.add.sub} title={L.pages.add.title} />
 
       {/* ── MODE SWITCH ── */}
       <div style={{display:"flex",gap:8,marginBottom:20,padding:5,background:darkMode?"linear-gradient(180deg,rgba(85,85,85,0.98) 0%,rgba(28,28,28,0.99) 100%)":"linear-gradient(180deg,rgba(60,60,60,0.95) 0%,rgba(18,18,18,0.97) 100%)",borderRadius:16,border:darkMode?"1px solid rgba(255,255,255,0.18)":"1px solid rgba(255,255,255,0.14)",boxShadow:darkMode?"0 12px 40px rgba(0,0,0,0.75), 0 4px 10px rgba(0,0,0,0.5), 0 0 50px rgba(255,255,255,0.1), 0 0 0 1px rgba(255,255,255,0.12), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.75)":"0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -2px 0 rgba(0,0,0,0.55)"}}>
@@ -1859,8 +1951,8 @@ ${recentTrades}`;
         ))}
       </div>
 
-      <Field label="Date"><DatePicker value={form.date} onChange={v => set("date", v)} /></Field>
-      <Field label="Instrument">
+      <Field label={L.form.date}><DatePicker value={form.date} onChange={v => set("date", v)} /></Field>
+      <Field label={L.form.instrument}>
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
           {BASE_INSTRUMENTS.map(o => <Chip key={o} label={o} active={form.instrument===o && !showCustom} onClick={()=>handleInstrument(o)}/>)}
           {extraInstr.map(o => <Chip key={o} label={o} active={form.instrument===o && !showCustom} onClick={()=>handleInstrument(o)} onDelete={()=>setExtraInstr(p=>p.filter(i=>i!==o))}/>)}
@@ -1875,14 +1967,14 @@ ${recentTrades}`;
         {extraInstr.length > 0 && !showCustom && <div style={{ marginTop:6, fontSize:10, color:C.gray2, fontFamily:"'Josefin Sans',sans-serif" }}>Mémorisés: {extraInstr.join(", ")}</div>}
       </Field>
       <Divider />
-      <Field label="Direction"><ChipGroup options={["LONG","SHORT"]} value={form.direction} onChange={v => set("direction", v)} /></Field>
-      <Field label="Résultat"><ChipGroup options={["WIN","LOSS","BREAKEVEN"]} value={form.result} onChange={v => { set("result", v); setBeSign(1); if (v === "BREAKEVEN") setTradeFixedMode("variable"); }} /></Field>
+      <Field label={L.form.direction}><ChipGroup options={["LONG","SHORT"]} value={form.direction} onChange={v => set("direction", v)} /></Field>
+      <Field label={L.form.result}><ChipGroup options={["WIN","LOSS","BREAKEVEN"]} value={form.result} onChange={v => { set("result", v); setBeSign(1); if (v === "BREAKEVEN") setTradeFixedMode("variable"); }} /></Field>
       <Divider />
-      <Field label="Session"><ChipGroup options={SESSIONS} value={form.session} onChange={v => set("session", v)} /></Field>
+      <Field label={L.form.session}><ChipGroup options={SESSIONS} value={form.session} onChange={v => set("session", v)} /></Field>
       {(tradeMode==="swing" || scalpFields.emotion) && (
-        <Field label="État émotionnel">
+        <Field label={L.form.emotion}>
           <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-            {EMOTIONS.map(e => { const pol = EMOTION_POLARITY[e]; return <Chip key={e} label={e} active={form.emotion===e} onClick={()=>set("emotion",e)} dot={pol==="positive"?"#4caf6e":pol==="negative"?"#e05a5a":null}/>; })}
+            {EMOTIONS.map(e => { const pol = EMOTION_POLARITY[e]; return <Chip key={e} label={L.emotions[e]||e} active={form.emotion===e} onClick={()=>set("emotion",e)} dot={pol==="positive"?"#4caf6e":pol==="negative"?"#e05a5a":null}/>; })}
             {extraEmotions.map(e => {
               const lbl = typeof e === "string" ? e : e.label;
               const pol = typeof e === "string" ? null : e.polarity;
@@ -1897,7 +1989,7 @@ ${recentTrades}`;
                 <button onClick={()=>{if(customEmotion.trim()){setExtraEmotions(p=>[...p,{label:customEmotion.trim(),polarity:customEmotionPolarity}]);set("emotion",customEmotion.trim());setCustomEmotion('');setShowCustomEmotion(false);}}} style={{background:C.accent,border:"none",borderRadius:6,padding:"0 14px",color:darkMode?"#111":"#fff",fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>OK</button>
               </div>
               <div style={{display:"flex",gap:6}}>
-                {[{k:"positive",l:"Positive",c:"#4caf6e"},{k:"negative",l:"Négative",c:"#e05a5a"}].map(p=>(
+                {[{k:"positive",l:L.form.positive,c:"#4caf6e"},{k:"negative",l:L.form.negative,c:"#e05a5a"}].map(p=>(
                   <button key={p.k} onClick={()=>setCustomEmotionPolarity(p.k)} style={{flex:1,padding:"7px 10px",borderRadius:8,border:`1px solid ${customEmotionPolarity===p.k?p.c:C.border}`,background:customEmotionPolarity===p.k?`${p.c}18`:"transparent",color:customEmotionPolarity===p.k?p.c:C.gray1,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.18s",display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
                     <span style={{width:7,height:7,borderRadius:"50%",background:customEmotionPolarity===p.k?p.c:C.gray2,flexShrink:0}}/>
                     {p.l}
@@ -1929,7 +2021,7 @@ ${recentTrades}`;
         </div>
       )}
       <Divider />
-      {(tradeFixedMode==="variable" || !(savedTS.tpFixed.enabled&&savedTS.tpFixed.value&&savedTS.slFixed.enabled&&savedTS.slFixed.value)) && <Field label={`P&L — ${form.result === "LOSS" ? "montant perte" : form.result === "WIN" ? "montant gain" : "breakeven"}`}>
+      {(tradeFixedMode==="variable" || !(savedTS.tpFixed.enabled&&savedTS.tpFixed.value&&savedTS.slFixed.enabled&&savedTS.slFixed.value)) && <Field label={`P&L — ${form.result === "LOSS" ? L.form.pnlLoss : form.result === "WIN" ? L.form.pnlWin : L.form.pnlBe}`}>
         <input type="text" inputMode="decimal" placeholder="" value={pnlRaw} onChange={e => { const v = e.target.value.replace(/,/g,".").replace(/[^0-9.]/g, ""); setPnlRaw(v); }} style={{ ...iStyle, fontSize:18, fontFamily:"'Josefin Sans',sans-serif", fontWeight:300, color:"#1a1a1a" }} />
         {/* Breakeven sign toggle — always visible in BE mode */}
         {form.result === "BREAKEVEN" && (
@@ -1943,20 +2035,20 @@ ${recentTrades}`;
         )}
         {pnlRaw && !isNaN(parseFloat(pnlRaw)) && form.result !== "BREAKEVEN" && (
           <div style={{ marginTop:5, fontSize:12, fontFamily:"'Josefin Sans',sans-serif" }}>
-            {form.result === "WIN" && <span style={{color:"#2a6e3a"}}>{`✓ Gain : +${fmtMoney(parseFloat(pnlRaw))} ${currency}`}</span>}
-            {form.result === "LOSS" && <span style={{color:"#c0392b"}}>{`✗ Perte : −${fmtMoney(parseFloat(pnlRaw))} ${currency}`}</span>}
+            {form.result === "WIN" && <span style={{color:"#2a6e3a"}}>{L.form.gain(fmtMoney(parseFloat(pnlRaw)), currency)}</span>}
+            {form.result === "LOSS" && <span style={{color:"#c0392b"}}>{L.form.loss(fmtMoney(parseFloat(pnlRaw)), currency)}</span>}
           </div>
         )}
       </Field>}
       {tradeMode==="swing" ? (
         <>
-          <Field label="Prix d'entrée"><input type="text" inputMode="decimal" placeholder="" value={form.entry} onChange={e => set("entry", e.target.value.replace(/,/g,"."))} style={iStyle} /></Field>
-          <Field label="Prix de sortie"><input type="text" inputMode="decimal" placeholder="" value={form.exit} onChange={e => set("exit", e.target.value.replace(/,/g,"."))} style={iStyle} /></Field>
-          {!(tradeFixedMode==="fixe" && savedTS.rrFixed.enabled && savedTS.rrFixed.value) && <Field label="Risk / Reward"><input type="text" inputMode="decimal" placeholder="" value={form.rr} onChange={e => set("rr", e.target.value.replace(/,/g,"."))} style={iStyle}/></Field>}
+          <Field label={L.form.entry}><input type="text" inputMode="decimal" placeholder="" value={form.entry} onChange={e => set("entry", e.target.value.replace(/,/g,"."))} style={iStyle} /></Field>
+          <Field label={L.form.exit}><input type="text" inputMode="decimal" placeholder="" value={form.exit} onChange={e => set("exit", e.target.value.replace(/,/g,"."))} style={iStyle} /></Field>
+          {!(tradeFixedMode==="fixe" && savedTS.rrFixed.enabled && savedTS.rrFixed.value) && <Field label={L.form.rr}><input type="text" inputMode="decimal" placeholder="" value={form.rr} onChange={e => set("rr", e.target.value.replace(/,/g,"."))} style={iStyle}/></Field>}
           {!(tradeFixedMode==="fixe" && savedTS.sizeFixed.enabled && savedTS.sizeFixed.value) && (
             <div style={{marginBottom:4}}>
               <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.18em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:6,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <span>Taille de position</span>
+                <span>{L.form.size}</span>
                 <div style={{display:"flex",borderRadius:5,border:`1px solid ${C.border}`,overflow:"hidden"}}>
                   {["contrats","lots"].map(u=>(
                     <button key={u} onClick={()=>set("sizeUnit",u)} style={{padding:"2px 10px",border:"none",background:form.sizeUnit===u?C.accent:"transparent",color:form.sizeUnit===u?(darkMode?"#111":"#fff"):C.gray1,fontSize:9,fontFamily:"'Josefin Sans',sans-serif",fontWeight:form.sizeUnit===u?600:300,cursor:"pointer",letterSpacing:"0.08em",transition:"all 0.18s"}}>{u}</button>
@@ -1972,11 +2064,11 @@ ${recentTrades}`;
           {/* Scalping optional toggles */}
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             {[
-              {k:"entry", label:"Prix entrée/sortie"},
+              {k:"entry", label:L.form.entryExit},
               {k:"rr", label:"R/R", hideInFixe: true},
-              {k:"emotion", label:"Émotion"},
-              {k:"notes", label:"Note"},
-              {k:"size", label:"Taille", hideInFixe: true},
+              {k:"emotion", label:L.form.emotion},
+              {k:"notes", label:L.form.notes},
+              {k:"size", label:L.form.size, hideInFixe: true},
             ].filter(f => !(f.hideInFixe && tradeFixedMode==="fixe" && ((f.k==="rr" && savedTS.rrFixed.enabled && savedTS.rrFixed.value)||(f.k==="size" && savedTS.sizeFixed.enabled && savedTS.sizeFixed.value)))).map(f => (
               <button key={f.k} onClick={()=>toggleScalp(f.k)} style={{padding:"6px 12px",borderRadius:6,border:`1px solid ${scalpFields[f.k]?C.accent:C.border}`,background:scalpFields[f.k]?"rgba(255,255,255,0.06)":"transparent",color:scalpFields[f.k]?C.white:C.gray2,fontSize:10,fontFamily:"'Josefin Sans',sans-serif",fontWeight:scalpFields[f.k]?400:300,letterSpacing:"0.1em",cursor:"pointer",transition:"all 0.18s",display:"flex",alignItems:"center",gap:6}}>
                 <div style={{width:6,height:6,borderRadius:"50%",background:scalpFields[f.k]?C.accent:C.gray3,transition:"background 0.18s"}}/>
@@ -1986,11 +2078,11 @@ ${recentTrades}`;
           </div>
           {scalpFields.entry && (
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              <Field label="Prix d'entrée"><input type="text" inputMode="decimal" placeholder="" value={form.entry} onChange={e => set("entry", e.target.value.replace(/,/g,"."))} style={iStyle}/></Field>
-              <Field label="Prix de sortie"><input type="text" inputMode="decimal" placeholder="" value={form.exit} onChange={e => set("exit", e.target.value.replace(/,/g,"."))} style={iStyle}/></Field>
+              <Field label={L.form.entry}><input type="text" inputMode="decimal" placeholder="" value={form.entry} onChange={e => set("entry", e.target.value.replace(/,/g,"."))} style={iStyle}/></Field>
+              <Field label={L.form.exit}><input type="text" inputMode="decimal" placeholder="" value={form.exit} onChange={e => set("exit", e.target.value.replace(/,/g,"."))} style={iStyle}/></Field>
             </div>
           )}
-          {scalpFields.rr && !(tradeFixedMode==="fixe" && savedTS.rrFixed.enabled && savedTS.rrFixed.value) && <Field label="Risk / Reward"><input type="text" inputMode="decimal" placeholder="" value={form.rr} onChange={e => set("rr", e.target.value.replace(/,/g,"."))} style={iStyle}/></Field>}
+          {scalpFields.rr && !(tradeFixedMode==="fixe" && savedTS.rrFixed.enabled && savedTS.rrFixed.value) && <Field label={L.form.rr}><input type="text" inputMode="decimal" placeholder="" value={form.rr} onChange={e => set("rr", e.target.value.replace(/,/g,"."))} style={iStyle}/></Field>}
           {scalpFields.size && !(tradeFixedMode==="fixe" && savedTS.sizeFixed.enabled && savedTS.sizeFixed.value) && (
             <Field label={<div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"space-between",width:"100%"}}>
               <span>Taille</span>
@@ -2006,13 +2098,13 @@ ${recentTrades}`;
         </div>
       )}
       {(tradeMode==="swing" || scalpFields.notes) && (
-        <Field label="Notes">
+        <Field label={L.form.notes}>
           <textarea rows={3} placeholder="ex: Parfaite exécution, j'ai suivi mon plan à la lettre." value={form.notes} onChange={e => set("notes", e.target.value)} style={{ ...iStyle, resize:"vertical", lineHeight:1.6 }} />
         </Field>
       )}
 
       {propfirms.filter(p=>!p.status||p.status==="active").length > 0 && (
-        <Field label="Compte(s) concerné(s)">
+        <Field label={L.form.accounts}>
           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
             {propfirms.filter(p=>!p.status||p.status==="active").map(pf => {
               const selected = form.accountIds.includes(pf.id);
@@ -2062,7 +2154,7 @@ ${recentTrades}`;
         </button>
       )}
       <button onClick={addTrade} disabled={computedPnl() === null} style={{ width:"100%", padding:"14px", borderRadius:4, border:"none", background:computedPnl() !== null ? C.accent : C.gray3, color:computedPnl() !== null ? (darkMode?"#111":"#fff") : C.gray2, fontSize:12, fontWeight:600, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.2em", textTransform:"uppercase", cursor:computedPnl() !== null ? "pointer" : "not-allowed", transition:"all 0.3s" }}>
-        {saved ? "✓  Trade enregistré" : "Enregistrer  →"}
+        {saved ? L.btn.recorded : `${L.btn.record}  →`}
       </button>
     </div>
   );
@@ -2070,7 +2162,7 @@ ${recentTrades}`;
   // ── History JSX ──
   const historyContent = (
     <div>
-      <PageTitle sub="Classements" title="Statistiques" />
+      <PageTitle sub={L.pages.stats.sub} title={L.pages.stats.title} />
 
       {/* ══════════════════ COURBES D'ÉQUITÉ PROP FIRMS ══════════════════ */}
       {propfirms.filter(p=>!p.status||p.status==="active").length>0&&(()=>{
@@ -2163,7 +2255,7 @@ ${recentTrades}`;
       {/* ── Filtre par compte ── */}
       {propfirms.length > 0 && (
         <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16 }}>
-          {[{ id:"all", label:"Tous" }, ...propfirms.map(p => ({ id:p.id, label:p.name || p.firm || "Compte" }))].map(opt => (
+          {[{ id:"all", label:L.btn.all }, ...propfirms.map(p => ({ id:p.id, label:p.name || p.firm || "Compte" }))].map(opt => (
             <button key={opt.id} onClick={() => setHistoryAccFilter(opt.id)} style={{
               padding:"5px 14px", borderRadius:20, fontSize:10, cursor:"pointer",
               fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase",
@@ -2387,7 +2479,7 @@ ${recentTrades}`;
                   {emoData.map(e=>(
                     <div key={e.e} style={{display:"contents"}}>
                       <div>
-                        <div style={{fontSize:11,color:C.white,fontFamily:ff,marginBottom:3}}>{e.e}</div>
+                        <div style={{fontSize:11,color:C.white,fontFamily:ff,marginBottom:3}}>{L.emotions[e.e]||e.e}</div>
                         <div style={{height:2,background:C.gray3,borderRadius:1}}>
                           <div style={{width:e.wr+"%",height:"100%",borderRadius:1,background:e.wr>=50?"#4caf6e":"#e05a5a",transition:"width 0.5s"}}/>
                         </div>
@@ -2562,18 +2654,18 @@ ${recentTrades}`;
         );
       })()}
       <div style={{textAlign:"center",padding:"8px 0 0"}}>
-        <button onClick={()=>setView("trades")} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 24px",color:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>☰ Voir l'historique des trades →</button>
+        <button onClick={()=>setView("trades")} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 24px",color:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>{L.btn.seeHistory}</button>
       </div>
     </div>
   );
 
   const tradesContent = (
     <div>
-      <PageTitle sub="Historique" title="Mes Trades" />
+      <PageTitle sub={L.pages.trades.sub} title={L.pages.trades.title} />
       {/* ── Filtre par compte ── */}
       {propfirms.length > 0 && (
         <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, paddingBottom:2 }}>
-          {[{ id:"all", label:"Tous" }, ...propfirms.map(p => ({ id:p.id, label:p.name || p.firm || "Compte" }))].map(opt => (
+          {[{ id:"all", label:L.btn.all }, ...propfirms.map(p => ({ id:p.id, label:p.name || p.firm || "Compte" }))].map(opt => (
             <button
               key={opt.id}
               onClick={() => setTradesAccFilter(opt.id)}
@@ -2626,7 +2718,7 @@ ${recentTrades}`;
                   </div>
                 </div>
                 <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-                  {[t.date, t.session, t.emotion, t.rr ? `RR ${t.rr}` : null,
+                  {[t.date, t.session, t.emotion?(L.emotions[t.emotion]||t.emotion):null, t.rr ? `RR ${t.rr}` : null,
                     ...(t.accountIds && t.accountIds.length > 0
                       ? t.accountIds.map(id => propfirms.find(p => p.id === id)?.name).filter(Boolean)
                       : [])
@@ -2718,7 +2810,7 @@ ${recentTrades}`;
   const strategyContent = (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:16 }}>
-        <PageTitle sub="Mes Stratégies" title="Plan de Trading" />
+        <PageTitle sub={L.pages.plan.sub} title={L.pages.plan.title} />
         <button onClick={()=>{ const ns={id:Date.now(),name:"Nouvelle stratégie",description:"",steps:[],rules:"",notes:""}; setStrategies(p=>[...p,ns]); setActiveStratId(ns.id); }} style={{ padding:"8px 14px", borderRadius:4, border:"none", background:"radial-gradient(ellipse 90% 90% at 50% 38%, rgba(245,245,245,0.95) 0%, rgba(215,215,215,0.88) 55%, rgba(230,230,230,0.92) 100%)", color:"#111", fontSize:11, fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", marginBottom:22 }}>+ Nouvelle</button>
       </div>
 
@@ -2773,7 +2865,7 @@ ${recentTrades}`;
   // ── AI JSX ──
   const aiContent = (
     <div style={{ maxWidth:680, margin:"0 auto" }}>
-      <PageTitle sub="Intelligence" title="Analyse IA" />
+      <PageTitle sub={L.pages.ai.sub} title={L.pages.ai.title} />
 
       {/* Header card */}
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,padding:"20px 18px",marginBottom:16,display:"flex",alignItems:"center",gap:14}}>
@@ -2899,7 +2991,7 @@ ${recentTrades}`;
   const propfirmContent = (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:22 }}>
-        <PageTitle sub="Mes Comptes" title={pfView==="list"?"Comptes":pfView==="add-type"?"Type de compte":pfView==="add-propfirm"?"Prop Firm":"Fond Propre"} />
+        <PageTitle sub={L.pages.accts.sub} title={pfView==="list"?L.pages.accts.list:pfView==="add-type"?L.pages.accts.addType:pfView==="add-propfirm"?L.pages.accts.addPf:L.pages.accts.addPers} />
         {pfView!=="list" && (
           <button onClick={()=>setPfView("list")} style={{ padding:"9px 16px", borderRadius:4, border:`1px solid ${C.border}`, background:"transparent", color:C.gray1, fontSize:11, fontFamily:"'Josefin Sans',sans-serif", letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", marginBottom:24 }}>← Retour</button>
         )}
@@ -3010,7 +3102,7 @@ ${recentTrades}`;
           )}
           <Divider/>
           <button onClick={addPropfirm} disabled={!pfForm.firm||!pfForm.capital||!pfForm.target||!pfForm.maxLoss} style={{width:"100%",padding:"14px",borderRadius:4,border:"none",background:pfForm.firm&&pfForm.capital&&pfForm.target&&pfForm.maxLoss?C.accent:C.gray3,color:pfForm.firm&&pfForm.capital&&pfForm.target&&pfForm.maxLoss?"#fff":C.gray2,fontSize:12,fontWeight:600,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.2em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.3s"}}>
-            Enregistrer →
+            {L.btn.record} →
           </button>
         </div>
       )}
@@ -3039,7 +3131,7 @@ ${recentTrades}`;
           )}
           <Divider/>
           <button onClick={addPropfirm} disabled={!pfForm.capital} style={{width:"100%",padding:"14px",borderRadius:4,border:"none",background:pfForm.capital?C.accent:C.gray3,color:pfForm.capital?"#fff":C.gray2,fontSize:12,fontWeight:600,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.2em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.3s"}}>
-            Enregistrer →
+            {L.btn.record} →
           </button>
         </div>
       )}
@@ -3056,7 +3148,7 @@ ${recentTrades}`;
       {/* ── PILLS Actifs / Archivés ── */}
       {pfView==="list" && propfirms.length>0 && (
         <div style={{display:"flex",gap:6,marginBottom:20}}>
-          {[{k:"active",l:"Actifs"},{k:"archived",l:"Archivés"}].map(tab=>(
+          {[{k:"active",l:L.btn.active},{k:"archived",l:L.btn.archived}].map(tab=>(
             <button key={tab.k} onClick={()=>setPfListTab(tab.k)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${pfListTab===tab.k?C.accent:C.border}`,background:pfListTab===tab.k?"rgba(0,0,0,0.06)":"transparent",color:pfListTab===tab.k?C.accent:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",fontWeight:pfListTab===tab.k?600:300,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>
               {tab.l}{tab.k==="archived"&&propfirms.filter(p=>p.status==="passed"||p.status==="breached").length>0?` · ${propfirms.filter(p=>p.status==="passed"||p.status==="breached").length}`:""}
             </button>
@@ -3810,7 +3902,7 @@ ${recentTrades}`;
                 {todayEmotions.map(e=>(
                   <div key={e.name} style={{background:C.bg3,borderRadius:6,padding:"10px 12px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{fontSize:11,color:C.white,fontFamily:"'Josefin Sans',sans-serif"}}>{e.name}</span>
+                      <span style={{fontSize:11,color:C.white,fontFamily:"'Josefin Sans',sans-serif"}}>{L.emotions[e.name]||e.name}</span>
                       <span style={{fontSize:10,color:e.wr>=50?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{e.wr}%</span>
                     </div>
                     <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif"}}>{e.count}T · {e.pnl>=0?"+":""}{fmtMoney(e.pnl)}{currency}</div>
@@ -3847,7 +3939,7 @@ ${recentTrades}`;
               <div>
                 <span style={{fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,fontSize:13,color:C.white}}>{t.instrument}</span>
                 <span style={{marginLeft:6,fontSize:9,color:t.direction==="LONG"?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,letterSpacing:"0.06em"}}>{t.direction}</span>
-                <div style={{fontSize:9,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{t.date} · {t.session} · {t.emotion}</div>
+                <div style={{fontSize:9,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",marginTop:2}}>{t.date} · {t.session} · {t.emotion?(L.emotions[t.emotion]||t.emotion):""}</div>
               </div>
               <div style={{textAlign:"right"}}>
                 <div style={{fontSize:15,fontWeight:300,color:pnl>=0?"#2a6e3a":"#c0392b",fontFamily:"'Josefin Sans',sans-serif"}}>{pnl>=0?"+":""}{fmtMoney(pnl)}{currency}</div>
@@ -4092,7 +4184,7 @@ ${recentTrades}`;
   // ── Tools Content ──
   const toolsContent = (
     <div>
-      <PageTitle sub="Outils" title="Boîte à outils" />
+      <PageTitle sub={L.pages.tools.sub} title={L.pages.tools.title} />
       {/* Tab selector */}
       <div style={{display:"flex",gap:6,marginBottom:20}}>
         {[{k:"csv",l:"Import CSV"},{k:"calc",l:"Calculateur"}].map(t=>(
@@ -4151,7 +4243,7 @@ ${recentTrades}`;
             </div>
           </Field>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-            <Field label="Prix d'entrée"><input type="text" inputMode="decimal" placeholder="" value={calcEntry} onChange={e=>setCalcEntry(e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,""))} style={iStyle}/></Field>
+            <Field label={L.form.entry}><input type="text" inputMode="decimal" placeholder="" value={calcEntry} onChange={e=>setCalcEntry(e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,""))} style={iStyle}/></Field>
             <Field label="Stop Loss"><input type="text" inputMode="decimal" placeholder="" value={calcStop} onChange={e=>setCalcStop(e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,""))} style={iStyle}/></Field>
           </div>
           <Field label="Risque max (€)"><input type="text" inputMode="decimal" placeholder="" value={calcRisk} onChange={e=>setCalcRisk(e.target.value.replace(/,/g,".").replace(/[^0-9.]/g,""))} style={iStyle}/></Field>
@@ -4250,7 +4342,7 @@ ${recentTrades}`;
     if (view === "profil" && !subData && !subLoading) loadSub();
     return (
       <div style={{ maxWidth:640, margin:"0 auto" }}>
-        <PageTitle sub="Mon Compte" title="Profil" />
+        <PageTitle sub={L.pages.prof.sub} title={L.pages.prof.title} />
 
         {/* ── Personal info ── */}
         <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),0 0 0 1px rgba(255,255,255,0.09),inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
@@ -4279,7 +4371,7 @@ ${recentTrades}`;
           </div>
           <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
             <button onClick={saveProfile} disabled={!!profileSaving} style={{padding:"11px 24px",borderRadius:8,border:profileSaving==="ok"?"1px solid rgba(74,222,128,0.4)":profileSaving==="saving"?"none":profileSaving?"1px solid rgba(229,100,100,0.4)":"none",background:profileSaving==="ok"?"rgba(74,222,128,0.1)":profileSaving==="saving"?`rgba(255,255,255,0.06)`:profileSaving?`rgba(229,100,100,0.1)`:`linear-gradient(135deg,${C.accent},#c9aa82)`,color:profileSaving==="ok"?"#4ade80":profileSaving==="saving"?C.gray1:profileSaving?"rgba(229,100,100,0.9)":"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:13,cursor:profileSaving?"not-allowed":"pointer",transition:"all 0.2s"}}>
-              {profileSaving==="ok"?"✓ Sauvegardé":profileSaving==="saving"?"Sauvegarde...":"Sauvegarder"}
+              {profileSaving==="ok"?L.btn.saved:profileSaving==="saving"?L.btn.saving:L.btn.save}
             </button>
             {profileSaving&&profileSaving!=="ok"&&profileSaving!=="saving"&&<span style={{fontSize:11,color:"rgba(229,100,100,0.9)",fontFamily:"'Josefin Sans',sans-serif"}}>{String(profileSaving).replace("error:","")}</span>}
           </div>
@@ -4427,9 +4519,9 @@ ${recentTrades}`;
   // ── Settings Content ──
   const settingsContent = (
     <div style={{ maxWidth:680, margin:"0 auto" }}>
-      <PageTitle sub="Paramètres" title="Réglages" />
+      <PageTitle sub={L.pages.sett.sub} title={L.pages.sett.title} />
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
-        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:14}}>Devise</div>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:14}}>{L.sett.currency}</div>
         <div style={{display:"flex",gap:8}}>
           {["€","$","£"].map(c=>(
             <button key={c} onClick={()=>setCurrency(c)} style={{flex:1,padding:"12px",borderRadius:8,border:`1px solid ${currency===c?C.accent:C.border}`,background:currency===c?"rgba(0,0,0,0.08)":"transparent",color:currency===c?C.accent:C.gray1,fontSize:18,cursor:"pointer",fontFamily:"'Josefin Sans',sans-serif",fontWeight:currency===c?600:300,transition:"all 0.2s"}}>
@@ -4439,7 +4531,7 @@ ${recentTrades}`;
         </div>
       </div>
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
-        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:14}}>Langue</div>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:14}}>{L.sett.language}</div>
         <div style={{display:"flex",gap:8}}>
           {[{k:"fr",l:"Français"},{k:"en",l:"English"},{k:"es",l:"Español"}].map(lg=>(
             <button key={lg.k} onClick={()=>setLang(lg.k)} style={{flex:1,padding:"10px",borderRadius:8,border:`1px solid ${lang===lg.k?C.accent:C.border}`,background:lang===lg.k?"rgba(0,0,0,0.08)":"transparent",color:lang===lg.k?C.accent:C.gray1,fontSize:12,cursor:"pointer",fontFamily:"'Josefin Sans',sans-serif",fontWeight:lang===lg.k?600:300,letterSpacing:"0.06em",transition:"all 0.2s"}}>
@@ -4447,7 +4539,6 @@ ${recentTrades}`;
             </button>
           ))}
         </div>
-        {lang!=="fr"&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:6,background:`rgba(var(--gold-rgb),${darkMode?0.08:0.15})`,border:`1px solid rgba(var(--gold-rgb),${darkMode?0.2:0.45})`,fontSize:11,color:"rgba(var(--gold-rgb),0.9)",fontFamily:"'Josefin Sans',sans-serif"}}>La traduction complète sera disponible prochainement.</div>}
       </div>
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -4463,9 +4554,9 @@ ${recentTrades}`;
 
       {/* ── COULEURS ── */}
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6),0 1px 4px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
-        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:16}}>Couleurs</div>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:16}}>{L.sett.colors}</div>
         <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12,marginBottom:14}}>
-          {[["Fond",customBg,setCustomBg,darkMode?"#0f0f0f":"#f8f7f5"],["Cartes",customBg2,setCustomBg2,darkMode?"#1a1a1a":"#f0ede8"]].map(([label,val,setter,def])=>(
+          {[[L.sett.bg,customBg,setCustomBg,darkMode?"#0f0f0f":"#f8f7f5"],[L.sett.cards,customBg2,setCustomBg2,darkMode?"#1a1a1a":"#f0ede8"]].map(([label,val,setter,def])=>(
             <div key={label}>
               <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>{label}</div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -4480,9 +4571,9 @@ ${recentTrades}`;
           ))}
         </div>
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Texte</div>
+          <div style={{fontSize:10,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>{L.sett.textColor}</div>
           <div style={{display:"flex",gap:6}}>
-            {[{v:null,l:"Auto"},{v:true,l:"Blanc"},{v:false,l:"Noir"}].map(opt=>(
+            {[{v:null,l:L.sett.auto},{v:true,l:L.sett.white},{v:false,l:L.sett.black}].map(opt=>(
               <button key={String(opt.v)} onClick={()=>setCustomTextWhite(opt.v)} style={{flex:1,padding:"9px",borderRadius:8,border:`1px solid ${customTextWhite===opt.v?C.accent:C.border}`,background:customTextWhite===opt.v?"rgba(128,128,128,0.12)":"transparent",color:customTextWhite===opt.v?C.white:C.gray1,fontSize:11,fontFamily:"'Josefin Sans',sans-serif",cursor:"pointer",transition:"all 0.2s"}}>
                 {opt.l}
               </button>
@@ -4496,11 +4587,11 @@ ${recentTrades}`;
             setColorSaving(error ? `error:${error.message}` : "ok");
             setTimeout(()=>setColorSaving(null),3000);
           }} style={{padding:"9px 20px",borderRadius:8,border:colorSaving&&colorSaving!=="ok"&&colorSaving!=="saving"?"1px solid rgba(229,100,100,0.4)":"none",background:colorSaving==="ok"?"rgba(74,222,128,0.1)":colorSaving==="saving"?"rgba(255,255,255,0.06)":colorSaving?`rgba(229,100,100,0.1)`:`linear-gradient(135deg,${C.accent},#c9aa82)`,color:colorSaving==="ok"?"#4ade80":colorSaving==="saving"?C.gray1:colorSaving?"rgba(229,100,100,0.9)":"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:colorSaving?"not-allowed":"pointer",transition:"all 0.2s",letterSpacing:"0.1em"}}>
-            {colorSaving==="ok"?"✓ Sauvegardé":colorSaving==="saving"?"···":colorSaving?"✗ Erreur":"Sauvegarder"}
+            {colorSaving==="ok"?L.btn.saved:colorSaving==="saving"?L.btn.saving:colorSaving?L.btn.error:L.btn.save}
           </button>
           {(customBg||customBg2||customTextWhite!==null)&&(
             <button onClick={()=>{setCustomBg("");setCustomBg2("");setCustomTextWhite(null);}} style={{fontSize:11,color:"rgba(229,100,100,0.7)",fontFamily:"'Josefin Sans',sans-serif",background:"none",border:"1px solid rgba(229,100,100,0.2)",borderRadius:8,padding:"7px 16px",cursor:"pointer",transition:"all 0.2s"}}>
-              Réinitialiser
+              {L.btn.reset}
             </button>
           )}
         </div>
@@ -4510,9 +4601,9 @@ ${recentTrades}`;
       <div style={{background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,boxShadow:"0 4px 28px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.09), 0 -2px 24px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.32)",padding:"18px 16px",marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div>
-            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>Fin de journée</div>
+            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600,marginBottom:4}}>{L.sett.dayEnd}</div>
             <div style={{fontSize:11,color:C.gray1,fontFamily:"'Josefin Sans',sans-serif",lineHeight:1.6}}>
-              Les trades passés après cet horaire sont rattachés au lendemain.
+              {L.sett.dayEndDesc}
             </div>
           </div>
           <button onClick={()=>setDayEndTime(d=>d?"":new Date().toTimeString().slice(0,5))} style={{width:40,height:22,borderRadius:11,border:"none",background:dayEndTime?C.accent:"rgba(255,255,255,0.1)",cursor:"pointer",position:"relative",transition:"background 0.22s",flexShrink:0,marginLeft:16}}>
@@ -4532,7 +4623,7 @@ ${recentTrades}`;
             setDayEndSaving(error ? `error:${error.message}` : "ok");
             setTimeout(()=>setDayEndSaving(null),3000);
           }} style={{padding:"9px 20px",borderRadius:8,border:dayEndSaving&&dayEndSaving!=="ok"&&dayEndSaving!=="saving"?"1px solid rgba(229,100,100,0.4)":"none",background:dayEndSaving==="ok"?"rgba(74,222,128,0.1)":dayEndSaving==="saving"?"rgba(255,255,255,0.06)":dayEndSaving?`rgba(229,100,100,0.1)`:`linear-gradient(135deg,${C.accent},#c9aa82)`,color:dayEndSaving==="ok"?"#4ade80":dayEndSaving==="saving"?C.gray1:dayEndSaving?"rgba(229,100,100,0.9)":"#000",fontFamily:"'Josefin Sans',sans-serif",fontWeight:700,fontSize:12,cursor:dayEndSaving?"not-allowed":"pointer",transition:"all 0.2s",letterSpacing:"0.1em"}}>
-            {dayEndSaving==="ok"?"✓ Sauvegardé":dayEndSaving==="saving"?"···":dayEndSaving?"✗ Erreur":"Sauvegarder"}
+            {dayEndSaving==="ok"?L.btn.saved:dayEndSaving==="saving"?L.btn.saving:dayEndSaving?L.btn.error:L.btn.save}
           </button>
         </div>
       </div>
@@ -4698,7 +4789,7 @@ ${recentTrades}`;
 
     return (
       <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <PageTitle sub="Compétition" title="Classement" />
+        <PageTitle sub={L.pages.rank.sub} title={L.pages.rank.title} />
 
         {/* My score card */}
         <div style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px 20px", marginBottom: 16, boxShadow: "0 4px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.28)", position: "relative", overflow: "hidden" }}>
@@ -4936,7 +5027,7 @@ ${recentTrades}`;
                               {dayEmotions.length>0&&<div style={{fontSize:7,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Josefin Sans',sans-serif"}}>Émotions</div>}
                               {dayEmotions.map(e=>(
                                 <div key={e.name} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                  <span style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontFamily:"'Josefin Sans',sans-serif"}}>{e.name}</span>
+                                  <span style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontFamily:"'Josefin Sans',sans-serif"}}>{L.emotions[e.name]||e.name}</span>
                                   <span style={{fontSize:10,color:e.wr>=50?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{e.wr}% · {e.pnl>=0?"+":""}{fmtMoney(e.pnl)}{currency}</span>
                                 </div>
                               ))}
@@ -5087,7 +5178,7 @@ ${recentTrades}`;
                           {dayEmotions.length>0&&<div style={{fontSize:7,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Josefin Sans',sans-serif"}}>Émotions</div>}
                           {dayEmotions.map(e=>(
                             <div key={e.name} style={{display:"flex",justifyContent:"space-between"}}>
-                              <span style={{fontSize:11,color:"rgba(255,255,255,0.6)",fontFamily:"'Josefin Sans',sans-serif"}}>{e.name}</span>
+                              <span style={{fontSize:11,color:"rgba(255,255,255,0.6)",fontFamily:"'Josefin Sans',sans-serif"}}>{L.emotions[e.name]||e.name}</span>
                               <span style={{fontSize:11,color:e.wr>=50?"#4caf6e":"#e05a5a",fontFamily:"'Josefin Sans',sans-serif",fontWeight:600}}>{e.wr}% · {e.pnl>=0?"+":""}{fmtMoney(e.pnl)}{currency}</span>
                             </div>
                           ))}
